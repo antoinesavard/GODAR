@@ -1,2 +1,2 @@
 # DEM
-DEM for sea ice modelling
+DEM for sea ice modeling

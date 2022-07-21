@@ -1,5 +1,7 @@
+### Fortran ###
 # Prerequisites
 *.d
+/output/*
 
 # Compiled Object files
 *.slo
@@ -30,3 +32,13 @@
 *.exe
 *.out
 *.app
+
+### SCons ###
+build/
+# for projects that use SCons for building: http://http://www.scons.org/
+.sconsign.dblite
+zoupa
+
+# When configure fails, SCons outputs these
+config.log
+.sconf_temp
