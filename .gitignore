@@ -42,3 +42,6 @@ zoupa
 # When configure fails, SCons outputs these
 config.log
 .sconf_temp
+
+*.mp4
+*/__pycache__/*

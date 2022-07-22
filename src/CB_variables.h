@@ -3,8 +3,12 @@
 !=======================================================================
 
     double precision ::           &   
-                xy      (n,4),    &
-                vu      (n,2),    &
+                x       (n),      &
+                y       (n),      &
+                r       (n),      &
+                h       (n),      &
+                u       (n),      &
+                v       (n),      &
                 f       (n,n),    &
                 d       (n,n),    &
                 s       (n,n),    &
@@ -31,11 +35,16 @@
                 wafy    (n),      &
                 l       (n,n),    &
                 lx      (n,n),    &
-                ly      (n,n)   
+                ly      (n,n),    &
+                mass    (n)   
 
     common/variables/        &
-                xy      ,    &
-                vu      ,    &
+                x       ,    &
+                y       ,    &
+                r       ,    &
+                h       ,    &
+                u       ,    &
+                v       ,    &
                 f       ,    &
                 d       ,    &
                 s       ,    &
@@ -62,4 +71,5 @@
                 wafy    ,    &
                 l       ,    &
                 lx      ,    &
-                ly          
+                ly      ,    &
+                mass            

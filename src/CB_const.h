@@ -11,6 +11,9 @@
             ks,          &
             eta2
 
+    double precision :: rhoair, rhoice, rhowater
+    double precision :: Cpair, Cpwater
+
 
     common/const/      &
             k,         & ! normal stiffness
@@ -20,3 +23,10 @@
             st,        & ! divide tot num of timestep to st
             ks,        & ! shear stiffness
             eta2         ! shear damping coefficient
+
+    common/const/      &
+            rhoair,    &
+            rhoice,    &
+            rhowater,  &
+            Cpair,     &
+            Cpwater 

@@ -10,29 +10,25 @@ program ice
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, j, tstep
+    integer :: tstep, expno
     type(datetime_type) :: tic, tac
-    character(len=20) :: filename
-    integer :: expno
 
     tic = now()
 
     print *, 'experiment #?'
     read  *, expno 
 
-    call get_default
     call ini_get
+    call get_default
     
     do tstep = 1, int(t / dt) + 1
 
         call stepper (tstep)
-        write (filename,'("output/xy",i4.4,".", i2.2)') tstep, expno
-        open (10, file = filename, status = 'unknown')
-        do i = 1, n
-            write(10,*) ( xy(i,j), j = 1, 4 )
-        end do
+        call sea_ice_post (tstep, expno)
 
     end do
+
+    call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py")
 
     tac = now()
 

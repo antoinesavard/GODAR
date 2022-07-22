@@ -7,13 +7,16 @@ import os
 output_dir = "output/"
 expno = "01"
 
-files = list_files(output_dir, expno)
+filesx = list_files(output_dir, "x", expno)
+filesy = list_files(output_dir, "y", expno)
+filesr = list_files(output_dir, "r", expno)
+filesh = list_files(output_dir, "h", expno)
 
 xdata, ydata, radii, mass = (
-    multiload(output_dir, files)[:, :, 0],
-    multiload(output_dir, files)[:, :, 1],
-    multiload(output_dir, files)[:, :, 2],
-    multiload(output_dir, files)[:, :, 3],
+    multiload(output_dir, filesx),
+    multiload(output_dir, filesy),
+    multiload(output_dir, filesr),
+    multiload(output_dir, filesh),
 )
 
 os.chdir("plots/")
@@ -28,11 +31,10 @@ ax.set_ylim(0, 100)
 
 disks = []
 
-
 def init():
-    for i in range(len(radii[0])):
-        r = np.array([xdata[0, i], ydata[0, i]])
-        disk = draw(ax, r, radii[0, i])
+    for i in range(len(radii[-1])):
+        p = np.array([xdata[0, i], ydata[0, i]])
+        disk = draw(ax, p, radii[0, i])
         disks.append(disk)
     time.set_text("")
     return disks
@@ -40,8 +42,8 @@ def init():
 
 def animate(i):
     for j, disk in enumerate(disks):
-        r = np.array([xdata[i, j], ydata[i, j]])
-        disk.center = r
+        p = np.array([xdata[i, j], ydata[i, j]])
+        disk.center = p
     time.set_text("iteration = {}".format(i))
     return disks
 

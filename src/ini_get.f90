@@ -6,31 +6,32 @@ subroutine ini_get
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, j
+    integer :: i
 
     ! position of particles: need a one column prepared text file
     
     open(102, file = 'src/X.dat')
     open(103, file = 'src/Y.dat')
     open(104, file = 'src/R.dat')
-    open(105, file = 'src/M.dat')
+    open(105, file = 'src/H.dat')
 
     do i = 1, n
 
-        read(102,*) xy(i,1)
-        read(103,*) xy(i,2)
-        read(104,*) xy(i,3)
-        read(105,*) xy(i,4)
+        read(102,*) x(i)
+        read(103,*) y(i)
+        read(104,*) r(i)
+        read(105,*) h(i)
         
     end do
 
-    do j = 102, 105
-        close(j)
+    do i = 102, 105
+        close(i)
     end do
 
 ! initial velocity
 
-    vu    =  0
+    u     =  0
+    v     =  0
     ome   =  0
 
 ! initial particle rotation

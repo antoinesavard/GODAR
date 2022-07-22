@@ -57,7 +57,7 @@ subroutine contact_forces
     do i = 1, N
         do j = 1, N
 
-            m(i) = m(i) + fw(j,i) * xy(i,3)
+            m(i) = m(i) + fw(j,i) * r(i)
             
         end do
     end do
@@ -79,10 +79,9 @@ subroutine viscous_terms
 
         tfx(i)  =  wafx(i) + dafx(i) + f(i,1)
         tfy(i)  =  wafy(i) + dafy(i) + f(i,2)
-        vu(i,1) =  vu(i,1) + ( tfx(i) / xy(i,4) ) * dt
-        vu(i,2) =  vu(i,2) + ( tfy(i) / xy(i,4) ) * dt
-        ome(i)  =  ome(i) + ( m(i) / ( 0.4 * xy(i,4) * xy(i,3) * &
-                   xy(i,3) )) * dt
+        u(i)    =  u(i) + ( tfx(i) / mass(i) ) * dt
+        v(i)    =  v(i) + ( tfy(i) / mass(i) ) * dt
+        ome(i)  =  ome(i) + dt * m(i) / ( 4d-1 * mass(i) * r(i) ** 2 ) 
 
     end do
 
@@ -100,8 +99,8 @@ subroutine forcing (tstep)
 
     if (tstep == 1) then
 
-        vu(1,1) = 5d0
-        vu(2,1) = -5d0
+        u(1) = 5d0
+        u(2) = -5d0
 
     end if
 

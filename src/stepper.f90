@@ -31,35 +31,35 @@ subroutine stepper (tstep)
             if ( j /= i ) then
                 if (abs(                                 &
                         sqrt(                            &
-                            ( xy(i,1) - xy(j,1) ) ** 2 + &
-                            ( xy(i,2) - xy(j,2) ) ** 2   &
+                            ( x(i) - x(j) ) ** 2 +       &
+                            ( y(i) - y(j) ) ** 2         &
                             )                            &
-                        ) < xy(i,3) + xy(j,3)            &
+                        ) < r(i) + r(j)                  &
                     ) then
 
                     ! Components of unit vector ei=(cosa,sina) are:
-                    cosa = ( xy(j,1) - xy(i,1) ) /            &
+                    cosa = ( x(j) - x(i) ) /                  &
                            ( sqrt(                            &
-                                 ( xy(i,1) - xy(j,1) ) ** 2 + &
-                                 ( xy(i,2) - xy(j,2) ) ** 2   &
+                                 ( x(i) - x(j) ) ** 2 +       &
+                                 ( y(i) - y(j) ) ** 2         &
                                  )                            &
                            )
                     
-                    sina = ( xy(j,2) - xy(i,2) ) /            &
+                    sina = ( y(j) - y(i) ) /                  &
                            ( sqrt(                            &
-                                 ( xy(i,1) - xy(j,1) ) ** 2 + &
-                                 ( xy(i,2) - xy(j,2) ) ** 2   &
+                                 ( x(i) - x(j) ) ** 2 +       &
+                                 ( y(i) - y(j) ) ** 2         &
                                  )                            &
                            )
 
                     ! Normal components of the relative velocities:
-                    ndot = ( vu(i,1) - vu(j,1) ) * cosa + &
-                           ( vu(i,2) - vu(j,2) ) * sina
+                    ndot = ( u(i) - u(j) ) * cosa +     &
+                           ( v(i) - v(j) ) * ( - cosa)
 
                     ! Tangential components of the relative velocities:
-                    sdot = ( ( vu(i,1) - vu(j,1) ) * sina +         &
-                             ( vu(i,2) - vu(j,2) ) * ( - cosa ) ) - &
-                           ( ome(i) * xy(i,3) + ome(j) * xy(j,3) )
+                    sdot = ( ( u(i) - u(j) ) * sina   +       &
+                             ( v(i) - v(j) ) * sina ) -       &
+                           ( ome(i) * r(i) + ome(j) * r(j) )
 
                     ! Normal component of the damping force at contacts, d(j,i), force induced from
                     ! particle B to particle A at their contact point
@@ -153,8 +153,8 @@ subroutine euler
     ! Update new position/angle of particles
     do i = 1, N
 
-        xy(i,1) = xy(i,1) + vu(i,1) * dt
-        xy(i,2) = xy(i,2) + vu(i,2) * dt
+        x(i) = x(i) + u(i) * dt
+        y(i) = y(i) + v(i) * dt
         teta(i) = teta(i) + ome(i) * dt
 
     end do

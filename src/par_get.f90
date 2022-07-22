@@ -6,14 +6,33 @@ subroutine get_default
     include "CB_variables.h"
     include "CB_const.h"
 
-! set parameter for the run
+    double precision :: pi
 
-    k       =  1.5d0        ! normal stiffness
-    ks      =  1.5d0        ! shear stiffness
-    dt      =  5d-2         ! length of time step
-    t       =  150 * dt     ! length of time
-    st      =  1            ! divide tot num of timestep to st
-    eta     =  1.5d0        ! Normal damping coefficient
-    eta2    =  1.5d0        ! shear damping coefficient
+!------------------------------------------------------------
+! set parameter for the run
+!------------------------------------------------------------
+
+    k        =  1.5d8              ! normal stiffness
+    ks       =  1.5d8              ! shear stiffness
+    dt       =  5d-2               ! length of time step
+    t        =  250 * dt           ! length of time
+    st       =  1                  ! divide tot num of timestep to st
+    eta      =  1.5d6              ! Normal damping coefficient
+    eta2     =  1.5d6              ! shear damping coefficient
+
+    pi       =  4d0 * datan(1d0)   ! pi
+
+    Cpair    =  1d03               ! Specific heat of air.
+    Cpwater  =  4d03               ! Specific heat of water
+
+    rhoair   =  1.3d0              ! air density [kg/m3]
+    rhoice   =  9d02               ! ice density [kg/m3]
+    rhowater =  1026d0             ! water density [kg/m3]
+
+!------------------------------------------------------------
+!           Disks physical parameters
+!------------------------------------------------------------
+
+    mass  =  rhoice * pi * h * r ** 2 
 
 end subroutine get_default
