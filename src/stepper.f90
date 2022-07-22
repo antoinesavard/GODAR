@@ -11,7 +11,7 @@ subroutine stepper (tstep)
     double precision :: cosa, sina, ndot, sdot
 
     ! Before new time step following arrays which play transitional
-    !role between global and incremental arrays shall be set to zero
+    ! role between global and incremental arrays shall be set to zero
     s   =  0d0
     sx  =  0d0
     sy  =  0d0
@@ -71,7 +71,7 @@ subroutine stepper (tstep)
                     ! Shear component of damping force at contact point
                     l(j,i)  =  - 1 * ( sdot * eta2 )
 
-                    ! Global components of L(j,i) in cartesian 
+                    ! Global components of l(j,i) in cartesian 
                     lx(j,i)  =  l(j,i) * sina
                     ly(j,i)  =  l(j,i) * ( - cosa )
 
