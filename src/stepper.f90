@@ -157,6 +157,8 @@ subroutine euler
         y(i) = y(i) + v(i) * dt
         teta(i) = teta(i) + ome(i) * dt
 
+        call bc_verify (i)
+
     end do
 
 end subroutine euler

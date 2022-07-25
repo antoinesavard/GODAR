@@ -31,6 +31,7 @@ ax.set_ylim(0, 100)
 
 disks = []
 
+
 def init():
     for i in range(len(radii[-1])):
         p = np.array([xdata[0, i], ydata[0, i]])
@@ -51,7 +52,7 @@ def animate(i):
 anim = FuncAnimation(
     fig,
     animate,
-    frames=250,
+    frames=xdata.shape[0],
     init_func=init,
     interval=10,
     repeat=False,

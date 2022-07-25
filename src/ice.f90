@@ -13,10 +13,10 @@ program ice
     integer :: tstep, expno
     type(datetime_type) :: tic, tac
 
-    tic = now()
-
     print *, 'experiment #?'
     read  *, expno 
+
+    tic = now()
 
     call ini_get
     call get_default
@@ -28,10 +28,14 @@ program ice
 
     end do
 
-    call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py")
-
     tac = now()
 
-    print*, "Total execution time: ", delta_str(tac-tic)
+    print*, "Total simulation time: ", delta_str(tac - tic)
+
+    call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py")
+
+    tic = now()
+
+    print*, "Total video creation time: ", delta_str(tic - tac)
     
 end program ice
