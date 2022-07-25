@@ -54,11 +54,11 @@ subroutine stepper (tstep)
 
                     ! Normal components of the relative velocities:
                     ndot = ( u(i) - u(j) ) * cosa +     &
-                           ( v(i) - v(j) ) * ( - cosa)
+                           ( v(i) - v(j) ) * sina
 
                     ! Tangential components of the relative velocities:
                     sdot = ( ( u(i) - u(j) ) * sina   +       &
-                             ( v(i) - v(j) ) * sina ) -       &
+                             ( v(i) - v(j) ) * cosa ) -       &
                            ( ome(i) * r(i) + ome(j) * r(j) )
 
                     ! Normal component of the damping force at contacts, d(j,i), force induced from

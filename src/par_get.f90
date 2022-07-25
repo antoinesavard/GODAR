@@ -12,13 +12,13 @@ subroutine get_default
 ! set parameter for the run
 !------------------------------------------------------------
 
-    k        =  1.5d8              ! normal stiffness
-    ks       =  1.5d8              ! shear stiffness
+    k        =  1.5d7              ! normal stiffness
+    ks       =  1.5d7              ! shear stiffness
     dt       =  5d-2               ! length of time step
     t        =  250 * dt           ! length of time
     st       =  1                  ! divide tot num of timestep to st
-    eta      =  1.5d6              ! Normal damping coefficient
-    eta2     =  1.5d6              ! shear damping coefficient
+    eta      =  1.5d1              ! Normal damping coefficient
+    eta2     =  1.5d1              ! shear damping coefficient
 
     pi       =  4d0 * datan(1d0)   ! pi
 
