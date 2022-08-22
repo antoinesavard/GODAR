@@ -32,7 +32,7 @@ subroutine ini_get
 
     u     =  0
     v     =  0
-    ome   =  0
+    omega =  0
 
 ! initial particle rotation
     teta  =  0 
@@ -56,3 +56,22 @@ subroutine ini_get
     ly      =  0d0
 
 end subroutine ini_get
+
+subroutine forcing (tstep)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: tstep
+
+    if (tstep == 1) then
+
+        u(1) = 5d0
+        u(2) = -5d0
+
+    end if
+
+end subroutine forcing

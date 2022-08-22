@@ -14,6 +14,10 @@
     double precision :: rhoair, rhoice, rhowater
     double precision :: Cpair, Cpwater
 
+    double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff
+
+    double precision :: pi
+
 
     common/const/      &
             k,         & ! normal stiffness
@@ -24,9 +28,19 @@
             ks,        & ! shear stiffness
             eta2         ! shear damping coefficient
 
-    common/const/      &
-            rhoair,    &
-            rhoice,    &
-            rhowater,  &
-            Cpair,     &
-            Cpwater 
+    common/const/         &
+            rhoair   ,    &
+            rhoice   ,    &
+            rhowater ,    &
+            Cpair    ,    &
+            Cpwater
+
+    common/const/                &
+            e_modul         ,    &
+            poiss_ratio     ,    &
+            ec              ,    &
+            gc              ,    &
+            friction_coeff  
+
+    common/const/         &
+            pi

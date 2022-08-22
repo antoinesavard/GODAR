@@ -1,4 +1,4 @@
-    integer  n
+    integer :: n
 
     double precision :: nx, ny
 

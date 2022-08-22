@@ -59,7 +59,7 @@ subroutine stepper (tstep)
                     ! Tangential components of the relative velocities:
                     sdot = ( ( u(i) - u(j) ) * sina   +       &
                              ( v(i) - v(j) ) * cosa ) -       &
-                           ( ome(i) * r(i) + ome(j) * r(j) )
+                           ( omega(i) * r(i) + omega(j) * r(j) )
 
                     ! Normal component of the damping force at contacts, d(j,i), force induced from
                     ! particle B to particle A at their contact point
@@ -155,7 +155,7 @@ subroutine euler
 
         x(i) = x(i) + u(i) * dt
         y(i) = y(i) + v(i) * dt
-        teta(i) = teta(i) + ome(i) * dt
+        teta(i) = teta(i) + omega(i) * dt
 
         call bc_verify (i)
 

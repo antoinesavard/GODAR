@@ -64,7 +64,8 @@ subroutine contact_forces
 
 end subroutine contact_forces
 
-subroutine viscous_terms
+
+subroutine contact
 
     implicit none
 
@@ -72,22 +73,54 @@ subroutine viscous_terms
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i
+    integer :: i, j
 
-    ! Total springs-dashpots forces at each contact point
-    do i = 1, N
+    double precision :: delta(n,n), mc(n,n), rc(n,n), hmin(i,j)
+    double precision :: fit
 
-        tfx(i)  =  wafx(i) + dafx(i) + f(i,1)
-        tfy(i)  =  wafy(i) + dafy(i) + f(i,2)
-        u(i)    =  u(i) + ( tfx(i) / mass(i) ) * dt
-        v(i)    =  v(i) + ( tfy(i) / mass(i) ) * dt
-        ome(i)  =  ome(i) + dt * m(i) / ( 4d-1 * mass(i) * r(i) ** 2 ) 
+    do i = 1, n
+        do j = 1, n
 
+            delta(i,j)  =  r(i) + r(j) - sqrt(    & ! normal overlap
+                           ( x(i) - x(j) ) ** 2 + & ! (displacement)
+                           ( y(i) - y(j) ) ** 2 )
+        
+            mc(i,j)     =  mass(i) * mass(j) / ( mass(i) + mass(j) )
+
+            rc(i,j)     =  r(i) * r(j) / ( r(i) + r(j) )
+
+            hmin(i,j)   =  min(h(i), h(j))
+
+            if ( j /= i ) then
+                if ( delta(i,j) >= 0 ) then
+
+                    kn     = pi * ec * hmin  *             &
+                             fit( delta(i,j) * rc(i,j) /   &
+                             ( 2 * hmin ** 2 ) )
+
+                    kt     = 6 * gc / ec * kn
+
+                    gamn   = - beta * sqrt( 5 * kn * mc(i,j) )
+
+                    gamt   = - 2 * beta *                  & 
+                             sqrt( 5 * gc / ec * kn * mc(i,j) )
+
+                    ! compute the normal force
+
+                    fcn(i) = kn * delta(i,j) - gamn * ()
+
+                end if
+            end if
+
+        end do
     end do
 
-end subroutine
+    call coulomb
 
-subroutine forcing (tstep)
+    
+end subroutine contact
+
+subroutine coulomb
 
     implicit none
 
@@ -95,13 +128,28 @@ subroutine forcing (tstep)
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer, intent(in) :: tstep
+    if l >= d
+    
+end subroutine coulomb
 
-    if (tstep == 1) then
+double precision function fit (x)
 
-        u(1) = 5d0
-        u(2) = -5d0
+    implicit none
 
-    end if
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
 
-end subroutine forcing
+    double precision, intent(in) :: x
+
+    double precision :: p1, p2, p3, q1, q2
+
+    p1 = 9117d-4
+    p2 = 2722d-4
+    p3 = 3324d-6
+    q1 = 1524d-3
+    q2 = 3159d-5
+
+    return ( p1 * x ** 2 + p2 * x + p3 ) / ( x ** 2 + q1 * x + q2 )
+
+end function fit

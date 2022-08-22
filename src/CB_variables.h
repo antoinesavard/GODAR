@@ -1,5 +1,5 @@
 !=======================================================================
-!   Common block Variablesn dynamic variables
+!   Common block dynamic variables
 !=======================================================================
 
     double precision ::           &   
@@ -7,9 +7,11 @@
                 y       (n),      & ! y positions
                 r       (n),      & ! radii
                 h       (n),      & ! thicknesses
+                mass    (n),      & ! mass
                 u       (n),      & ! u velocity in x axis
                 v       (n),      & ! v velocity in y axis
                 f       (n,2),    & ! perp/para forces collision frame
+                fcn     (n),      & ! perp forces contact
                 d       (n,n),    & ! perp damping force
                 s       (n,n),    & ! storage array for increments force
                 tfx     (n),      & ! total force in x
@@ -19,7 +21,7 @@
                 fsx     (n,n),    & !
                 fsy     (n,n),    & !
                 teta    (n),      & !
-                ome     (n),      & !
+                omega   (n),      & !
                 m       (n),      & !
                 fw      (n,n),    & !
                 fwx     (n,n),    & !
@@ -35,17 +37,18 @@
                 wafy    (n),      & !
                 l       (n,n),    & !
                 lx      (n,n),    & !
-                ly      (n,n),    & !
-                mass    (n)         ! mass
+                ly      (n,n)       !
 
     common/variables/        &
                 x       ,    &
                 y       ,    &
                 r       ,    &
                 h       ,    &
+                mass    ,    &
                 u       ,    &
                 v       ,    &
                 f       ,    &
+                fcn     ,    &
                 d       ,    &
                 s       ,    &
                 tfx     ,    &
@@ -55,7 +58,7 @@
                 fsx     ,    &
                 fsy     ,    &
                 teta    ,    &
-                ome     ,    &
+                omega   ,    &
                 m       ,    &
                 fw      ,    &
                 fwx     ,    &
@@ -71,5 +74,4 @@
                 wafy    ,    &
                 l       ,    &
                 lx      ,    &
-                ly      ,    &
-                mass            
+                ly                  
