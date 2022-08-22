@@ -14,7 +14,7 @@
     double precision :: rhoair, rhoice, rhowater
     double precision :: Cpair, Cpwater
 
-    double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff
+    double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff, rest_coeff, beta
 
     double precision :: pi
 
@@ -40,7 +40,9 @@
             poiss_ratio     ,    &
             ec              ,    &
             gc              ,    &
-            friction_coeff  
+            friction_coeff  ,    &
+            rest_coeff      ,    &
+            beta
 
     common/const/         &
             pi

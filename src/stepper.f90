@@ -140,6 +140,77 @@ subroutine stepper (tstep)
 
 end subroutine stepper
 
+subroutine stepper2 (tstep)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer :: i, j
+    integer, intent(in) :: tstep
+    double precision :: cosa, sina, veln, velt
+
+    tfx = 0d0
+    tfy = 0d0
+    fcn = 0d0
+    fct = 0d0
+
+    do i = 1, n
+        do j = 1, n
+            
+            if ( j /= i ) then
+                if (abs(                                 &
+                        sqrt(                            &
+                            ( x(i) - x(j) ) ** 2 +       &
+                            ( y(i) - y(j) ) ** 2         &
+                            )                            &
+                        ) < r(i) + r(j)                  &
+                    ) then
+
+                    ! Components of unit vector ei=(cosa,sina) are:
+                    cosa = ( x(i) - x(j) ) /                  &
+                           ( sqrt(                            &
+                                 ( x(i) - x(j) ) ** 2 +       &
+                                 ( y(i) - y(j) ) ** 2         &
+                                 )                            &
+                           )
+                    
+                    sina = ( y(i) - y(j) ) /                  &
+                           ( sqrt(                            &
+                                 ( x(i) - x(j) ) ** 2 +       &
+                                 ( y(i) - y(j) ) ** 2         &
+                                 )                            &
+                           )
+
+                    ! Normal components of the relative velocities:
+                    veln = ( u(i) - u(j) ) * cosa +     &
+                           ( v(i) - v(j) ) * sina
+
+                    ! Tangential components of the relative velocities:
+                    velt = ( ( u(i) - u(j) ) * (- sina) +       &
+                             ( v(i) - v(j) ) * cosa )
+
+                    call contact_forces2 (i, j, veln, velt)
+
+                    tfx(i) = tfx(i) - fcn(i,j) * sina
+                    tfy(i) = tfy(i) + fcn(i,j) * cosa
+
+                end if
+            endif
+
+        end do
+    end do
+
+    call velocity
+
+    call forcing (tstep)
+
+    call euler
+
+end subroutine stepper2
+
 subroutine euler
 
     implicit none
@@ -151,7 +222,7 @@ subroutine euler
     integer :: i
 
     ! Update new position/angle of particles
-    do i = 1, N
+    do i = 1, n
 
         x(i) = x(i) + u(i) * dt
         y(i) = y(i) + v(i) * dt

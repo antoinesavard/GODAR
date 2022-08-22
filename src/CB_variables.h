@@ -11,7 +11,8 @@
                 u       (n),      & ! u velocity in x axis
                 v       (n),      & ! v velocity in y axis
                 f       (n,2),    & ! perp/para forces collision frame
-                fcn     (n),      & ! perp forces contact
+                fcn     (n,n),    & ! perp forces contact
+                fct     (n,n),    & ! tangent forces contact
                 d       (n,n),    & ! perp damping force
                 s       (n,n),    & ! storage array for increments force
                 tfx     (n),      & ! total force in x
@@ -49,6 +50,7 @@
                 v       ,    &
                 f       ,    &
                 fcn     ,    &
+                fct     ,    &
                 d       ,    &
                 s       ,    &
                 tfx     ,    &

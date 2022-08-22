@@ -69,8 +69,8 @@ subroutine forcing (tstep)
 
     if (tstep == 1) then
 
-        u(1) = 5d0
-        u(2) = -5d0
+        u(3000) = 5d0
+        u(4000) = -5d0
 
     end if
 

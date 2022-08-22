@@ -23,7 +23,7 @@ program ice
     
     do tstep = 1, int(t / dt) + 1
 
-        call stepper (tstep)
+        call stepper2 (tstep)
         call sea_ice_post (tstep, expno)
 
     end do

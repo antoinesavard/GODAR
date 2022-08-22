@@ -65,7 +65,7 @@ subroutine contact_forces
 end subroutine contact_forces
 
 
-subroutine contact
+subroutine contact_forces2 (i, j, veln, velt)
 
     implicit none
 
@@ -73,54 +73,48 @@ subroutine contact
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, j
+    integer, intent(in) :: i, j
 
-    double precision :: delta(n,n), mc(n,n), rc(n,n), hmin(i,j)
+    double precision, intent(in) :: veln, velt
+    double precision :: deltan(n,n), deltat(n,n), mc(n,n), rc(n,n), hmin(n,n)
     double precision :: fit
+    double precision :: kn, kt, gamn, gamt
 
-    do i = 1, n
-        do j = 1, n
+    deltan(i,j)  =  r(i) + r(j) - sqrt(     & ! normal overlap
+                    ( x(i) - x(j) ) ** 2 +  & ! (displacement)
+                    ( y(i) - y(j) ) ** 2 )
 
-            delta(i,j)  =  r(i) + r(j) - sqrt(    & ! normal overlap
-                           ( x(i) - x(j) ) ** 2 + & ! (displacement)
-                           ( y(i) - y(j) ) ** 2 )
-        
-            mc(i,j)     =  mass(i) * mass(j) / ( mass(i) + mass(j) )
+    deltat(i,j)  =  velt * dt
 
-            rc(i,j)     =  r(i) * r(j) / ( r(i) + r(j) )
+    mc(i,j)      =  mass(i) * mass(j) / ( mass(i) + mass(j) )
 
-            hmin(i,j)   =  min(h(i), h(j))
+    rc(i,j)      =  r(i) * r(j) / ( r(i) + r(j) )
 
-            if ( j /= i ) then
-                if ( delta(i,j) >= 0 ) then
+    hmin(i,j)    =  min(h(i), h(j))
 
-                    kn     = pi * ec * hmin  *             &
-                             fit( delta(i,j) * rc(i,j) /   &
-                             ( 2 * hmin ** 2 ) )
+    kn     = pi * ec * hmin(i,j)  *             &
+                fit( deltan(i,j) * rc(i,j) /     &
+                ( 2 * hmin(i,j) ** 2 ) )
 
-                    kt     = 6 * gc / ec * kn
+    kt     = 6 * gc / ec * kn
 
-                    gamn   = - beta * sqrt( 5 * kn * mc(i,j) )
+    gamn   = - beta * sqrt( 5 * kn * mc(i,j) )
 
-                    gamt   = - 2 * beta *                  & 
-                             sqrt( 5 * gc / ec * kn * mc(i,j) )
+    gamt   = - 2 * beta * sqrt( 5 * gc / ec * kn * mc(i,j) )
 
-                    ! compute the normal force
+    ! compute the normal/tangent force
 
-                    fcn(i) = kn * delta(i,j) - gamn * ()
+    fcn(i,j) = kn * deltan(i,j) - gamn * veln
 
-                end if
-            end if
+    fct(i,j) = kt * deltat(i,j) - gamt * velt
 
-        end do
-    end do
+    call coulomb (i,j)
 
-    call coulomb
+    call moment (i,j)
 
-    
-end subroutine contact
+end subroutine contact_forces2
 
-subroutine coulomb
+subroutine coulomb (i, j)
 
     implicit none
 
@@ -128,11 +122,17 @@ subroutine coulomb
     include "CB_variables.h"
     include "CB_const.h"
 
-    if l >= d
+    integer, intent(in) :: i, j
+
+    if ( fct(i,j) > friction_coeff * fcn(i,j) ) then
+
+        fct(i,j) = friction_coeff * fcn(i,j)
+
+    end if
     
 end subroutine coulomb
 
-double precision function fit (x)
+subroutine moment (i, j)
 
     implicit none
 
@@ -140,8 +140,21 @@ double precision function fit (x)
     include "CB_variables.h"
     include "CB_const.h"
 
-    double precision, intent(in) :: x
+    integer, intent(in) :: i, j
 
+    m(i) = r(i) * fct(i,j)
+    
+end subroutine moment
+
+double precision function fit (xi)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    double precision, intent(in)  :: xi
     double precision :: p1, p2, p3, q1, q2
 
     p1 = 9117d-4
@@ -150,6 +163,6 @@ double precision function fit (x)
     q1 = 1524d-3
     q2 = 3159d-5
 
-    return ( p1 * x ** 2 + p2 * x + p3 ) / ( x ** 2 + q1 * x + q2 )
+    fit = ( p1 * xi ** 2 + p2 * xi + p3 ) / ( xi ** 2 + q1 * xi + q2 )
 
 end function fit
