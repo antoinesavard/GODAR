@@ -7,13 +7,19 @@ subroutine ini_get
     include "CB_const.h"
 
     integer :: i
+    character Xfile*32, Yfile*32, Rfile*32, Hfile*32
 
     ! position of particles: need a one column prepared text file
     
-    open(102, file = 'src/X.dat')
-    open(103, file = 'src/Y.dat')
-    open(104, file = 'src/R.dat')
-    open(105, file = 'src/H.dat')
+    Xfile = 'src/X.dat'
+    Yfile = 'src/Y.dat'
+    Rfile = 'src/R.dat'
+    Hfile = 'src/H.dat'
+
+    open(102, file = Xfile, status='old')
+    open(103, file = Yfile, status='old')
+    open(104, file = Rfile, status='old')
+    open(105, file = Hfile, status='old')
 
     do i = 1, n
 
@@ -28,50 +34,19 @@ subroutine ini_get
         close(i)
     end do
 
-! initial velocity
+    ! initial velocity
 
     u     =  0
     v     =  0
     omega =  0
-
-! initial particle rotation
+    
+    ! initial particle angle
     teta  =  0 
 
-!Allocate following array with zero value before main loop calculation
-!(loop of contact force detection)
-    fw      =  0d0
-    f(:,2)  =  0d0
-    f(:,1)  =  0d0
-    s       =  0d0
-    fsx     =  0d0
-    fsy     =  0d0
-    w       =  0d0
-    fwx     =  0d0
-    fwy     =  0d0
-    d       =  0d0
-    dx      =  0d0
-    dy      =  0d0
-    l       =  0d0
-    lx      =  0d0
-    ly      =  0d0
+    ! initialize arrays
+    tfx     =  0d0
+    tfy     =  0d0
+    fcn     =  0d0
+    fct     =  0d0
 
 end subroutine ini_get
-
-subroutine forcing (tstep)
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-
-    integer, intent(in) :: tstep
-
-    if (tstep == 1) then
-
-        u(3000) = 5d0
-        u(4000) = -5d0
-
-    end if
-
-end subroutine forcing

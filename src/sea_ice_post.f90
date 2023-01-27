@@ -10,16 +10,16 @@ subroutine sea_ice_post (tstep, expno)
     integer, intent(in) :: tstep, expno
     character(len=20) :: filename
 
-    write (filename,'("output/x",i4.4,".", i2.2)') tstep, expno
+    write (filename,'("output/x",i9.9,".", i2.2)') tstep, expno
     open (10, file = filename, status = 'unknown')
 
-    write (filename,'("output/y",i4.4,".", i2.2)') tstep, expno
+    write (filename,'("output/y",i9.9,".", i2.2)') tstep, expno
     open (11, file = filename, status = 'unknown')
 
-    write (filename,'("output/r",i4.4,".", i2.2)') tstep, expno
+    write (filename,'("output/r",i9.9,".", i2.2)') tstep, expno
     open (12, file = filename, status = 'unknown')
 
-    write (filename,'("output/h",i4.4,".", i2.2)') tstep, expno
+    write (filename,'("output/h",i9.9,".", i2.2)') tstep, expno
     open (13, file = filename, status = 'unknown')
     
     do i = 1, n

@@ -1,9 +1,9 @@
-    integer :: n
+integer :: n
 
-    double precision :: nx, ny
+double precision :: nx, ny
 
-    parameter(                        &
-                nx   = 100d0,         & ! x - size of the domain 
-                ny   = 100d0,         & ! y - size of the domain 
-                n    = 5000           & ! number of disks
-            )
+parameter(                      &
+            nx   = 1d4,         & ! x - size of the domain 
+            ny   = 1d4,         & ! y - size of the domain 
+            n    = 5d1          & ! number of disks
+        )

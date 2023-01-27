@@ -17,7 +17,11 @@ def list_files(directory: str, datatype: str, expno: str) -> list:
     """
     from os import path, listdir
 
-    files = (f for f in listdir(directory) if f.startswith(datatype) and f.endswith(expno))
+    files = (
+        f
+        for f in listdir(directory)
+        if f.startswith(datatype) and f.endswith(expno)
+    )
 
     return [f for f in files]
 

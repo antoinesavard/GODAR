@@ -3,9 +3,16 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from files import *
 import os
+import sys
 
 output_dir = "output/"
-expno = "01"
+try:
+    expno = str(sys.argv[1])
+except:
+    print("No argument provided by sys.")
+    expno = input("expno = ")
+sf = 1e3
+compression = 1
 
 filesx = list_files(output_dir, "x", expno)
 filesy = list_files(output_dir, "y", expno)
@@ -19,6 +26,11 @@ xdata, ydata, radii, mass = (
     multiload(output_dir, filesh),
 )
 
+xdata = xdata[::compression]
+ydata = ydata[::compression]
+radii = radii[::compression]
+mass = mass[::compression]
+
 os.chdir("plots/")
 
 fig = plt.figure(dpi=300, figsize=(4, 4))
@@ -26,8 +38,8 @@ ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
 
 time = ax.text(0.02, 0.95, "", transform=ax.transAxes)
 
-ax.set_xlim(0, 100)
-ax.set_ylim(0, 100)
+ax.set_xlim(0, 10 * sf)
+ax.set_ylim(0, 10 * sf)
 
 disks = []
 
@@ -42,6 +54,8 @@ def init():
 
 
 def animate(i):
+    if i % 50 == 0:
+        print("Frame: {}".format(i))
     for j, disk in enumerate(disks):
         p = np.array([xdata[i, j], ydata[i, j]])
         disk.center = p
@@ -56,7 +70,7 @@ anim = FuncAnimation(
     init_func=init,
     interval=10,
     repeat=False,
-    blit=True,
+    blit=False,
 )
 
-save_or_show_animation(anim, 1)
+save_or_show_animation(anim, 1, "collision{}.mp4".format(expno))

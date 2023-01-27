@@ -1,71 +1,4 @@
-subroutine contact_forces
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-
-    integer :: i, j
-
-    ! set values to zero at each timestep
-    wafx  =  0d0
-    wafy  =  0d0
-    dafx  =  0d0
-    dafy  =  0d0
-
-    do i = 1, n
-        do j = 1, n
-
-            ! sum of global components of normal incremental force at contact point of each particle
-            fsx(j,i)  =  fsx(j,i) + sx(j,i)
-            fsy(j,i)  =  fsy(j,i) + sy(j,i)
-
-            ! resultant shear spring force (damping included)
-            fw(j,i)   =  fw(j,i) - w(j,i) - l(j,i)
-
-            ! sum of global components of shear incremental force at contact point of each particle
-            fwx(j,i)  =  fwx(j,i) + wx(j,i)
-            fwy(j,i)  =  fwy(j,i) + wy(j,i)
-
-            ! sum of global components of normal damping forces at contact point of each particle
-            dafx(i)   =  dafx(i) + dx(j,i)
-            dafy(i)   =  dafy(i) + dy(j,i)
-
-            ! sum of global components of shear damping forces at contact point of each particle
-            wafx(i)   =  wafx(i) + lx(j,i)
-            wafy(i)   =  wafy(i) + ly(j,i)
-
-        end do
-    end do
-
-    ! resultant force on each particle
-    f = 0
-
-    do i = 1, N
-        do j = 1, N
-
-            f(i,1) = f(i,1) + fsx(j,i) + fwx(j,i)
-            f(i,2) = f(i,2) + fsy(j,i) + fwy(j,i)
-
-        end do
-    end do
-
-    ! Resultant moment acting on each particle
-    m = 0
-
-    do i = 1, N
-        do j = 1, N
-
-            m(i) = m(i) + fw(j,i) * r(i)
-            
-        end do
-    end do
-
-end subroutine contact_forces
-
-
-subroutine contact_forces2 (i, j, veln, velt)
+subroutine contact_forces (i, j)
 
     implicit none
 
@@ -75,16 +8,11 @@ subroutine contact_forces2 (i, j, veln, velt)
 
     integer, intent(in) :: i, j
 
-    double precision, intent(in) :: veln, velt
-    double precision :: deltan(n,n), deltat(n,n), mc(n,n), rc(n,n), hmin(n,n)
+    double precision :: deltat(n,n), mc(n,n), rc(n,n), hmin(n,n)
     double precision :: fit
     double precision :: kn, kt, gamn, gamt
 
-    deltan(i,j)  =  r(i) + r(j) - sqrt(     & ! normal overlap
-                    ( x(i) - x(j) ) ** 2 +  & ! (displacement)
-                    ( y(i) - y(j) ) ** 2 )
-
-    deltat(i,j)  =  velt * dt
+    deltat(i,j)  =  velt(i,j) * dt
 
     mc(i,j)      =  mass(i) * mass(j) / ( mass(i) + mass(j) )
 
@@ -93,7 +21,7 @@ subroutine contact_forces2 (i, j, veln, velt)
     hmin(i,j)    =  min(h(i), h(j))
 
     kn     = pi * ec * hmin(i,j)  *             &
-                fit( deltan(i,j) * rc(i,j) /     &
+                fit( deltan(i,j) * rc(i,j) /    &
                 ( 2 * hmin(i,j) ** 2 ) )
 
     kt     = 6 * gc / ec * kn
@@ -104,15 +32,15 @@ subroutine contact_forces2 (i, j, veln, velt)
 
     ! compute the normal/tangent force
 
-    fcn(i,j) = kn * deltan(i,j) - gamn * veln
+    fcn(i,j) = kn * deltan(i,j) - gamn * veln(i,j)
 
-    fct(i,j) = kt * deltat(i,j) - gamt * velt
+    fct(i,j) = kt * deltat(i,j) - gamt * velt(i,j)
 
     call coulomb (i,j)
 
     call moment (i,j)
 
-end subroutine contact_forces2
+end subroutine contact_forces
 
 subroutine coulomb (i, j)
 
@@ -126,7 +54,7 @@ subroutine coulomb (i, j)
 
     if ( fct(i,j) > friction_coeff * fcn(i,j) ) then
 
-        fct(i,j) = friction_coeff * fcn(i,j)
+        fct(i,j) = 0
 
     end if
     
@@ -142,7 +70,7 @@ subroutine moment (i, j)
 
     integer, intent(in) :: i, j
 
-    m(i) = r(i) * fct(i,j)
+    m(i) = r(i) * fct(i,j) + mw(i)
     
 end subroutine moment
 

@@ -1,79 +1,72 @@
 !=======================================================================
-!   Common block dynamic variables
+!                   Common block dynamic variables
 !=======================================================================
 
-    double precision ::           &   
-                x       (n),      & ! x positions
-                y       (n),      & ! y positions
-                r       (n),      & ! radii
-                h       (n),      & ! thicknesses
-                mass    (n),      & ! mass
-                u       (n),      & ! u velocity in x axis
-                v       (n),      & ! v velocity in y axis
-                f       (n,2),    & ! perp/para forces collision frame
-                fcn     (n,n),    & ! perp forces contact
-                fct     (n,n),    & ! tangent forces contact
-                d       (n,n),    & ! perp damping force
-                s       (n,n),    & ! storage array for increments force
-                tfx     (n),      & ! total force in x
-                tfy     (n),      & ! total force in y
-                sx      (n,n),    & !
-                sy      (n,n),    & !
-                fsx     (n,n),    & !
-                fsy     (n,n),    & !
-                teta    (n),      & !
-                omega   (n),      & !
-                m       (n),      & !
-                fw      (n,n),    & !
-                fwx     (n,n),    & !
-                fwy     (n,n),    & !
-                w       (n,n),    & !
-                wx      (n,n),    & !
-                wy      (n,n),    & !
-                dx      (n,n),    & !
-                dy      (n,n),    & !
-                dafx    (n),      & !
-                dafy    (n),      & !
-                wafx    (n),      & !
-                wafy    (n),      & !
-                l       (n,n),    & !
-                lx      (n,n),    & !
-                ly      (n,n)       !
+    double precision ::           & ! particle variables
+                x       (n),      & 
+                y       (n),      &
+                r       (n),      &
+                h       (n),      &
+				hfa     (n),      &
+				hfw     (n),      &
+                mass    (n),      &
+                u       (n),      &
+                v       (n),      &
+				teta    (n),      &
+                omega   (n)
 
-    common/variables/        &
-                x       ,    &
-                y       ,    &
-                r       ,    &
-                h       ,    &
-                mass    ,    &
-                u       ,    &
-                v       ,    &
-                f       ,    &
-                fcn     ,    &
-                fct     ,    &
-                d       ,    &
-                s       ,    &
-                tfx     ,    &
-                tfy     ,    &
-                sx      ,    &
-                sy      ,    &
-                fsx     ,    &
-                fsy     ,    &
-                teta    ,    &
-                omega   ,    &
-                m       ,    &
-                fw      ,    &
-                fwx     ,    &
-                fwy     ,    &
-                w       ,    &
-                wx      ,    &
-                wy      ,    &
-                dx      ,    &
-                dy      ,    &
-                dafx    ,    &
-                dafy    ,    &
-                wafx    ,    &
-                wafy    ,    &
-                l       ,    &
-                lx      ,    &
-                ly                  
+	double precision ::           & ! force variables
+                fcn     (n,n),    &
+                fct     (n,n),    &
+                tfx     (n),      &
+                tfy     (n),      &
+		        m       (n)
+
+	double precision ::           & ! forcing variables
+				fax     (n),      &
+                fay     (n),      &
+                fwx     (n),      &
+                fwy     (n),      &
+		        mw      (n)
+
+	double precision ::           & ! decomposition variables
+				cosa    (n,n),    &
+				sina    (n,n),    &
+				veln    (n,n),    &
+				velt    (n,n),    &
+				deltan  (n,n)
+		
+    common/variables/        & ! particle variables
+                x       ,    & ! x positions                         [m]
+                y       ,    & ! y positions                         [m]
+                r       ,    & ! radii                               [m]
+                h       ,    & ! thicknesses                         [m]
+				hfa     ,    & ! freeboard                           [m]
+				hfw     ,    & ! drag                                [m]
+                mass    ,    & ! mass                               [kg]
+                u       ,    & ! u velocity in x axis              [m/s]
+                v       ,    & ! v velocity in y axis              [m/s]
+                teta    ,    & ! angular position                  [rad]
+                omega          ! angular velocity                [rad/s]
+				
+				
+	common/variables/        & ! force variables
+				fcn     ,    & ! perp forces contact                 [N]
+                fct     ,    & ! tangent forces contact              [N]
+                tfx     ,    & ! total force in x                    [N]
+                tfy     ,    & ! total force in y                    [N]
+				m       	   ! moment                            [N*m]
+		        
+	common/variables/        & ! forcing variables			
+				fax     ,    & ! wind force in x                     [N]
+		        fay     ,    & ! wind force in y                     [N]
+		        fwx     ,    & ! water force in x                    [N]
+		        fwy     ,    & ! water force in y                    [N]
+		        mw             ! water drag moment                 [N*m]
+
+	common/variables/        & ! decomposition variables
+				cosa    ,    & ! cos of angle between particles
+				sina    ,    & ! sin of angle between particles
+				veln    ,    & ! normal velocity                   [m/s]
+				velt    ,    & ! tangential velocity               [m/s]
+				deltan         ! normal distance between borders     [m]

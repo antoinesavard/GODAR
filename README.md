@@ -4,9 +4,9 @@ DEM for sea ice modeling
 
 Simple DEM model. To compile, run scons with the appropriate parameters.
 
-scons -j [n]   ! compile the code on [n] cores
-scons -c       ! clear the build
-./zoupa        ! run the executable
+scons-3 -j [n]   ! compile the code on [n] cores
+scons-3 -c       ! clear the build
+./zoupa          ! run the executable
 
 The code executes automatically a python script to output a video file of the collisions. This is saved in collision.mp4 file. To suppress, just comment the line 
 

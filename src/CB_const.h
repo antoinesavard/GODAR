@@ -1,48 +1,42 @@
 !=======================================================================
-!     Common block const: program constants
+!                Common block const: program constants
 !=======================================================================
 
-    double precision ::  &
-            k,           &
-            dt,          &
-            t,           &
-            eta,         &
-            st,          &
-            ks,          &
-            eta2
+	double precision :: t, dt, nt, comp
 
-    double precision :: rhoair, rhoice, rhowater
-    double precision :: Cpair, Cpwater
+	double precision :: rhoair, rhoice, rhowater
+	double precision :: Cdair, Cdwater, Csair, Cswater
+	double precision :: z0w
 
-    double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff, rest_coeff, beta
+	double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff, rest_coeff, beta
 
-    double precision :: pi
+	double precision :: pi
 
 
-    common/const/      &
-            k,         & ! normal stiffness
-            dt,        & ! length of time step
-            t,         & ! length of time
-            eta,       & ! Normal damping coefficient
-            st,        & ! divide tot num of timestep to st
-            ks,        & ! shear stiffness
-            eta2         ! shear damping coefficient
+	common/const/                &
+			t               ,    & ! length of time                  [s]
+			dt              ,    & ! time step                       [s]
+			nt              ,    & ! total number of time step
+			comp                   ! compression of the output
 
-    common/const/         &
-            rhoair   ,    &
-            rhoice   ,    &
-            rhowater ,    &
-            Cpair    ,    &
-            Cpwater
+	common/const/                &
+			rhoair          ,    & ! air density
+			rhoice          ,    & ! ice density
+			rhowater        ,    & ! water density
+			Cdair           ,    & ! air skin drag coeff
+			Cdwater         ,    & ! water skin drag coeff
+			Csair           ,    & ! air body drag coeff
+			Cswater         ,    & ! water body drag coeff
+			z0w                    ! viscosity limit over water
 
-    common/const/                &
-            e_modul         ,    &
-            poiss_ratio     ,    &
-            ec              ,    &
-            gc              ,    &
-            friction_coeff  ,    &
-            rest_coeff      ,    &
-            beta
+	common/const/                &
+			e_modul         ,    &
+			poiss_ratio     ,    &
+			ec              ,    &
+			gc              ,    &
+			friction_coeff  ,    &
+			rest_coeff      ,    &
+			beta
 
-    common/const/         &
-            pi
+	common/const/                &
+			pi

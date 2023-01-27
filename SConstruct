@@ -40,11 +40,16 @@ FC = F90 = "gfortran"
 
 env = Environment(
     LIBPATH=[libs],
-    FORTRANMODDIR=[include,],
+    FORTRANMODDIR=[
+        include,
+    ],
     FORTRANMODDIRPREFIX="-J",
-    F90PATH=[include,],
+    F90PATH=[
+        include,
+    ],
     F90FLAGS=[
         "-Wall",
+        "-Wno-tabs",
         "-fPIC",
         "-fbackslash",
         "-O3",
@@ -84,4 +89,3 @@ datetime = SConscript("datetime/SConscript", variant_dir="build/datetime")
 
 # The Sea Ice Model library and executable
 sim = SConscript("src/SConscript", variant_dir="build/sim")
-
