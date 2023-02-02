@@ -2,7 +2,7 @@
 DEM for sea ice modeling
 
 
-Simple DEM model. To compile, run scons with the appropriate parameters.
+Simple DEM model. To compile, run scons-3 with the appropriate parameters.
 
 scons-3 -j [n]   ! compile the code on [n] cores
 scons-3 -c       ! clear the build
