@@ -12,7 +12,7 @@
                 mass    (n),      &
                 u       (n),      &
                 v       (n),      &
-				teta    (n),      &
+				theta   (n),      &
                 omega   (n)
 
 	double precision ::           & ! force variables
@@ -27,7 +27,8 @@
                 fay     (n),      &
                 fwx     (n),      &
                 fwy     (n),      &
-		        mw      (n)
+		        mw      (n),      &
+				ma      (n)
 
 	double precision ::           & ! decomposition variables
 				cosa    (n,n),    &
@@ -46,7 +47,7 @@
                 mass    ,    & ! mass                               [kg]
                 u       ,    & ! u velocity in x axis              [m/s]
                 v       ,    & ! v velocity in y axis              [m/s]
-                teta    ,    & ! angular position                  [rad]
+                theta   ,    & ! angular position                  [rad]
                 omega          ! angular velocity                [rad/s]
 				
 				
@@ -62,7 +63,8 @@
 		        fay     ,    & ! wind force in y                     [N]
 		        fwx     ,    & ! water force in x                    [N]
 		        fwy     ,    & ! water force in y                    [N]
-		        mw             ! water drag moment                 [N*m]
+		        mw      ,    & ! water drag moment                 [N*m]
+				ma             ! air drag moment                   [N*m]
 
 	common/variables/        & ! decomposition variables
 				cosa    ,    & ! cos of angle between particles

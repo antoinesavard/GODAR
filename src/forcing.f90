@@ -15,10 +15,10 @@ subroutine forcing (i, j)
 	double precision :: log_wind_profile, H_shelter
 	double precision :: hsfa, hsfw
     
-    uw = 0
-    vw = 0
-    ua = 20
-    va = 0
+    uw = 0d0
+    vw = 0d0
+    ua = 0d0
+    va = 10d0
 
 	! sheltering height form air and water
 	hsfa = H_shelter(hfa(i), -deltan(i,j), cosa(i,j), sina(i,j), ua, va)
@@ -26,16 +26,20 @@ subroutine forcing (i, j)
 						uw - u(i), vw - v(i))
     
 	! wind drag forcing
-    fdax(i) = rhoair * Cdair * (hfa(i) - hsfa) * r(i) * ua * &
-				ABS(ua) * log_wind_profile(h(i), max(z0w, hsfa))
+    fdax(i) = rhoair * Cdair * (hfa(i) - hsfa) * r(i) * (ua - u(i)) * &
+				ABS(ua - u(i)) * log_wind_profile(hfa(i),             &
+				max(z0w, hsfa))
 
-	fday(i) = rhoair * Cdair * (hfa(i) - hsfa) * r(i) * va * &
-				ABS(va) * log_wind_profile(hfa(i), max(z0w, hsfa))
+	fday(i) = rhoair * Cdair * (hfa(i) - hsfa) * r(i) * (va - v(i)) * &
+				ABS(va - v(i)) * log_wind_profile(hfa(i),             &
+				max(z0w, hsfa))
 
 	! wind skin forcing
-	fsax(i) = rhoair * pi * r(i) ** 2 * Csair * ua * ABS(ua)
+	fsax(i) = 0.5 * rhoair * pi * r(i) ** 2 * Csair * &
+				(ua - u(i)) * ABS(ua - u(i))
 
-	fsay(i) = rhoair * pi * r(i) ** 2 * Csair * va * ABS(va)
+	fsay(i) = 0.5 * rhoair * pi * r(i) ** 2 * Csair * &
+				(va - v(i)) * ABS(va - v(i))
 
 	! water drag forcing
 	fdwx(i) = rhowater * Cdwater * (hfw(i) - hsfw) * r(i) * (uw - &
@@ -60,10 +64,10 @@ subroutine forcing (i, j)
 	fwx(i) = fdwx(i) + fswx(i)
 	fwy(i) = fdwy(i) + fswy(i)
 
-	! il me reste ca a checker ici
-    mw  = -pi / 2 * r ** 4 * rhowater * (Cswater + 2 * pi * h / r * &
-         	rhoice / rhowater * Cdwater) * omega
-    
+	! torque induced drag due to rotation of floes
+	ma(i) = -pi / 5 * r(i) ** 5 * rhoair * Csair * omega(i) ** 2
+    mw(i) = -pi / 5 * r(i) ** 5 * rhowater * Cswater * omega(i) ** 2
+
 end subroutine forcing
 
 double precision function log_wind_profile (hf, z0)

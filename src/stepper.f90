@@ -9,10 +9,15 @@ subroutine stepper (tstep)
     integer :: i, j
     integer, intent(in) :: tstep
 
-    tfx = 0d0
-    tfy = 0d0
-    fcn = 0d0
-    fct = 0d0
+	! reinitialize force arrays
+	do i = 1, n
+		do j = 1, n
+			tfx = 0d0
+			tfy = 0d0
+			fcn = 0d0
+			fct = 0d0
+		end do
+	end do
     
     ! put yourself in the referential of the ith particle
     do i = 1, n - 1 
@@ -61,6 +66,8 @@ subroutine stepper (tstep)
 
 			call forcing(i, j)
 
+			call moment(i, j)
+
 			tfx(i) = tfx(i) + fax(i) + fwx(i)
 			tfy(i) = tfy(i) + fay(i) + fwy(i)
 
@@ -88,7 +95,7 @@ subroutine euler
 
         x(i) = x(i) + u(i) * dt
         y(i) = y(i) + v(i) * dt
-        teta(i) = teta(i) + omega(i) * dt
+        theta(i) = theta(i) + omega(i) * dt
 
         call bc_verify (i)
 

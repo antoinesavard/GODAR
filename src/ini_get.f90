@@ -34,19 +34,14 @@ subroutine ini_get
         close(i)
     end do
 
-    ! initial velocity
-
-    u     =  0
-    v     =  0
-    omega =  0
-    
-    ! initial particle angle
-    teta  =  0 
-
-    ! initialize arrays
-    tfx     =  0d0
-    tfy     =  0d0
-    fcn     =  0d0
-    fct     =  0d0
+	do i = 1, n
+		! initial velocity
+		u(i)      =  0d0
+		v(i)      =  0d0
+		omega(i)  =  0d0
+		
+		! initial particle angle
+		theta(i)  =  0d0 
+	end do
 
 end subroutine ini_get

@@ -17,10 +17,10 @@ subroutine get_default
 
     pi       =  4d0 * datan(1d0)   ! pi
 
-    Cdair    =  1.2d-3             ! skin drag air
-    Csair    =  1.1d-3             ! body drag air
-    Cdwater  =  5.5d-3             ! skin drag water
-    Cswater  =  5.1d-3             ! body drag water
+    Cdair    =  3d-1 * pi / 4      ! body drag air
+    Csair    =  5d-4               ! surface drag air
+    Cdwater  =  3d-1 * pi / 4      ! body drag water
+    Cswater  =  2d-3               ! surface drag water
 
 	z0w      =  3.0d-4             ! viscosity limit of water  
     

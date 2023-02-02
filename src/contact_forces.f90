@@ -38,8 +38,6 @@ subroutine contact_forces (i, j)
 
     call coulomb (i,j)
 
-    call moment (i,j)
-
 end subroutine contact_forces
 
 subroutine coulomb (i, j)
@@ -70,7 +68,7 @@ subroutine moment (i, j)
 
     integer, intent(in) :: i, j
 
-    m(i) = r(i) * fct(i,j) + mw(i)
+    m(i) = r(i) * fct(i,j) + mw(i) + ma(i)
     
 end subroutine moment
 

@@ -10,7 +10,7 @@ try:
     expno = str(sys.argv[1])
 except:
     print("No argument provided by sys.")
-    expno = input("expno = ")
+    expno = str(input("expno = "))
 sf = 1e3
 compression = 1
 
@@ -18,18 +18,25 @@ filesx = list_files(output_dir, "x", expno)
 filesy = list_files(output_dir, "y", expno)
 filesr = list_files(output_dir, "r", expno)
 filesh = list_files(output_dir, "h", expno)
+filest = list_files(output_dir, "theta", expno)
+fileso = list_files(output_dir, "omega", expno)
 
-xdata, ydata, radii, mass = (
+x, y, r, h, t, o = (
     multiload(output_dir, filesx),
     multiload(output_dir, filesy),
     multiload(output_dir, filesr),
     multiload(output_dir, filesh),
+    multiload(output_dir, filest),
+    multiload(output_dir, fileso),
 )
 
-xdata = xdata[::compression]
-ydata = ydata[::compression]
-radii = radii[::compression]
-mass = mass[::compression]
+x = x[::compression]
+y = y[::compression]
+r = r[::compression]
+h = h[::compression]
+t = t[::compression]
+o = o[::compression]
+edge = np.where(o > 0, "g", "r")
 
 os.chdir("plots/")
 
@@ -42,13 +49,15 @@ ax.set_xlim(0, 10 * sf)
 ax.set_ylim(0, 10 * sf)
 
 disks = []
+radii = []
 
 
 def init():
-    for i in range(len(radii[-1])):
-        p = np.array([xdata[0, i], ydata[0, i]])
-        disk = draw(ax, p, radii[0, i])
+    for i in range(len(r[-1])):
+        p = np.array([x[0, i], y[0, i]])
+        disk, rad = draw(ax, p, r[0, i], t[0, i], edge[0, i])
         disks.append(disk)
+        radii.append(rad)
     time.set_text("")
     return disks
 
@@ -56,9 +65,11 @@ def init():
 def animate(i):
     if i % 50 == 0:
         print("Frame: {}".format(i))
-    for j, disk in enumerate(disks):
-        p = np.array([xdata[i, j], ydata[i, j]])
+    for j, (disk, rad) in enumerate(zip(disks, radii)):
+        p = np.array([x[i, j], y[i, j]])
         disk.center = p
+        rad.angle = t[i, j]
+        rad.edgecolor = edge[i, j]
     time.set_text("iteration = {}".format(i))
     return disks
 
@@ -66,7 +77,7 @@ def animate(i):
 anim = FuncAnimation(
     fig,
     animate,
-    frames=xdata.shape[0],
+    frames=x.shape[0],
     init_func=init,
     interval=10,
     repeat=False,

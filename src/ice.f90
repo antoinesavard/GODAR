@@ -13,7 +13,7 @@ program ice
     integer :: tstep
     integer :: expno, readnamelist
     type(datetime_type) :: tic, tac
-    character expno_str*2
+    character(len=2) expno_str
 
     !-------------------------------------------------------------------
     !       Read run information
@@ -28,6 +28,7 @@ program ice
     print *, 'experiment #?'
     read  *, expno 
     print *, expno 
+	write(expno_str,'(i2.2)') expno
 
     call ini_get
 
@@ -35,7 +36,9 @@ program ice
     if (readnamelist .eq. 1) then
         call read_namelist      ! overwrite default based on namelist
     endif
-    
+
+	call clear_posts (expno_str)
+
     do tstep = 1, int(nt) + 1
 
         call stepper (tstep)
@@ -43,7 +46,7 @@ program ice
         if (MODULO(tstep, int(nt/comp)) .eq. 0) then
 
             print *, "Time step: ", tstep
-            call sea_ice_post (tstep, expno)
+            call sea_ice_post (expno_str)
 
         endif
 
@@ -52,8 +55,6 @@ program ice
     tac = now()
 
     print*, "Total simulation time: ", delta_str(tac - tic)
-
-    write(expno_str,'(i2.2)') expno
 
     call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py "//expno_str)
 
