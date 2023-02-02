@@ -28,7 +28,7 @@ program ice
     print *, 'experiment #?'
     read  *, expno 
     print *, expno 
-	write(expno_str,'(i2.2)') expno
+    write(expno_str,'(i2.2)') expno
 
     call ini_get
 
@@ -37,7 +37,7 @@ program ice
         call read_namelist      ! overwrite default based on namelist
     endif
 
-	call clear_posts (expno_str)
+    call clear_posts (expno_str)
 
     do tstep = 1, int(nt) + 1
 

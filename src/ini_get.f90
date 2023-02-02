@@ -34,14 +34,14 @@ subroutine ini_get
         close(i)
     end do
 
-	do i = 1, n
-		! initial velocity
-		u(i)      =  0d0
-		v(i)      =  0d0
-		omega(i)  =  0d0
-		
-		! initial particle angle
-		theta(i)  =  0d0 
-	end do
+    do i = 1, n
+        ! initial velocity
+        u(i)      =  0d0
+        v(i)      =  0d0
+        omega(i)  =  0d0
+        
+        ! initial particle angle
+        theta(i)  =  0d0 
+    end do
 
 end subroutine ini_get

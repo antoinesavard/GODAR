@@ -22,7 +22,7 @@ subroutine get_default
     Cdwater  =  3d-1 * pi / 4      ! body drag water
     Cswater  =  2d-3               ! surface drag water
 
-	z0w      =  3.0d-4             ! viscosity limit of water  
+    z0w      =  3.0d-4             ! viscosity limit of water  
     
     rhoair   =  1.3d0              ! air density [kg/m3]
     rhoice   =  9d02               ! ice density [kg/m3]
@@ -45,10 +45,10 @@ subroutine get_default
     gc    =  e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
     ! damping ratio
     beta  =  log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
-	! freeboard height
-	hfa   =  h * (rhowater - rhoice) / rhowater
-	! drag from water height
-	hfw   =  h * rhoice / rhowater
+    ! freeboard height
+    hfa   =  h * (rhowater - rhoice) / rhowater
+    ! drag from water height
+    hfw   =  h * rhoice / rhowater
 
 
 end subroutine get_default
