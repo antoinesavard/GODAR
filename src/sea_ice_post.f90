@@ -24,12 +24,12 @@ implicit none
 	open (14, file = filet, access = 'append', status = 'unknown')
 	open (15, file = fileo, access = 'append', status = 'unknown')
 
-	write(10,*) ( x(i),                i=1, n )
-	write(11,*) ( y(i),                i=1, n )
-	write(12,*) ( r(i),                i=1, n )
-	write(13,*) ( h(i),                i=1, n )
-	write(14,*) ( theta(i),            i=1, n )
-	write(15,*) ( sign(1d0, omega(i)), i=1, n )
+	write(10,*) ( x(i),   	i=1, n )
+	write(11,*) ( y(i),    	i=1, n )
+	write(12,*) ( r(i),   	i=1, n )
+	write(13,*) ( h(i),  	i=1, n )
+	write(14,*) ( theta(i),	i=1, n )
+	write(15,*) ( omega(i),	i=1, n )
 
     do i = 10, 15
         close(i)

@@ -35,8 +35,8 @@ y = y[::compression]
 r = r[::compression]
 h = h[::compression]
 t = t[::compression]
-o = o[::compression]
-edge = np.where(o > 0, "g", "r")
+o = np.sign(o[::compression])
+edge = np.where(o >= 0, "g", "r")
 
 os.chdir("plots/")
 
@@ -68,7 +68,8 @@ def animate(i):
     for j, (disk, rad) in enumerate(zip(disks, radii)):
         p = np.array([x[i, j], y[i, j]])
         disk.center = p
-        rad.angle = t[i, j]
+        rad.xy = p
+        rad.angle = 0  # t[i, j]
         rad.edgecolor = edge[i, j]
     time.set_text("iteration = {}".format(i))
     return disks

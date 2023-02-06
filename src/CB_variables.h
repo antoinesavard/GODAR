@@ -2,40 +2,41 @@
 !                   Common block dynamic variables
 !=======================================================================
 
-    double precision ::           & ! particle variables
-                x       (n),      & 
-                y       (n),      &
-                r       (n),      &
-                h       (n),      &
-                hfa     (n),      &
-                hfw     (n),      &
-                mass    (n),      &
-                u       (n),      &
-                v       (n),      &
-                theta   (n),      &
+    double precision ::			& ! particle variables
+                x       (n),    & 
+                y       (n),    &
+                r       (n),    &
+                h       (n),    &
+                hfa     (n),    &
+                hfw     (n),    &
+                mass    (n),    &
+                u       (n),    &
+                v       (n),    &
+                theta   (n),    &
                 omega   (n)
 
-    double precision ::           & ! force variables
-                fcn     (n,n),    &
-                fct     (n,n),    &
-                tfx     (n),      &
-                tfy     (n),      &
+    double precision ::         & ! force variables
+                fcn     (n,n),  &
+                fct     (n,n),  &
+                tfx     (n),    &
+                tfy     (n),    &
                 m       (n)
 
-    double precision ::           & ! forcing variables
-                fax     (n),      &
-                fay     (n),      &
-                fwx     (n),      &
-                fwy     (n),      &
-                mw      (n),      &
+    double precision ::         & ! forcing variables
+                fax     (n),    &
+                fay     (n),    &
+                fwx     (n),    &
+                fwy     (n),    &
+                mw      (n),    &
                 ma      (n)
 
-    double precision ::           & ! decomposition variables
-                cosa    (n,n),    &
-                sina    (n,n),    &
-                veln    (n,n),    &
-                velt    (n,n),    &
-                deltan  (n,n)
+    double precision ::         & ! decomposition variables
+                cosa    (n,n),  &
+                sina    (n,n),  &
+                veln    (n,n),  &
+                velt    (n,n),  &
+                deltan  (n,n),	&
+				omegarel(n,n),	&
         
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
@@ -66,9 +67,10 @@
                 mw      ,    & ! water drag moment                 [N*m]
                 ma             ! air drag moment                   [N*m]
 
-    common/variables/        & ! decomposition variables
-                cosa    ,    & ! cos of angle between particles
-                sina    ,    & ! sin of angle between particles
+    common/variables/      	 & ! decomposition variables
+                cosa    ,  	 & ! cos of angle between particles
+                sina    , 	 & ! sin of angle between particles
                 veln    ,    & ! normal velocity                   [m/s]
-                velt    ,    & ! tangential velocity               [m/s]
-                deltan         ! normal distance between borders     [m]
+                velt    ,  	 & ! tangential velocity               [m/s]
+                deltan  ,  	 & ! normal distance between borders     [m]
+				omegarel	   ! relative angular velocity       [rad/s]

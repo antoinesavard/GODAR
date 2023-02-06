@@ -17,11 +17,12 @@ subroutine forcing (i, j)
     
     uw = 0d0
     vw = 0d0
-    ua = 0d0
-    va = 10d0
+    ua = 20d0
+    va = 20d0
 
-    ! sheltering height form air and water
-    hsfa = H_shelter(hfa(i), -deltan(i,j), cosa(i,j), sina(i,j), ua, va)
+    ! sheltering height from air and water
+    hsfa = H_shelter(hfa(i), -deltan(i,j), cosa(i,j), sina(i,j), 	&
+						ua - u(i), va - v(i))
     hsfw = H_shelter(hfw(i), -deltan(i,j), cosa(i,j), sina(i,j), 	&
                         uw - u(i), vw - v(i))
     
@@ -64,11 +65,35 @@ subroutine forcing (i, j)
     fwx(i) = fdwx(i) + fswx(i)
     fwy(i) = fdwy(i) + fswy(i)
 
-    ! torque induced drag due to rotation of floes
-    ma(i) = -pi / 5 * r(i) ** 5 * rhoair * Csair * omega(i) ** 2
-    mw(i) = -pi / 5 * r(i) ** 5 * rhowater * Cswater * omega(i) ** 2
+    ! torque induced drag due to rotation of floes when no speed
+	! if speed, use second expression valid for |U| >> |omega*r|
+	if ( abs(ua) + abs(va) .eq. 0 ) then
+		ma(i) = - pi / 5 * r(i) ** 5 * rhoair * Csair * omega(i) * &
+				ABS(omega(i))
+	else
+		ma(i) = - 3 / 8 * pi * rhoair * Csair * &
+				sqrt( ua ** 2 + va ** 2) * omega(i) * r ** 4
+	end if
+
+	if ( abs(uw) + abs(vw) .eq. 0 ) then
+    	mw(i) = - pi / 5 * r(i) ** 5 * rhowater * Cswater * omega(i) * &
+				ABS(omega(i))
+	else
+		ma(i) = - 3 / 8 * pi * rhowater * Cswater * &
+				sqrt( uw ** 2 + vw ** 2) * omega(i) * r ** 4
+	end if
 
 end subroutine forcing
+
+
+subroutine coriolis (i, j)
+
+	implicit none
+
+	integer, intent(in) :: i, j
+
+end subroutine coriolis
+
 
 double precision function log_wind_profile (hf, z0)
 

@@ -20,85 +20,58 @@ subroutine stepper (tstep)
     end do
     
     ! put yourself in the referential of the ith particle
+	! loop through all j particles and compute interactions
     do i = 1, n - 1 
         do j = i + 1, n
     
-            ! Components of unit vector ei=(cosa,sina) are:
-            cosa(i,j) = ( x(j) - x(i) ) /                 	 &
-                        ( sqrt(                              &
-                                ( x(i) - x(j) ) ** 2 +       &
-                                ( y(i) - y(j) ) ** 2         &
-                                )                            &
-                        )
-            
-            sina(i,j) = ( y(j) - y(i) ) /                 	 &
-                        ( sqrt(                              &
-                                ( x(i) - x(j) ) ** 2 +       &
-                                ( y(i) - y(j) ) ** 2         &
-                                )                            &
-                        )
+			! compute relative position and velocity
+            call rel_pos_vel (i, j)
 
-            ! Normal components of the relative velocities:
-            veln(i,j) = ( u(j) - u(i) ) * cosa(i,j) +     &
-                        ( v(j) - v(i) ) * sina(i,j)
-
-            ! Tangential components of the relative velocities:
-            velt(i,j) = ( u(j) - u(i) ) * sina(i,j) +   &
-                        ( v(j) - v(i) ) * cosa(i,j) -   &
-                        ( omega(i) * r(i) + omega(j) * r(j) )
-
-            ! normal overlap (displacement) deltan >=0
-            deltan(i,j)  =  r(i) + r(j) -          & 
-                            sqrt(                  & 
-                            ( x(i) - x(j) ) ** 2 + & 
-                            ( y(i) - y(j) ) ** 2   & 
-                            )
+			! bond initialization
+			if ( tstep .eq. 1 ) then
+				if ( -deltan(i, j) .leq. 2 * r(i)) ! can be fancier
+					bond (i, j) = 1
+				end if
+			end if
 
             ! verify if two particles are colliding
             if ( deltan(i,j) .ge. 0 ) then
 
                 call contact_forces (i, j)
 
+				! call bond_creation (i, j) to implement
+
+				! update force on particle i by particle j
                 tfx(i) = tfx(i) - fcn(i,j) * cosa(i,j)
                 tfy(i) = tfy(i) - fcn(i,j) * sina(i,j)
 
             end if
 
-            call forcing(i, j)
+			! compute forces from bonds between particle i and j
+			if bond (i, j) .eq. 1 then
 
+				call bond_forces (i, j)
+				call bond_breaking (i, j)
+
+			end if
+
+			! compute forcing of air and water drag, and coriolis
+            call forcing(i, j)
+			call coriolis(i, j)
+
+			! call moments at the end because you need all previous 
+			! tangential forces to compute this (M = r x F_t)
             call moment(i, j)
 
+			! sum all forces together
             tfx(i) = tfx(i) + fax(i) + fwx(i)
             tfy(i) = tfy(i) + fay(i) + fwy(i)
 
         end do
     end do
 
+	! integration in time
     call velocity
-
     call euler
 
 end subroutine stepper
-
-subroutine euler
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-
-    integer :: i
-
-    ! Update new position/angle of particles
-    do i = 1, n
-
-        x(i) = x(i) + u(i) * dt
-        y(i) = y(i) + v(i) * dt
-        theta(i) = theta(i) + omega(i) * dt
-
-        call bc_verify (i)
-
-    end do
-
-end subroutine euler

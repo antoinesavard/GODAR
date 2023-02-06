@@ -32,7 +32,7 @@ subroutine get_default
     !           Disks physical parameters
     !-------------------------------------------------------------------
 
-    e_modul         =  6d9            ! elastic moduli [N/m^2]
+    e_modul         =  6d9            ! elastic moduli
     poiss_ratio     =  33d-2          ! poisson ratio nu
     friction_coeff  =  7d-1           ! friction coefficient mu
     rest_coeff      =  88d-2          ! coefficient of restitution
@@ -49,6 +49,18 @@ subroutine get_default
     hfa   =  h * (rhowater - rhoice) / rhowater
     ! drag from water height
     hfw   =  h * rhoice / rhowater
+
+	!-------------------------------------------------------------------
+    !           Bonds physical parameters
+    !-------------------------------------------------------------------
+
+	eb			= 
+	lambda_rb	=
+	lambda_lb	=
+	sigmat_max	=
+	sigman_max	=
+	tau_max		=
+	gamma_d		=
 
 
 end subroutine get_default

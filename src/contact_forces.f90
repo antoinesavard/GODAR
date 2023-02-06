@@ -36,41 +36,11 @@ subroutine contact_forces (i, j)
 
     fct(i,j) = kt * deltat(i,j) - gamt * velt(i,j)
 
+	! make sure that disks are slipping if not enough normal force
     call coulomb (i,j)
 
 end subroutine contact_forces
 
-subroutine coulomb (i, j)
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-
-    integer, intent(in) :: i, j
-
-    if ( fct(i,j) > friction_coeff * fcn(i,j) ) then
-
-        fct(i,j) = 0
-
-    end if
-    
-end subroutine coulomb
-
-subroutine moment (i, j)
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-
-    integer, intent(in) :: i, j
-
-    m(i) = r(i) * fct(i,j) + mw(i) + ma(i)
-    
-end subroutine moment
 
 double precision function fit (xi)
 

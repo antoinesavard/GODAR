@@ -11,7 +11,7 @@ program ice
     include "CB_const.h"
 
     integer :: tstep
-    integer :: expno, readnamelist
+    integer :: expno, readnamelist, restart, expno_r
     type(datetime_type) :: tic, tac
     character(len=2) expno_str
 
@@ -25,16 +25,26 @@ program ice
     read  *, readnamelist
     print *, readnamelist
 
+	print *, 'Restart experiment from previous one?'
+	read  *, restart
+	print *, restart
+
+	if (restart .eq. 1) then
+         read(*, '(i2)') expno_r
+         write(*,*) "Restart experiment number is: ", expno_r
+    endif
+
     print *, 'experiment #?'
     read  *, expno 
     print *, expno 
     write(expno_str,'(i2.2)') expno
 
-    call ini_get
+    call ini_get (restart, expno_r)
 
     call get_default
+	! overwrite default based on namelist
     if (readnamelist .eq. 1) then
-        call read_namelist      ! overwrite default based on namelist
+        call read_namelist
     endif
 
     call clear_posts (expno_str)
