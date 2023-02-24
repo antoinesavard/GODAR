@@ -5,6 +5,7 @@ subroutine stepper (tstep)
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+	include "CB_bond.h"
 
     integer :: i, j
     integer, intent(in) :: tstep
@@ -29,7 +30,7 @@ subroutine stepper (tstep)
 
 			! bond initialization
 			if ( tstep .eq. 1 ) then
-				if ( -deltan(i, j) .leq. 2 * r(i)) ! can be fancier
+				if ( -deltan(i, j) .le. 2 * r(i)) then ! can be fancier
 					bond (i, j) = 1
 				end if
 			end if
@@ -48,7 +49,7 @@ subroutine stepper (tstep)
             end if
 
 			! compute forces from bonds between particle i and j
-			if bond (i, j) .eq. 1 then
+			if ( bond (i, j) .eq. 1 ) then
 
 				call bond_forces (i, j)
 				call bond_breaking (i, j)

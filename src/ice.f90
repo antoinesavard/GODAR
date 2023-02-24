@@ -13,7 +13,7 @@ program ice
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r
     type(datetime_type) :: tic, tac
-    character(len=2) expno_str
+    character(len=2) :: expno_str, expno_str_r
 
     !-------------------------------------------------------------------
     !       Read run information
@@ -32,14 +32,15 @@ program ice
 	if (restart .eq. 1) then
          read(*, '(i2)') expno_r
          write(*,*) "Restart experiment number is: ", expno_r
+		 write(expno_str_r,'(i2.2)') expno_r
     endif
 
-    print *, 'experiment #?'
+    print *, 'Experiment #?'
     read  *, expno 
     print *, expno 
     write(expno_str,'(i2.2)') expno
 
-    call ini_get (restart, expno_r)
+    call ini_get (restart, expno_str_r)
 
     call get_default
 	! overwrite default based on namelist

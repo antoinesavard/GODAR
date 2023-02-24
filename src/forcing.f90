@@ -68,19 +68,19 @@ subroutine forcing (i, j)
     ! torque induced drag due to rotation of floes when no speed
 	! if speed, use second expression valid for |U| >> |omega*r|
 	if ( abs(ua) + abs(va) .eq. 0 ) then
-		ma(i) = - pi / 5 * r(i) ** 5 * rhoair * Csair * omega(i) * &
+		ma(i) = - pi / 5d0 * r(i) ** 5 * rhoair * Csair * omega(i) * &
 				ABS(omega(i))
 	else
-		ma(i) = - 3 / 8 * pi * rhoair * Csair * &
-				sqrt( ua ** 2 + va ** 2) * omega(i) * r ** 4
+		ma(i) = - 3d0 / 8d0 * pi * rhoair * Csair * &
+				sqrt( ua ** 2 + va ** 2) * omega(i) * r(i) ** 4
 	end if
 
 	if ( abs(uw) + abs(vw) .eq. 0 ) then
-    	mw(i) = - pi / 5 * r(i) ** 5 * rhowater * Cswater * omega(i) * &
-				ABS(omega(i))
+    	mw(i) = - pi / 5d0 * r(i) ** 5 * rhowater * Cswater * &
+				omega(i) * ABS(omega(i))
 	else
-		ma(i) = - 3 / 8 * pi * rhowater * Cswater * &
-				sqrt( uw ** 2 + vw ** 2) * omega(i) * r ** 4
+		mw(i) = - 3d0 / 8d0 * pi * rhowater * Cswater * &
+				sqrt( uw ** 2 + vw ** 2) * omega(i) * r(i) ** 4
 	end if
 
 end subroutine forcing

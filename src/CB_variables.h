@@ -36,7 +36,7 @@
                 veln    (n,n),  &
                 velt    (n,n),  &
                 deltan  (n,n),	&
-				omegarel(n,n),	&
+				omegarel(n,n)
         
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]

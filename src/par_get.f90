@@ -5,6 +5,7 @@ subroutine get_default
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+	include "CB_bond.h"
 
     !-------------------------------------------------------------------
     ! set parameter for the run
@@ -32,10 +33,10 @@ subroutine get_default
     !           Disks physical parameters
     !-------------------------------------------------------------------
 
-    e_modul         =  6d9            ! elastic moduli
-    poiss_ratio     =  33d-2          ! poisson ratio nu
-    friction_coeff  =  7d-1           ! friction coefficient mu
-    rest_coeff      =  88d-2          ! coefficient of restitution
+    e_modul         =  6d9         ! elastic moduli
+    poiss_ratio     =  33d-2       ! poisson ratio nu
+    friction_coeff  =  7d-1        ! friction coefficient mu
+    rest_coeff      =  88d-2       ! coefficient of restitution
 
     ! mass of disk
     mass  =  rhoice * pi * h * r ** 2
@@ -54,13 +55,13 @@ subroutine get_default
     !           Bonds physical parameters
     !-------------------------------------------------------------------
 
-	eb			= 
-	lambda_rb	=
-	lambda_lb	=
-	sigmat_max	=
-	sigman_max	=
-	tau_max		=
-	gamma_d		=
+	eb			= 1d0
+	lambda_rb	= 1d0
+	lambda_lb	= 1d0
+	sigmat_max	= 1d0
+	sigman_max	= 1d0
+	tau_max		= 1d0
+	gamma_d		= 1d0
 
 
 end subroutine get_default
