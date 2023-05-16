@@ -11,8 +11,8 @@ DEM model. To compile, run scons-3 with the appropriate parameters.
 The input_file is a simple file to pass along to the main program when executing that can take the following arguments in this order: 
 - NEED`[bool]   input namelist`
 - NEED`[bool]   input restart`
-- OPT`[int]    restart version`
-- OPT`[int]    restart time`
+- OPT `[int]    restart version`
+- OPT `[int]    restart time`
 - NEED`[int]    exp version`
 - NEED`[int]    number of threads`
 
