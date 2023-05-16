@@ -1,69 +1,69 @@
-subroutine forcing (i, j)
+subroutine forcing (i)
 
     implicit none
 
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+    include "CB_forcings.h"
 
-    integer, intent(in) :: i, j
+    integer, intent(in) :: i
 
-    double precision :: uw, vw, ua, va
-    double precision :: fdax(n), fday(n), fsax(i), fsay(i)
-    double precision :: fdwx(n), fdwy(n), fswx(i), fswy(i)
+    double precision :: fdax, fday, fsax, fsay
+    double precision :: fdwx, fdwy, fswx, fswy
 
-    double precision :: log_wind_profile, H_shelter
-    double precision :: hsfa, hsfw
-    
-    uw = 0d0
-    vw = 0d0
-    ua = 20d0
-    va = 20d0
+    double precision :: log_profile
+    double precision :: hsfa_f(n), hsfw_f(n)
 
-    ! sheltering height from air and water
-    hsfa = H_shelter(hfa(i), -deltan(i,j), cosa(i,j), sina(i,j), 	&
-						ua - u(i), va - v(i))
-    hsfw = H_shelter(hfw(i), -deltan(i,j), cosa(i,j), sina(i,j), 	&
-                        uw - u(i), vw - v(i))
+    hsfa_f = maxval(hsfa, dim=1)
+    hsfw_f = maxval(hsfw, dim=1)
+
+    if ( hsfa_f(i) .gt. 1d0 ) then
+        hsfa_f(i) = 1d0
+    end if
+
+    if ( hsfw_f(i) .gt. 1d0 ) then
+        hsfw_f(i) = 1d0
+    end if    
     
     ! wind drag forcing
-    fdax(i) = rhoair * Cdair * (hfa(i) - hsfa) * r(i) * (ua - u(i)) * &
-                ABS(ua - u(i)) * log_wind_profile(hfa(i),             &
-                max(z0w, hsfa))
+    fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *    &
+                ABS(ua - u(i)) * log_profile(hfa(i),             &
+                max(z0w, hsfa_f(i))) * hsfa_f(i)
 
-    fday(i) = rhoair * Cdair * (hfa(i) - hsfa) * r(i) * (va - v(i)) * &
-                ABS(va - v(i)) * log_wind_profile(hfa(i),             &
-                max(z0w, hsfa))
+    fday     = rhoair * Cdair * hfa(i) * r(i) * (va - v(i)) *    &
+                ABS(va - v(i)) * log_profile(hfa(i),             &
+                max(z0w, hsfa_f(i))) * hsfa_f(i)
 
     ! wind skin forcing
-    fsax(i) = 0.5 * rhoair * pi * r(i) ** 2 * Csair * &
+    fsax     = 0.5 * rhoair * pi * r(i) ** 2 * Csair * &
                 (ua - u(i)) * ABS(ua - u(i))
 
-    fsay(i) = 0.5 * rhoair * pi * r(i) ** 2 * Csair * &
+    fsay     = 0.5 * rhoair * pi * r(i) ** 2 * Csair * &
                 (va - v(i)) * ABS(va - v(i))
 
     ! water drag forcing
-    fdwx(i) = rhowater * Cdwater * (hfw(i) - hsfw) * r(i) * (uw - &
-                u(i)) * ABS(uw - u(i)) * log_wind_profile(hfw(i), &
-                max(z0w, hsfw))
+    fdwx     = rhowater * Cdwater * hfw(i) * r(i) * (uw -            &
+                u(i)) * ABS(uw - u(i)) * log_profile(hfw(i),         &
+                max(z0w, hsfw_f(i))) * hsfw_f(i)
 
-    fdwy(i) = rhowater * Cdwater * (hfw(i) - hsfw) * r(i) * (vw - &
-                v(i)) * ABS(vw - v(i)) * log_wind_profile(hfw(i), &
-                max(z0w, hsfw))
+    fdwy     = rhowater * Cdwater * hfw(i) * r(i) * (vw -            &
+                v(i)) * ABS(vw - v(i)) * log_profile(hfw(i),         &
+                max(z0w, hsfw_f(i))) * hsfw_f(i)
 
     ! water skin forcing
-    fswx(i) = 0.5 * rhowater * pi * r(i) ** 2 * Cswater * &
+    fswx     = 0.5 * rhowater * pi * r(i) ** 2 * Cswater * &
                 (uw - u(i)) * ABS(uw - u(i))
 
-    fswy(i) = 0.5 * rhowater * pi * r(i) ** 2 * Cswater * &
+    fswy     = 0.5 * rhowater * pi * r(i) ** 2 * Cswater * &
                 (vw - v(i)) * ABS(vw - v(i))
 
     ! total forcing from air and water
-    fax(i) = fdax(i) + fsax(i)
-    fay(i) = fday(i) + fsay(i)
+    fax(i) = fdax + fsax
+    fay(i) = fday + fsay
 
-    fwx(i) = fdwx(i) + fswx(i)
-    fwy(i) = fdwy(i) + fswy(i)
+    fwx(i) = fdwx + fswx
+    fwy(i) = fdwy + fswy
 
     ! torque induced drag due to rotation of floes when no speed
 	! if speed, use second expression valid for |U| >> |omega*r|
@@ -86,26 +86,54 @@ subroutine forcing (i, j)
 end subroutine forcing
 
 
-subroutine coriolis (i, j)
+subroutine sheltering (j, i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_forcings.h"
+    include "CB_variables.h"
+
+    integer, intent(in) :: i, j
+
+    double precision :: H_shelter
+
+    ! sheltering height from air and water in units of h(i)
+    hsfa(j, i) = H_shelter(hfa(j), -deltan(j,i), cosa(j,i), sina(j,i), &
+                    ua - u(i), va - v(i)) / hfa(i)
+    hsfw(j, i) = H_shelter(hfw(j), -deltan(j,i), cosa(j,i), sina(j,i), &
+                    uw - u(i), vw - v(i)) / hfw(i)
+
+end subroutine
+
+
+subroutine coriolis (i)
 
 	implicit none
 
-	integer, intent(in) :: i, j
+	integer, intent(in) :: i
+
+    include "parameter.h"
+    include "CB_variables.h"
+
+	!fcorx(i)  = mass(i) * f * v(i)
+
+    !fcory(i)  = - mass(i) * f * u(i)
 
 end subroutine coriolis
 
 
-double precision function log_wind_profile (hf, z0)
+double precision function log_profile (hf, z0)
 
     implicit none
 
     double precision, intent(in) :: hf, z0
 
-    log_wind_profile = ( log( hf / z0 ) ** 2.0d0 - 2.0d0 *           &
+    log_profile = ( log( hf / z0 ) ** 2.0d0 - 2.0d0 *           &
                          log( hf / z0 ) + 2.0d0 - 2.0d0 * z0 / hf) / &
                          log( 10 / z0 ) ** 2.0d0
 
-end function log_wind_profile
+end function log_profile
 
 double precision function heaviside (x)
 
@@ -134,6 +162,11 @@ double precision function H_shelter (hf, deltan, cosa, sina, uf, vf)
                 hf * heaviside(deltan) * ( 1 - exp(-1d0) ) **   &
                 ( 5d1 / (u + 1d-5) * heaviside(25d0 - u) +      &
                 2d0 * heaviside(u - 25d0) )                     &
-                ) * ( 1 - sina ) * heaviside(sign(1d0, cosa)) 
+                ) *                                             &
+                (                                               &
+                heaviside(sign(1d0, -cosa * sign(1d0, uf)))      &
+                * ( 1 - abs(sina) ) + ( 1 - abs(cosa) ) *       &
+                heaviside(sign(1d0, -sina * sign(1d0, vf)))      &
+                )
 
 end function H_shelter

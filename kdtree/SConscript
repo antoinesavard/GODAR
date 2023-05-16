@@ -1,0 +1,5 @@
+Import("env")
+
+src = Glob("*.f90")
+
+env.Library(target="#/libs/kdtree", source=src)

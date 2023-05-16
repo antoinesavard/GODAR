@@ -5,6 +5,7 @@ subroutine velocity
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+	include "CB_bond.h"
 
     ! u_f = u_i + F/m * dt
     u      =  u + ( tfx / mass ) * dt

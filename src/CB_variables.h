@@ -3,8 +3,8 @@
 !=======================================================================
 
     double precision ::			& ! particle variables
-                x       (n),    & 
-                y       (n),    &
+                x       (n),    & ! x positions
+                y       (n),    & ! y positions
                 r       (n),    &
                 h       (n),    &
                 hfa     (n),    &
@@ -16,19 +16,15 @@
                 omega   (n)
 
     double precision ::         & ! force variables
-                fcn     (n,n),  &
-                fct     (n,n),  &
-                tfx     (n),    &
-                tfy     (n),    &
-                m       (n)
-
-    double precision ::         & ! forcing variables
-                fax     (n),    &
-                fay     (n),    &
-                fwx     (n),    &
-                fwy     (n),    &
-                mw      (n),    &
-                ma      (n)
+                fcn     (n,n),  & ! normal contact forces
+                fct     (n,n),  & ! tangential contact forces
+                fcx     (n)  ,  & ! contact forces in x
+                fcy     (n)  ,  & ! contact forces in y
+                mc      (n)  ,  & ! moment due to contact
+                mcc     (n,n),  & ! moment due to rolling
+                tfx     (n)  ,  & ! total forces in x
+                tfy     (n)  ,  & ! totale forces in y
+                m       (n)       ! total moment
 
     double precision ::         & ! decomposition variables
                 cosa    (n,n),  &
@@ -36,7 +32,9 @@
                 veln    (n,n),  &
                 velt    (n,n),  &
                 deltan  (n,n),	&
-				omegarel(n,n)
+                deltat  (n,n),  &
+				omegarel(n,n),  &
+                dist    (n,n)
         
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
@@ -55,17 +53,14 @@
     common/variables/        & ! force variables
                 fcn     ,    & ! perp forces contact                 [N]
                 fct     ,    & ! tangent forces contact              [N]
+                fcx     ,    & ! contact forces in x                 [N]
+                fcy     ,    & ! contact forces in y                 [N]
+                mc      ,    & ! moment due to contact             [N*m]
+                mcc     ,    & ! moment due to rolling             [N*m]
                 tfx     ,    & ! total force in x                    [N]
                 tfy     ,    & ! total force in y                    [N]
                 m       	   ! moment                            [N*m]
                 
-    common/variables/        & ! forcing variables			
-                fax     ,    & ! wind force in x                     [N]
-                fay     ,    & ! wind force in y                     [N]
-                fwx     ,    & ! water force in x                    [N]
-                fwy     ,    & ! water force in y                    [N]
-                mw      ,    & ! water drag moment                 [N*m]
-                ma             ! air drag moment                   [N*m]
 
     common/variables/      	 & ! decomposition variables
                 cosa    ,  	 & ! cos of angle between particles
@@ -73,4 +68,6 @@
                 veln    ,    & ! normal velocity                   [m/s]
                 velt    ,  	 & ! tangential velocity               [m/s]
                 deltan  ,  	 & ! normal distance between borders     [m]
-				omegarel	   ! relative angular velocity       [rad/s]
+                deltat  ,    & ! tangent overlap                     [m]
+				omegarel,	 & ! relative angular velocity       [rad/s]
+                dist           ! distance between 2 particles        [m]

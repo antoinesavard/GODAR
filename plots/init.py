@@ -2,14 +2,14 @@ import numpy as np
 
 # size factor
 sf = 1e3
-disks_num_y = 10
-disks_num_x = int(disks_num_y / 2)
+disks_num_y = 50
+disks_num_x = int(disks_num_y)
 disks_num = disks_num_y * disks_num_x
-radius = 1e3 / 2 * np.ones(int(disks_num))
-height = np.random.normal(loc=3.3, scale=1.8, size=int(disks_num))
+radius = np.random.lognormal(6, 0.25, 2500)
+height = np.random.lognormal(0, 0.25, 2500) - 0.15
 height = np.where(height <= 0, 0.1, height)
 
-lines = sf * np.arange(0.5, disks_num_y + 0.5)
+lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
 lines = lines.astype(str)
 lines = lines.tolist()
 with open("src/Y.dat", "w") as f:
@@ -20,7 +20,7 @@ with open("src/Y.dat", "w") as f:
             f.write("\n")
             i += 1
 
-lines = sf * np.arange(1 / 2 * disks_num_x + 0.5, 3 / 2 * disks_num_x + 0.5)
+lines = sf * np.arange(1, 2 * disks_num_x + 1, 2)
 lines = lines.astype(str)
 lines = lines.tolist()
 with open("src/X.dat", "w") as f:

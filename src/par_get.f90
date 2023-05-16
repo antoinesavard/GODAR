@@ -6,6 +6,7 @@ subroutine get_default
     include "CB_variables.h"
     include "CB_const.h"
 	include "CB_bond.h"
+    include "CB_forcings.h"
 
     !-------------------------------------------------------------------
     ! set parameter for the run
@@ -38,30 +39,34 @@ subroutine get_default
     friction_coeff  =  7d-1        ! friction coefficient mu
     rest_coeff      =  88d-2       ! coefficient of restitution
 
-    ! mass of disk
-    mass  =  rhoice * pi * h * r ** 2
     ! effective contact modulus
     ec    =  e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
     ! effective shear modulus
     gc    =  e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
     ! damping ratio
     beta  =  log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
-    ! freeboard height
-    hfa   =  h * (rhowater - rhoice) / rhowater
-    ! drag from water height
-    hfw   =  h * rhoice / rhowater
 
 	!-------------------------------------------------------------------
     !           Bonds physical parameters
     !-------------------------------------------------------------------
 
-	eb			= 1d0
-	lambda_rb	= 1d0
+	eb			= 6d9
+	lambda_rb	= 8d-1
 	lambda_lb	= 1d0
-	sigmat_max	= 1d0
-	sigman_max	= 1d0
-	tau_max		= 1d0
+	lambda_ns   = 2d0
+	sigmatb_max	= 1d5
+	sigmanb_max	= 1d6
+	tau_max		= 1d6
 	gamma_d		= 1d0
+
+    !-------------------------------------------------------------------
+    !           Winds and currents forcings
+    !-------------------------------------------------------------------
+
+    uw = -100d0
+    vw = -1d0
+    ua = 0d0
+    va = 10d0
 
 
 end subroutine get_default

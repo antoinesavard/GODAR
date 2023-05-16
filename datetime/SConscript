@@ -1,6 +1,5 @@
-Import('env')
+Import("env")
 
-src = Glob('*.f90')
+src = Glob("*.f90")
 
-env.Library(target='#/libs/datetime', source = src)
-
+env.Library(target="#/libs/datetime", source=src)

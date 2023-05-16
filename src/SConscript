@@ -1,11 +1,13 @@
-Import('env')
-Import('EXE')
+Import("env")
+Import("EXE")
 
 # Source files for the sea ice model
-src = Glob('*.f90') 
-src.remove(Glob('ice.f90')[0])
+src = Glob("*.f90")
+src.remove(Glob("ice.f90")[0])
 
-env.Library(target='#/libs/ice', source = src, LIBS=['datetime'])
+env.Library(target="#/libs/ice", source=src, LIBS=["datetime", "kdtree"])
 
 # The executable
-env.Program(target='#/'+EXE, source='ice.f90', LIBS=["ice", 'datetime'])
+env.Program(
+    target="#/" + EXE, source="ice.f90", LIBS=["ice", "datetime", "kdtree"]
+)

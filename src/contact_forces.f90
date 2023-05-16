@@ -1,43 +1,68 @@
-subroutine contact_forces (i, j)
+subroutine contact_forces (j, i)
 
     implicit none
 
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+    include "CB_bond.h"
 
     integer, intent(in) :: i, j
 
-    double precision :: deltat(n,n), mc(n,n), rc(n,n), hmin(n,n)
+    double precision :: m_redu, r_redu, hmin
     double precision :: fit
-    double precision :: kn, kt, gamn, gamt
+    double precision :: knc, ktc, gamn, gamt
+    double precision :: krc, mrolling
 
-    deltat(i,j)  =  velt(i,j) * dt
+    deltat(j,i) = sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
+                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 )
 
-    mc(i,j)      =  mass(i) * mass(j) / ( mass(i) + mass(j) )
+    m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
 
-    rc(i,j)      =  r(i) * r(j) / ( r(i) + r(j) )
+    r_redu =  r(i) * r(j) / ( r(i) + r(j) )
 
-    hmin(i,j)    =  min(h(i), h(j))
+    hmin   =  min(h(i), h(j))
 
-    kn     = pi * ec * hmin(i,j)  *             &
-                fit( deltan(i,j) * rc(i,j) /    &
-                ( 2 * hmin(i,j) ** 2 ) )
+    knc    = pi * ec * hmin  *                  &
+                fit( deltan(j,i) * r_redu /     &
+                ( 2 * hmin ** 2 ) )
 
-    kt     = 6 * gc / ec * kn
+    ktc    = 6d0 * gc / ec * knc
 
-    gamn   = - beta * sqrt( 5 * kn * mc(i,j) )
+    krc    = knc * deltat(j,i) ** 2 / 12
 
-    gamt   = - 2 * beta * sqrt( 5 * gc / ec * kn * mc(i,j) )
+    gamn   = -beta * sqrt( 5d0 * knc * m_redu )
+
+    gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * m_redu )
 
     ! compute the normal/tangent force
+    ! normal force is F=kx-du it works because this is the force needed
+    ! make an compression of x knowing that there is a damping that acts
+    ! againts us, and F is the force that the particle j is feeling
+    ! while -F is the force the particle i is feeling
+    fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
 
-    fcn(i,j) = kn * deltan(i,j) - gamn * veln(i,j)
-
-    fct(i,j) = kt * deltat(i,j) - gamt * velt(i,j)
+    fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
 
 	! make sure that disks are slipping if not enough normal force
-    call coulomb (i,j)
+    call coulomb (j, i)
+
+    if ( bond (j, i) .eq. 0 ) then
+        ! moments due to rolling
+        mrolling = -krc * omegarel(j, i) * dt
+
+        ! ensures no rolling if moment is too big
+        if ( abs(omegarel(j,i)) > 2 * abs(fcn(j,i)) / knc * &
+                deltat(j,i) ) then
+                
+            mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
+                        sign(1d0, omegarel(j,i))
+        
+        end if
+
+        ! total moment due to rolling
+        mcc(j, i) = mrolling 
+    end if
 
 end subroutine contact_forces
 

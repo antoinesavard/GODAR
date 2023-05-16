@@ -1,29 +1,33 @@
 !=======================================================================
-!             COMMAND BLOCK: bond properties
+!             Common block: bond properties
 !=======================================================================
 
     double precision :: 		& ! global physical parameters
-				eb			, 	&
-				lambda_rb	, 	&
-				lambda_lb	, 	&
-				sigmat_max	, 	&
-				sigman_max	,	&
+				eb			, 	& ! elastic stiffness
+				lambda_rb	, 	& ! radius parameter
+				lambda_lb	, 	& ! lenght parameter
+				lambda_ns   ,   & ! normal stiffness parameter
+				sigmatb_max	, 	&
+				sigmanb_max	,	&
 				tau_max		,	&
 				gamma_d
 
 	double precision ::			& ! individual physical properties
-				knb 	(n,n), 	&
-				ktb 	(n,n), 	&
-				rb		(n,n),	&
-				hb		(n,n),	&
-				lb		(n,n),	&
-				sb		(n,n),	&
-				ib		(n,n)
+				knb 	(n,n), 	& ! bond normal stiffness
+				ktb 	(n,n), 	& ! bond shear stiffness
+				rb		(n,n),	& ! bond half width
+				hb		(n,n),	& ! bond thicknesses
+				lb		(n,n),	& ! bond lenght
+				sb		(n,n),	& ! bond cross sectionnal area
+				ib		(n,n)     ! bond moment of inertia
 
 	double precision ::			& ! forces in bonds
-				fbn		(n,n),	&
-				fbt		(n,n),	&
-				mbb		(n,n)
+				fbn		(n,n),	& ! force due to floes sliding
+				fbt		(n,n),	& ! force due to compresion/elongation
+				mbb		(n,n),  & ! moment du to bending
+				mb      (n)  , 	& ! total moment due to bonds on i
+				fbx     (n)  ,  & ! forces in x
+				fby     (n)       ! forces in y
 
 	double precision ::			& ! stresses in bonds
 				taub	(n,n),	&
@@ -33,31 +37,37 @@
     integer :: 					& ! bond presence or not
 				bond 	(n,n)
 
+    common/bond_bool/           &
+                bond              ! bond between disks i and j  [0 or 1]
+
     common/bond_param/			& ! global physical parameters
-                bond        , 	& ! bond between disks i and j  [0 or 1]
                 eb			,	& ! elastic modulus of bonds	 [N/m^2]
-				lambda_rb	, 	&
-				lambda_lb	, 	&
-				sigmat_max	, 	&
-				sigman_max	,	&
+				lambda_rb	, 	& ! radius parameter                 [m]
+				lambda_lb	, 	& ! lenght parameter                 [m]
+				lambda_ns   ,   & ! normal stiffness parameter
+				sigmatb_max	, 	&
+				sigmanb_max	,	&
 				tau_max		,	&
 				gamma_d
 
 	common/bond_var/			& ! individual physical properties
-				knb 		, 	&
-				ktb			, 	&
-				rb			,	&
-				hb			,	&
-				lb			,	&
-				sb			,	&
-				ib		
+				knb 		, 	& ! bond normal stiffness
+				ktb			, 	& ! bond shear stiffness
+				rb			,	& ! bond half width
+				hb			,	& ! bond thicknesses
+				lb			,	& ! bond lenght
+				sb			,	& ! bond cross sectionnal area
+				ib		          ! bond moment of inertia
 
 	common/bond_var/			& ! forces in bonds
-				fbn			,	&
-				fbt			,	&
-				mbb		
+				fbn			,	& ! force due to floes sliding
+				fbt			,	& ! force due to compresion/elongation
+				mbb		    ,   & ! moment du to bending
+				mb			,	& ! total moment due to bonds on i
+				fbx			,	& ! forces in x due to bonds
+				fby			      ! forces in y due to bonds
 
 	common/bond_var/			& ! stresses in bonds
-				taub		,	&
-				sigmanb		,	&
-				sigmatb
+				taub		,	& ! shear stress
+				sigmanb		,	& ! compressive stress
+				sigmatb           ! tensile stress

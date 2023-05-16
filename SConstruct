@@ -40,13 +40,9 @@ FC = F90 = "gfortran"
 
 env = Environment(
     LIBPATH=[libs],
-    FORTRANMODDIR=[
-        include,
-    ],
+    FORTRANMODDIR=[include],
     FORTRANMODDIRPREFIX="-J",
-    F90PATH=[
-        include,
-    ],
+    F90PATH=[include],
     F90FLAGS=[
         "-Wall",
         "-Wno-tabs",
@@ -55,24 +51,24 @@ env = Environment(
         "-O3",
         "-ffast-math",
         "-mcmodel=medium",
+        "-fopenmp",
     ],
+    LINKFLAGS=["-fopenmp"],
     FORTRAN=FC,
-    LINKFLAGS=[],
     F90=FC,
 )
 
 # Command line options to modify the build environment.
-# Use scons debug=1 to compile with debugging flags.
+# Use scons-3 debug=1 to compile with debugging flags.
 
 
 DEBUG = ARGUMENTS.get("debug", 0)
-EXE = ARGUMENTS.get("exe", "zoupa")
-
+EXE = ARGUMENTS.get("exe", "godar")
 
 if int(DEBUG):
-    env.Append(F90FLAGS="-g")
-    env.Append(F90FLAGS="-static")
-    env.Append(F90FLAGS="-fbacktrace")
+    env.Append(FORTRANFLAGS="-g")
+    env.Append(FORTRANFLAGS="-static")
+    env.Append(FORTRANFLAGS="-fbacktrace")
     env.Append(LINKFLAGS="-fbacktrace")
 
 # ----------------------------------------
@@ -87,5 +83,8 @@ Export("EXE")
 # The datetime module
 datetime = SConscript("datetime/SConscript", variant_dir="build/datetime")
 
-# The Sea Ice Model library and executable
-sim = SConscript("src/SConscript", variant_dir="build/sim")
+# The kdtree module
+datetime = SConscript("kdtree/SConscript", variant_dir="build/kdtree")
+
+# The GoDAR library and executable
+godar = SConscript("src/SConscript", variant_dir="build/godar")
