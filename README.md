@@ -4,8 +4,11 @@
 DEM model. To compile, run scons-3 with the appropriate parameters.
 
 scons-3 -j [n]        ! compile the code on [n] cores
+
 scons-3 -c            ! clear the build
+
 scons-3 debug=1       ! debug the code
+
 ./godar < input_file  ! run the executable
 
 The code executes automatically a python script to output a video file of the collisions. This is saved in collisionXY.mp4 file. To suppress, just comment the line 
