@@ -1,6 +1,11 @@
 subroutine stepper (tstep)
 
     use omp_lib
+    use m_allocate, only: allocate
+    use m_deallocate, only: deallocate
+    use m_KdTree, only: KdTree, KdTreeSearch
+    use dArgDynamicArray_Class, only: dArgDynamicArray
+    use m_strings, only: str
 
     implicit none
 
@@ -10,9 +15,15 @@ subroutine stepper (tstep)
 	include "CB_bond.h"
     include "CB_forcings.h"
 
-    integer :: i, j
+    integer :: i, j, k
     integer, intent(in) :: tstep
+    type(KdTree) :: tree
+    type(KdTreeSearch) :: search
+    type(dArgDynamicArray) :: da
 
+    ! Build the tree
+    tree = KdTree(x, y)
+        
     ! reinitialize force arrays for contact and bonds
     do i = 1, n
         mc(i)  = 0d0
@@ -31,20 +42,31 @@ subroutine stepper (tstep)
 	! loop through all j particles and compute interactions
 
     !$omp parallel do schedule(guided) &
-    !$omp private(i,j) &
+    !$omp private(i,j,da) &
     !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb)
     do i = n, 1, -1
-        do j = i + 1, n
+        ! Find all the particles j near i
+        da = search%kNearest(tree, x, y, xQuery = x(i), yQuery = y(i), &
+                            radius = r(i) + rtree)
+        ! loop over the nearest neighbors except the first because this is the particle i
+        do k = 1, size(da%i%values) - 1
+            j = da%i%values(k + 1)
+
+            ! only compute lower triangular matrices
+            if (i .ge. j) then
+                cycle
+            end if
+
 			! compute relative position and velocity
             call rel_pos_vel (j, i)
 
 			! bond initialization
-			if ( tstep .eq. 1 ) then
-				if ( -deltan(j, i) .le. 5d-1 * r(i)) then ! can be fancier
-					!bond (j, i) = 1
-                end if
-                call bond_properties (j, i)
-			end if
+		!	if ( tstep .eq. 1 ) then
+		!		if ( -deltan(j, i) .le. 5d-1 * r(i)) then ! can be fancier
+		!			bond (j, i) = 1
+        !        end if
+        !        call bond_properties (j, i)
+		!	end if
 
             ! verify if two particles are colliding
             if ( deltan(j,i) .gt. 0 ) then
@@ -109,6 +131,9 @@ subroutine stepper (tstep)
 
     end do
     !$omp end parallel do
+
+    ! deallocate tree memory
+    call tree%deallocate()
 
     ! sum all forces together on particule i
     do i = 1, n

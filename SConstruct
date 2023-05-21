@@ -53,10 +53,15 @@ env = Environment(
         "-mcmodel=medium",
         "-fopenmp",
     ],
-    LINKFLAGS=["-fopenmp"],
+    LINKFLAGS=[
+        "-fopenmp",
+    ],
     FORTRAN=FC,
     F90=FC,
 )
+
+env.Append(LIBPATH="/aos/home/asavard/coretran/lib")
+env.Append(F90PATH="/aos/home/asavard/coretran/include")
 
 # Command line options to modify the build environment.
 # Use scons-3 debug=1 to compile with debugging flags.
@@ -82,9 +87,6 @@ Export("EXE")
 
 # The datetime module
 datetime = SConscript("datetime/SConscript", variant_dir="build/datetime")
-
-# The kdtree module
-datetime = SConscript("kdtree/SConscript", variant_dir="build/kdtree")
 
 # The GoDAR library and executable
 godar = SConscript("src/SConscript", variant_dir="build/godar")

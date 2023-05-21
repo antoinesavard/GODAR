@@ -35,7 +35,7 @@ program ice
          read *, expno_r
          print *, "Restart experiment number is:"
          print *, expno_r
-		 write(expno_str_r,'(i4.2)') expno_r
+		 write(expno_str_r,'(i2.2)') expno_r
          read *, nt_r
          print *, "Last iteration of restart experiment is:"
          print *, nt_r

@@ -59,9 +59,8 @@ angleb = np.zeros_like(b)
 print("Compute the length and orientation of the bonds...")
 for i in range(b.shape[-1] - 1):
     for j in range(i + 1, b.shape[-1]):
-        for k in range(b.shape[0]):
-            lb[k, i, j] = lb_func(x[k, i], y[k, i], x[k, j], y[k, j])
-            angleb[k, i, j] = angleb_func(x[k, i], y[k, i], x[k, j], y[k, j])
+        lb[:, i, j] = lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+        angleb[:, i, j] = angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
 
 os.chdir("plots/")
 

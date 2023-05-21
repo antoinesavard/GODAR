@@ -5,9 +5,9 @@ Import("EXE")
 src = Glob("*.f90")
 src.remove(Glob("ice.f90")[0])
 
-env.Library(target="#/libs/ice", source=src, LIBS=["datetime", "kdtree"])
+env.Library(target="#/libs/ice", source=src, LIBS=["datetime", "coretran"])
 
 # The executable
 env.Program(
-    target="#/" + EXE, source="ice.f90", LIBS=["ice", "datetime", "kdtree"]
+    target="#/" + EXE, source="ice.f90", LIBS=["ice", "datetime", "coretran"]
 )
