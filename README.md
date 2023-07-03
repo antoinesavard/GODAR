@@ -56,7 +56,7 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
 
 ### Program architecture
 
-'''
+```bash
 - godar/
     - experiences
     - input
@@ -98,4 +98,4 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
     - build/
     - include/
     - libs/
-'''
+```
