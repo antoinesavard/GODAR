@@ -32,13 +32,13 @@ program ice
 	print *, restart
 
 	if (restart .eq. 1) then
-         read *, expno_r
-         print *, "Restart experiment number is:"
-         print *, expno_r
-		 write(expno_str_r,'(i2.2)') expno_r
-         read *, nt_r
-         print *, "Last iteration of restart experiment is:"
-         print *, nt_r
+        read *, expno_r
+        print *, "Restart experiment number is:"
+        print *, expno_r
+        write(expno_str_r,'(i2.2)') expno_r
+        read *, nt_r
+        print *, "Last iteration of restart experiment is:"
+        print *, nt_r
     endif
 
     print *, 'Experiment #?'

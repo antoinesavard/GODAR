@@ -1,13 +1,6 @@
 from glob import glob
 
-# This file sets up the compilation environment for the sea ice model and its libraries.
-
-# Refer questions to
-# David Huard <david.huard@gmail.com>
-# McGill U.
-
-# Sept. 18, 2008
-
+# This file sets up the compilation environment for Godar and its libraries.
 
 # ----------------------------------
 #         SCONS Variables

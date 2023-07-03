@@ -39,6 +39,7 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
         return data[0] if data.shape[0] == 1 else data
 
     elif bond:
+        print("Reading bonds...")
         for file in files:
             with open(output_dir + file) as fic:
                 data = np.loadtxt(fic).reshape(-1, n, n)
@@ -79,7 +80,7 @@ def draw_bond(ax, r, lb, angleb):
 def save_or_show_animation(anim, save, filename="collision.mp4"):
     if save:
         Writer = animation.writers["ffmpeg"]
-        writer = Writer(fps=60, bitrate=1800)
+        writer = Writer(fps=60, bitrate=-1)
         anim.save(filename, writer=writer)
     else:
         plt.show()

@@ -61,18 +61,18 @@ subroutine stepper (tstep)
             call rel_pos_vel (j, i)
 
 			! bond initialization
-		!	if ( tstep .eq. 1 ) then
-		!		if ( -deltan(j, i) .le. 5d-1 * r(i)) then ! can be fancier
-		!			bond (j, i) = 1
-        !        end if
-        !        call bond_properties (j, i)
-		!	end if
+			if ( tstep .eq. 1 ) then
+				if ( -deltan(j, i) .le. 5d-1 * r(i)) then ! can be fancier
+					bond (j, i) = 1
+                end if
+                call bond_properties (j, i)
+			end if
 
             ! verify if two particles are colliding
             if ( deltan(j,i) .gt. 0 ) then
 
                 call contact_forces (j, i)
-				!call bond_creation (j, i) ! to implement
+				call bond_creation (j, i) ! to implement
 
 				! update contact force on particle i by particle j
                 fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i)

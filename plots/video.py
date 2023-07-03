@@ -69,8 +69,9 @@ ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
 
 time = ax.text(0.02, 0.95, "", transform=ax.transAxes)
 
-ax.set_xlim(0, 100 * sf)
-ax.set_ylim(0, 100 * sf)
+# limits of the plot in kilometers
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 10)
 
 disks = []
 radii = []

@@ -1,0 +1,42 @@
+&numerical_param_nml
+    rtree   = 999d0                ! search radius in kd-tree
+    dt      = 1d-3                 ! length of time step [s]
+    nt      = 1d6                  ! number of tstep
+    comp    = 1d3                  ! output steps
+    /
+
+&physical_param_nml
+    Cdair    =  3d-1 * pi / 4      ! body drag air
+    Csair    =  5d-4               ! surface drag air
+    Cdwater  =  3d-1 * pi / 4      ! body drag water
+    Cswater  =  2d-3               ! surface drag water
+    z0w      =  3.0d-4             ! viscosity limit of water  
+    rhoair   =  1.3d0              ! air density [kg/m3]
+    rhoice   =  9d02               ! ice density [kg/m3]
+    rhowater =  1026d0             ! water density [kg/m3]
+    /
+
+&disk_param_nml
+    e_modul         =  6d9         ! elastic moduli
+    poiss_ratio     =  33d-2       ! poisson ratio nu
+    friction_coeff  =  7d-1        ! friction coefficient mu
+    rest_coeff      =  88d-2       ! coefficient of restitution
+    /
+
+&bond_param_nml
+    eb			= 6d9
+	lambda_rb	= 8d-1
+	lambda_lb	= 1d0
+	lambda_ns   = 2d0
+	sigmatb_max	= 1d5
+	sigmanb_max	= 1d6
+	tau_max		= 1d6
+	gamma_d		= 1d0
+    /
+
+&input_files_nml
+    Xfile = "input_files/X_test.dat"
+    Yfile = "input_files/Y_test.dat"
+    Rfile = "input_files/R_test.dat"
+    Hfile = "input_files/H_test.dat"
+    /

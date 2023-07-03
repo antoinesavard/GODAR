@@ -11,8 +11,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 	character(2), intent(in) :: expno_str_r
 
     integer :: i, j, k
-    character Xfile*32, Yfile*32, Rfile*32, Hfile*32, Tfile*32, &
-                Ofile*32, Bfile*32
+    character Tfile*32, Ofile*32, Bfile*32
 
 	! load restart files
 	if ( restart .eq. 1 ) then
@@ -71,11 +70,6 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 
 		! position of particles: need a one column prepared text file
 		write(*,*) ('Reading prepared text files')
-
-		Xfile = 'src/X.dat'
-		Yfile = 'src/Y.dat'
-		Rfile = 'src/R.dat'
-		Hfile = 'src/H.dat'
 
 		open(102, file = Xfile, status='old')
 		open(103, file = Yfile, status='old')

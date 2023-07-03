@@ -1,10 +1,9 @@
 integer :: n
 
-double precision :: nx, ny, rtree
+double precision :: nx, ny
 
 parameter(                       &
-            nx    = 1d5,         & ! x - size of the domain 
-            ny    = 1d5,         & ! y - size of the domain 
-            n     = 2500,        & ! number of disks
-            rtree = 1d3          & ! search radius in kd-tree
+            nx    = 1d4,         & ! x - size of the domain          [m]
+            ny    = 1d4,         & ! y - size of the domain          [m]
+            n     = 45           & ! number of disks
         )

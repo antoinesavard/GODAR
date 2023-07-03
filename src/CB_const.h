@@ -3,6 +3,7 @@
 !=======================================================================
 
     double precision :: t, dt, nt, comp
+    double precision :: rtree
 
     double precision :: rhoair, rhoice, rhowater
     double precision :: Cdair, Cdwater, Csair, Cswater
@@ -12,12 +13,15 @@
 
     double precision :: pi
 
+    character :: Xfile*32, Yfile*32, Rfile*32, Hfile*32
+
 
     common/const/                & ! time variables
             t               ,    & ! length of time                  [s]
             dt              ,    & ! time step                       [s]
             nt              ,    & ! total number of time step
-            comp                   ! compression of the output
+            comp            ,    & ! compression of the output
+            rtree                  ! distance to search tree         [m]
 
     common/const/                & ! general constants
             rhoair          ,    & ! air density				[kg/m^3]
@@ -31,12 +35,18 @@
 
     common/const/                & ! disks parameters
             e_modul         ,    & ! elastic moduli				 [N/m^2]
-            poiss_ratio     ,    &
-            ec              ,    &
-            gc              ,    &
-            friction_coeff  ,    &
-            rest_coeff      ,    &
-            beta
+            poiss_ratio     ,    & ! poisson ratio
+            ec              ,    & ! effective contact modulus
+            gc              ,    & ! effective shear modulus
+            friction_coeff  ,    & ! friction coefficient
+            rest_coeff      ,    & ! restitution coefficient
+            beta                   ! damping ratio
 
     common/const/                & ! math constants
             pi
+
+    common/const/                & ! input files
+            Xfile           ,    &
+            Yfile           ,    &
+            Rfile           ,    &
+            Hfile

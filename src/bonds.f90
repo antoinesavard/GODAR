@@ -110,7 +110,7 @@ subroutine bond_creation (j, i)
 
 	integer, intent(in) :: i, j
 
-	if ( deltan(j, i) .ge. 0.05 * r(i)) then
+	if ( deltan(j, i) .ge. 0.01 * r(i)) then
 		
 		bond(j, i) = 1
 

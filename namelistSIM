@@ -1,5 +1,0 @@
-&numerical_param_nml
-    nt = 1d6
-    dt = 1d-3
-    comp = 1d3
-    /
