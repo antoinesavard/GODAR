@@ -8,6 +8,7 @@
     double precision :: rhoair, rhoice, rhowater
     double precision :: Cdair, Cdwater, Csair, Cswater
     double precision :: z0w
+    double precision :: lat
 
     double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff, rest_coeff, beta
 
@@ -31,7 +32,8 @@
             Cdwater         ,    & ! water skin drag coeff
             Csair           ,    & ! air body drag coeff
             Cswater         ,    & ! water body drag coeff
-            z0w                    ! viscosity limit over water		 [m]
+            z0w             ,    & ! viscosity limit over water		 [m]
+            lat                    ! latitude of domain coriolis   [rad]
 
     common/const/                & ! disks parameters
             e_modul         ,    & ! elastic moduli				 [N/m^2]

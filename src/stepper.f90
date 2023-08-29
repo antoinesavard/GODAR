@@ -26,12 +26,12 @@ subroutine stepper (tstep)
         
     ! reinitialize force arrays for contact and bonds
     do i = 1, n
-        mc(i)  = 0d0
-        mb(i)  = 0d0
-        fcx(i) = 0d0
-        fcy(i) = 0d0
-        fbx(i) = 0d0
-        fby(i) = 0d0
+        mc(i)    = 0d0
+        mb(i)    = 0d0
+        fcx(i)   = 0d0
+        fcy(i)   = 0d0
+        fbx(i)   = 0d0
+        fby(i)   = 0d0
         ! and total force arrays
         m(i)   = 0d0
 		tfx(i) = 0d0
@@ -127,7 +127,7 @@ subroutine stepper (tstep)
 
         ! compute the total forcing from winds, currents and coriolis on particule i
         call forcing (i)
-        !call coriolis(i)
+        call coriolis(i)
 
     end do
     !$omp end parallel do
@@ -137,8 +137,8 @@ subroutine stepper (tstep)
 
     ! sum all forces together on particule i
     do i = 1, n
-        tfx(i) = fcx(i) + fbx(i) + fax(i) + fwx(i)
-        tfy(i) = fcy(i) + fby(i) + fay(i) + fwy(i)
+        tfx(i) = fcx(i) + fbx(i) + fax(i) + fwx(i) + fcorx(i)
+        tfy(i) = fcy(i) + fby(i) + fay(i) + fwy(i) + fcory(i)
 
         ! sum all moments on particule i together
         m(i) =  mc(i) + mb(i) + ma(i) + mw(i)

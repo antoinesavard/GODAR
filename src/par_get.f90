@@ -24,12 +24,13 @@ subroutine get_default
     !           physical parameters
     !-------------------------------------------------------------------
 
-    Cdair    =  3d-1 * pi / 4      ! body drag air
+    Cdair    =  3d-1               ! body drag air [Lupkes, 2012]
     Csair    =  5d-4               ! surface drag air
-    Cdwater  =  3d-1 * pi / 4      ! body drag water
+    Cdwater  =  3d-1               ! body drag water [Lupkes, 2012]
     Cswater  =  2d-3               ! surface drag water
 
-    z0w      =  3.0d-4             ! viscosity limit of water  
+    z0w      =  3.0d-4             ! viscosity limit of water
+    lat      =  1.4                ! latitude ~80 degrees   
     
     rhoair   =  1.3d0              ! air density [kg/m3]
     rhoice   =  9d02               ! ice density [kg/m3]
@@ -58,7 +59,6 @@ subroutine get_default
 	eb			= 6d9
 	lambda_rb	= 8d-1
 	lambda_lb	= 1d0
-	lambda_ns   = 2d0
 	sigmatb_max	= 1d5
 	sigmanb_max	= 1d6
 	tau_max		= 1d6
@@ -95,6 +95,7 @@ subroutine read_namelist
     include "CB_forcings.h"
     
     integer :: nml_error, filenb
+    logical :: exist
     character filename*32
 
     !---- namelist variables -------------------------------------------
@@ -102,7 +103,8 @@ subroutine read_namelist
         rtree, dt, nt, comp
 
     namelist /physical_param_nml/ &
-        Cdair, Csair, Cdwater, Cswater, z0w, rhoair, rhoice, rhowater
+        Cdair, Csair, Cdwater, Cswater, z0w, lat, rhoair, &
+        rhoice, rhowater
 
     namelist /disk_param_nml/ &
         e_modul, poiss_ratio, friction_coeff, rest_coeff
@@ -118,32 +120,66 @@ subroutine read_namelist
     filename ='namelist.nml'
     filenb = 10
 
-    print *, 'Reading namelist values'
+    print '(a)', &
+        '',&
+        '|--------------------------------------------------------|',&
+        '|                                                        |',&
+        '|   Readind namelist values to update defaults.          |',&
+        '|                                                        |',&
+        '|--------------------------------------------------------|',&
+        ''  
     
-    open (filenb, file=filename, status='old',iostat=nml_error)
-    if (nml_error /= 0) then
-        nml_error = -1
-    else
-        nml_error =  1
-    endif
+    inquire (file=filename, exist=exist)
+
+    if (exist .eqv. .False.) then
+        print *, "Error: input file does not exist: ", filename
+        print *, "Default will be used"
+        return
+    end if
+
+    ! open file
+    open (filenb, file=filename, status='old', iostat=nml_error)
         
-    do while (nml_error > 0)
-        print*,'Reading numerical parameters'
-        read(filenb, nml=numerical_param_nml,iostat=nml_error)
-        if (nml_error /= 0) exit
-        print*,'Reading input files names parameters'
-        read(filenb, nml=physical_param_nml,iostat=nml_error)
-        if (nml_error /= 0) exit
-        print*,'Reading input files names parameters'
-        read(filenb, nml=disk_param_nml,iostat=nml_error)
-        if (nml_error /= 0) exit
-        print*,'Reading input files names parameters'
-        read(filenb, nml=bond_param_nml,iostat=nml_error)
-        if (nml_error /= 0) exit
-        print*,'Reading input files names parameters'
-        read(filenb, nml=input_files_nml,iostat=nml_error)
-        print *, nml_error
-    enddo
+    ! read values inside file    
+    print*,'Reading numerical parameters'
+    read(filenb, nml=numerical_param_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
+
+    print*,'Reading physical parameters'
+    read(filenb, nml=physical_param_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
+
+    print*,'Reading disk parameters'
+    read(filenb, nml=disk_param_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
+
+    print*,'Reading bond parameters'
+    read(filenb, nml=bond_param_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
+
+    print*,'Reading input files names'
+    read(filenb, nml=input_files_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
 
     close(filenb)
 

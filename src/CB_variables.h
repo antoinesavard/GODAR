@@ -24,7 +24,9 @@
                 mcc     (n,n),  & ! moment due to rolling
                 tfx     (n)  ,  & ! total forces in x
                 tfy     (n)  ,  & ! totale forces in y
-                m       (n)       ! total moment
+                m       (n)  ,  & ! total moment
+                fcorx   (n)  ,  & ! coriolis x force
+                fcory   (n)       ! coriolis y force
 
     double precision ::         & ! decomposition variables
                 cosa    (n,n),  &
@@ -59,7 +61,9 @@
                 mcc     ,    & ! moment due to rolling             [N*m]
                 tfx     ,    & ! total force in x                    [N]
                 tfy     ,    & ! total force in y                    [N]
-                m       	   ! moment                            [N*m]
+                m       ,	 & ! moment                            [N*m]
+                fcorx   ,    & ! coriolis x force                    [N]
+                fcory          ! coriolis y force                    [N]
                 
 
     common/variables/      	 & ! decomposition variables

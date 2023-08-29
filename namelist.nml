@@ -6,11 +6,12 @@
     /
 
 &physical_param_nml
-    Cdair    =  3d-1 * pi / 4      ! body drag air
+    Cdair    =  3d-1               ! body drag air
     Csair    =  5d-4               ! surface drag air
-    Cdwater  =  3d-1 * pi / 4      ! body drag water
+    Cdwater  =  3d-1               ! body drag water
     Cswater  =  2d-3               ! surface drag water
-    z0w      =  3.0d-4             ! viscosity limit of water  
+    z0w      =  3.0d-4             ! viscosity limit of water 
+    lat      =  1.3d0              ! latitude [rad] 
     rhoair   =  1.3d0              ! air density [kg/m3]
     rhoice   =  9d02               ! ice density [kg/m3]
     rhowater =  1026d0             ! water density [kg/m3]
@@ -27,7 +28,6 @@
     eb			= 6d9
 	lambda_rb	= 8d-1
 	lambda_lb	= 1d0
-	lambda_ns   = 2d0
 	sigmatb_max	= 1d5
 	sigmanb_max	= 1d6
 	tau_max		= 1d6

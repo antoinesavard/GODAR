@@ -69,7 +69,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 	else
 
 		! position of particles: need a one column prepared text file
-		write(*,*) ('Reading prepared text files')
+		write(*,*) ('Reading prepared text files with given path')
 
 		open(102, file = Xfile, status='old')
 		open(103, file = Yfile, status='old')

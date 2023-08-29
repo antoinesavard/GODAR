@@ -23,17 +23,29 @@ program ice
 
     tic = now()
 
-    print *, 'Read namelist?'
+    print '(a)', &
+        '',&
+        '|========================================================|',&
+        '|                                                        |',&
+        '|   Welcome in GODAR (Granular flOes for Discrete        |',&
+        '|   Arctic Representation). Please use the input file    |',&
+        '|   as arguments to this program. If not, please provide |',&
+        '|   the following:                                       |',&
+        '|                                                        |',&
+        '|========================================================|',&
+        ''  
+
+    print *, 'Read namelist? (0/1)'
     read  *, readnamelist
     print *, readnamelist
 
-	print *, 'Restart experiment from previous one?'
+	print *, 'Restart experiment from previous one? (0/1)'
 	read  *, restart
 	print *, restart
 
 	if (restart .eq. 1) then
         read *, expno_r
-        print *, "Restart experiment number is:"
+        print *, "Restart from experiment number: (XX)"
         print *, expno_r
         write(expno_str_r,'(i2.2)') expno_r
         read *, nt_r
@@ -41,7 +53,7 @@ program ice
         print *, nt_r
     endif
 
-    print *, 'Experiment #?'
+    print *, 'This experiment number? (XX)'
     read  *, expno 
     print *, expno 
     write(expno_str,'(i2.2)') expno
@@ -58,15 +70,34 @@ program ice
     call clear_posts (expno_str)
 
     !number of processor/threads
+
+    print '(a)', &
+        '',&
+        '|--------------------------------------------------------|',&
+        '|                                                        |',&
+        '|   Checking the number of threads to use.               |',&
+        '|                                                        |',&
+        '|--------------------------------------------------------|',&
+        '' 
+
     proc_num = omp_get_num_procs ( )
     thread_num = omp_get_max_threads ( )
+    print *, 'Number of processors available: ', proc_num
+    print *, 'Number of threads available:    ', thread_num
+    
     print *, 'Number of threads to use?'
 	read  *, num_threads
 	print *, num_threads
     call omp_set_num_threads (num_threads)
 
-    write ( *, '(a,i8)' ) 'Number of processors available: ', proc_num
-    write ( *, '(a,i8)' ) 'Number of threads available:    ', thread_num
+    print '(a)', &
+        '',&
+        '|--------------------------------------------------------|',&
+        '|                                                        |',&
+        '|   Entering main program now. Please wait...            |',&
+        '|                                                        |',&
+        '|--------------------------------------------------------|',&
+        '' 
 
     do tstep = 1, int(nt) + 1
 
@@ -86,6 +117,15 @@ program ice
     tac = now()
 
     print*, "Total simulation time: ", delta_str(tac - tic)
+
+    print '(a)', &
+        '',&
+        '|--------------------------------------------------------|',&
+        '|                                                        |',&
+        '|   Exiting main program now.                            |',&
+        '|                                                        |',&
+        '|--------------------------------------------------------|',&
+        '' 
 
     call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py "//expno_str//' '//n_str)
 

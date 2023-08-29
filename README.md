@@ -7,18 +7,23 @@ GODAR is a discrete element model that solves Newton's equations for a given num
 
 ### How to setup GODAR
 
-There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github. Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`.
+There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: https://github.com/leonfoks/coretran. 
+
+Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`.
 
 1. Change the `LIBPATH` and `F90PATH` values in the SConstruct file (lines 62 and 63) to your `/mycoretran/lib` and `/mycoretran/include` respectively
-2. Open the terminal and run: `LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mycoretran/lib`
-3. Then run the command: `export LD_LIBRARY_PATH`
+2. We want to edit the `.bashrc` file so that we only have to do this operation one, otherwise, you will have to do it everytime you open a new terminal. Open the terminal and run: `emacs ~/.bashrc`
+3. Add the following line to this file: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mycoretran/lib` If the line already exist, just append `:/mycoretran/lib` at the end of the line.
+4. `Crtl-x Crtl-s` to save and `Crtl-x Crtl-c` to exit emacs.
 
-After these steps, you should be good to go. Next, to compile, run `scons-3` with the appropriate parameters.
+After these steps, you should be good to go. 
+
+Next, to compile, this program uses `scons-3`. You will have to install it prior to running this program; try doing `pip install SCons==3.0.0`. Then, run `scons-3` with the appropriate parameters to compile the Godar.
 
 - To compile the code on n cores `scons-3 -j n` 
 - To clear the build: `scons-3 -c`
 - Debug the code: `scons-3 debug=1`
-- Run the executable: `./godar < input`
+- Run the executable in the background: `./godar < input &`
 
 The input_file is a simple file to pass along to the main program when executing that can take the following arguments in this order: 
 - NEED`[bool]   input namelist`
