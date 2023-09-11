@@ -44,6 +44,7 @@ subroutine get_default
     poiss_ratio     =  33d-2       ! poisson ratio nu
     friction_coeff  =  7d-1        ! friction coefficient mu
     rest_coeff      =  88d-2       ! coefficient of restitution
+    sigmanc_crit    =  1d6         ! critical normal stress
 
     ! effective contact modulus
     ec    =  e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
@@ -56,13 +57,13 @@ subroutine get_default
     !           Bonds physical parameters
     !-------------------------------------------------------------------
 
-	eb			= 6d9
-	lambda_rb	= 8d-1
-	lambda_lb	= 1d0
-	sigmatb_max	= 1d5
-	sigmanb_max	= 1d6
-	tau_max		= 1d6
-	gamma_d		= 1d0
+	eb			 = 6d9
+	lambda_rb	 = 8d-1
+	lambda_lb	 = 1d0
+	sigmatb_crit = 1d5
+	sigmacb_crit = 1d6
+	tau_crit	 = 1d6
+	gamma_d		 = 1d0
 
     !-------------------------------------------------------------------
     !           Winds and currents forcings
@@ -107,11 +108,11 @@ subroutine read_namelist
         rhoice, rhowater
 
     namelist /disk_param_nml/ &
-        e_modul, poiss_ratio, friction_coeff, rest_coeff
+        e_modul, poiss_ratio, friction_coeff, rest_coeff, sigmanc_crit
 
     namelist /bond_param_nml/ &
-        eb, lambda_rb, lambda_lb, lambda_ns, sigmatb_max, &
-        sigmanb_max, tau_max, gamma_d
+        eb, lambda_rb, lambda_lb, sigmatb_crit, &
+        sigmacb_crit, tau_crit, gamma_d
 
     namelist /input_files_nml/ &
         Xfile, Yfile, Rfile, Hfile

@@ -145,7 +145,7 @@ subroutine stepper (tstep)
     end do
 
     ! forces on side particles for experiments
-    !call experiment_forces
+    call experiment_forces
 
 	! integration in time
     call velocity
@@ -165,10 +165,12 @@ subroutine experiment_forces
     include "CB_forcings.h"
 
 
-    tfx(44) = 0d0
-    tfy(44) = 0d0
-    tfx(45) = 0d0
-    tfy(45) = 0d0
+    tfx(2) = tfx(2) - 1d8
+
+    !tfx(44) = 0d0
+    !tfy(44) = 0d0
+    !tfx(45) = 0d0
+    !tfy(45) = 0d0
 
     ! bottom plate on the left
     !tfy(1) = tfy(1) + 1d8
@@ -176,9 +178,9 @@ subroutine experiment_forces
     !tfy(3) = tfy(3) + 1d8
 
     ! top plate on the right
-    tfy(6) = tfy(6) - 5d7
-    tfy(4) = tfy(4) - 5d7
-    tfy(7) = tfy(7) - 5d7
+    !tfy(6) = tfy(6) - 5d7
+    !tfy(4) = tfy(4) - 5d7
+    !tfy(7) = tfy(7) - 5d7
 
     ! left plate
     !tfx(2) = tfx(2) + 1d8
@@ -188,10 +190,10 @@ subroutine experiment_forces
     !tfx(26) = tfx(26) + 1d8
 
     ! right plate
-    tfx(7) = tfx(7) - 5d7
-    tfx(13) = tfx(13) - 5d7
-    tfx(19) = tfx(19) - 5d7
-    tfx(25) = tfx(25) - 5d7
-    tfx(31) = tfx(31) - 5d7
+    !tfx(7) = tfx(7) - 5d7
+    !tfx(13) = tfx(13) - 5d7
+    !tfx(19) = tfx(19) - 5d7
+    !tfx(25) = tfx(25) - 5d7
+    !tfx(31) = tfx(31) - 5d7
 
 end subroutine experiment_forces

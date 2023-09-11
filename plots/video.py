@@ -42,10 +42,10 @@ x, y, r, h, t, o, b = (
     multiload(output_dir, filesb, 1, n),
 )
 
-x = x[::compression]
-y = y[::compression]
-r = r[::compression]
-h = h[::compression]
+x = x[::compression] / 1000
+y = y[::compression] / 1000
+r = r[::compression] / 1000
+h = h[::compression] / 1000
 t = t[::compression]
 o = np.sign(o[::compression])
 b = b[::compression]
@@ -66,6 +66,8 @@ os.chdir("plots/")
 
 fig = plt.figure(dpi=300, figsize=(4, 4))
 ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
+ax.set_ylabel("Position [km]", rotation=90)
+ax.set_xlabel("Position [km]")
 
 time = ax.text(0.02, 0.95, "", transform=ax.transAxes)
 
@@ -117,8 +119,10 @@ def animate(k):
     for i, (disk, rad) in enumerate(zip(disks, radii)):
         p = np.array([x[k, i], y[k, i]])
         disk.center = p
+        disk.radius = r[k, i]
         rad.xy = p
         rad.angle = t[k, i]
+        rad.set_width(r[k, i])
         rad.set_edgecolor(edge[k, i])
         if i == len(disks) - 1:
             continue

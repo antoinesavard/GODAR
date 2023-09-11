@@ -1,4 +1,4 @@
 1                   input namelist
 0					input restart
-10                  exp version
-14                  number of threads
+99                  exp version
+1                   number of threads

@@ -8,6 +8,9 @@ subroutine bond_properties (j, i)
 	include "CB_bond.h"
 
 	integer, intent(in) :: i, j
+    double precision :: gb
+
+    gb = eb / 2d0 / (1 + poiss_ratio)
 
 	rb  (j, i) = lambda_rb * min(r(i), r(j))
 	hb  (j, i) = (h(i) + h(j)) / 2d0
@@ -17,6 +20,6 @@ subroutine bond_properties (j, i)
 	ib  (j, i) = 2d0 / 3d0 * hb (j, i) * rb (j, i) ** 3d0
 
 	knb (j, i) = eb / lb (j, i)
-	ktb (j, i) = knb (j, i) / lambda_ns
+	ktb (j, i) = 5d0 / 6d0 * gb / lb (j, i)
 
 end subroutine bond_properties

@@ -2,14 +2,13 @@
 !             Common block: bond properties
 !=======================================================================
 
-    double precision :: 		& ! global physical parameters
-				eb			, 	& ! elastic stiffness
-				lambda_rb	, 	& ! radius parameter
-				lambda_lb	, 	& ! lenght parameter
-				lambda_ns   ,   & ! normal stiffness parameter
-				sigmatb_max	, 	&
-				sigmanb_max	,	&
-				tau_max		,	&
+    double precision :: 	 	& ! global physical parameters
+				eb			 , 	& ! elastic stiffness
+				lambda_rb	 , 	& ! radius parameter
+				lambda_lb	 , 	& ! lenght parameter
+				sigmatb_crit , 	&
+				sigmacb_crit ,	&
+				tau_crit	 ,	&
 				gamma_d
 
 	double precision ::			& ! individual physical properties
@@ -31,7 +30,7 @@
 
 	double precision ::			& ! stresses in bonds
 				taub	(n,n),	&
-				sigmanb	(n,n),	&
+				sigmacb	(n,n),	&
 				sigmatb	(n,n)
 
     integer :: 					& ! bond presence or not
@@ -41,33 +40,32 @@
                 bond              ! bond between disks i and j  [0 or 1]
 
     common/bond_param/			& ! global physical parameters
-                eb			,	& ! elastic modulus of bonds	 [N/m^2]
-				lambda_rb	, 	& ! radius parameter                 [m]
-				lambda_lb	, 	& ! lenght parameter                 [m]
-				lambda_ns   ,   & ! normal stiffness parameter
-				sigmatb_max	, 	&
-				sigmanb_max	,	&
-				tau_max		,	&
+                eb			 ,	& ! elastic modulus of bonds	 [N/m^2]
+				lambda_rb	 , 	& ! radius parameter                 [-]
+				lambda_lb	 , 	& ! lenght parameter                 [-]
+				sigmatb_crit , 	&
+				sigmacb_crit ,	&
+				tau_crit	 ,	&
 				gamma_d
 
 	common/bond_var/			& ! individual physical properties
-				knb 		, 	& ! bond normal stiffness
-				ktb			, 	& ! bond shear stiffness
-				rb			,	& ! bond half width
-				hb			,	& ! bond thicknesses
-				lb			,	& ! bond lenght
-				sb			,	& ! bond cross sectionnal area
+				knb 		 , 	& ! bond normal stiffness
+				ktb			 , 	& ! bond shear stiffness
+				rb			 ,	& ! bond half width
+				hb			 ,	& ! bond thicknesses
+				lb			 ,	& ! bond lenght
+				sb			 ,	& ! bond cross sectionnal area
 				ib		          ! bond moment of inertia
 
 	common/bond_var/			& ! forces in bonds
-				fbn			,	& ! force due to floes sliding
-				fbt			,	& ! force due to compresion/elongation
-				mbb		    ,   & ! moment du to bending
-				mb			,	& ! total moment due to bonds on i
-				fbx			,	& ! forces in x due to bonds
+				fbn			 ,	& ! force due to floes sliding
+				fbt			 ,	& ! force due to compresion/elongation
+				mbb		     ,  & ! moment du to bending
+				mb			 ,	& ! total moment due to bonds on i
+				fbx			 ,	& ! forces in x due to bonds
 				fby			      ! forces in y due to bonds
 
 	common/bond_var/			& ! stresses in bonds
-				taub		,	& ! shear stress
-				sigmanb		,	& ! compressive stress
+				taub		 ,	& ! shear stress
+				sigmacb		 ,	& ! compressive stress
 				sigmatb           ! tensile stress

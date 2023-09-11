@@ -52,7 +52,7 @@ def draw(ax, r, radius, angle, edge):
     circle = Circle(xy=r, radius=radius, edgecolor="b", fill=True, zorder=0)
     angle_rect = Rectangle(
         xy=r,
-        height=1,
+        height=1 / 1000,
         width=radius,
         angle=angle,
         edgecolor=edge,
@@ -66,7 +66,7 @@ def draw(ax, r, radius, angle, edge):
 def draw_bond(ax, r, lb, angleb):
     bond_rect = Rectangle(
         xy=r,
-        height=1,
+        height=1 / 1000,
         width=lb,
         angle=angleb,
         edgecolor=(0, 0, 0, 0.5),

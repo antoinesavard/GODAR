@@ -5,5 +5,5 @@ double precision :: nx, ny
 parameter(                       &
             nx    = 1d4,         & ! x - size of the domain          [m]
             ny    = 1d4,         & ! y - size of the domain          [m]
-            n     = 45           & ! number of disks
+            n     = 2            & ! number of disks
         )

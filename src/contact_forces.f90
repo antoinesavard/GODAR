@@ -14,7 +14,7 @@ subroutine contact_forces (j, i)
     double precision :: knc, ktc, gamn, gamt
     double precision :: krc, mrolling
 
-    deltat(j,i) = sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
+    deltat(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
                     r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 )
 
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
@@ -36,13 +36,22 @@ subroutine contact_forces (j, i)
     gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * m_redu )
 
     ! compute the normal/tangent force
-    ! normal force is F=kx-du it works because this is the force needed
-    ! make an compression of x knowing that there is a damping that acts
-    ! againts us, and F is the force that the particle j is feeling
-    ! while -F is the force the particle i is feeling
+    ! normally force is F=-kx-cu: in our case it works because x is 
+    ! measured as the spring compression (x>0) as seen from particle i 
+    ! (positive), while u_rel is measured as if i was not moving
+    ! so as if the other particles are moving towards i (negative, 
+    ! because u = (x_j-x_i) \hat{n} so we need to have F=-kx+cu, but
+    ! there is a negative sign in stepper (k > 0, c > 0).
     fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
 
     fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
+
+    ! verify if we are in the plastic case or not
+    if ( sigmanc_crit * hmin .le. fcn(j,i) / deltat(j,i) / hmin ) then
+        
+        call plastic_contact (j, i, m_redu, hmin, krc)
+
+    end if
 
 	! make sure that disks are slipping if not enough normal force
     call coulomb (j, i)
@@ -52,7 +61,7 @@ subroutine contact_forces (j, i)
         mrolling = -krc * omegarel(j, i) * dt
 
         ! ensures no rolling if moment is too big
-        if ( abs(omegarel(j,i)) > 2 * abs(fcn(j,i)) / knc * &
+        if ( abs(omegarel(j,i) * dt) > 2 * abs(fcn(j,i)) / knc / &
                 deltat(j,i) ) then
                 
             mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
@@ -87,3 +96,81 @@ double precision function fit (xi)
     fit = ( p1 * xi ** 2 + p2 * xi + p3 ) / ( xi ** 2 + q1 * xi + q2 )
 
 end function fit
+
+
+subroutine plastic_contact (j, i, m_redu, hmin, krc)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: j, i
+    double precision, intent(in) :: m_redu, hmin
+    double precision, intent(out) :: krc
+
+    double precision :: knc, ktc, gamn, gamt
+
+    knc    = sigmanc_crit * hmin ** 2 * deltat(j,i) / deltan(j,i)
+
+    ktc    = 6d0 * gc / ec * knc
+
+    krc    = knc * deltat(j,i) ** 2 / 12
+
+    gamn   = -beta * sqrt( 5d0 * knc * m_redu )
+
+    gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * m_redu )
+
+    fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
+
+    fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
+
+    call update_shape (j, i)
+
+end subroutine plastic_contact
+
+
+subroutine update_shape (j, i)
+
+    implicit none 
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: j, i
+
+    double precision :: hmin, dh, Vol, Area
+
+    hmin = min(h(i), h(j))
+
+    Area = r(i) ** 2 * acos((dist(j,i) ** 2 - r(j) ** 2 + r(i) ** 2)   &
+            / (2 * dist(j,i)) / r(i)) - (dist(j,i) ** 2 - r(j) ** 2 &
+            + r(i) ** 2) / (2 * dist(j,i)) * deltat(j,i) / 2d0 +    &
+        r(j) ** 2 * acos((dist(j,i) ** 2 - r(i) ** 2 + r(j) ** 2)   &
+            / (2 * dist(j,i)) / r(j)) - (dist(j,i) ** 2 - r(i) ** 2 &
+            + r(j) ** 2) / (2 * dist(j,i)) * deltat(j,i) / 2d0
+
+    Vol = Area * hmin
+
+    if ( hmin .eq. h(i) ) then
+
+        dh = Vol / ( pi * r(i) ** 2d0 )
+
+        r(i) = r(i) * sqrt(h(i) / (h(i) + dh) )
+
+        h(i) = h(i) + dh
+
+    else if ( hmin .eq. h(j) ) then
+
+        dh = Vol / ( pi * r(j) ** 2d0 )
+
+        r(j) = r(j) * sqrt(h(j) / (h(j) + dh) )
+
+        h(j) = h(j) + dh
+
+    end if
+
+
+end subroutine update_shape

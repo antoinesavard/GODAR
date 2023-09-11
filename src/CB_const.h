@@ -10,7 +10,7 @@
     double precision :: z0w
     double precision :: lat
 
-    double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff, rest_coeff, beta
+    double precision :: e_modul, poiss_ratio, ec, gc, friction_coeff, rest_coeff, beta, sigmanc_crit
 
     double precision :: pi
 
@@ -42,7 +42,8 @@
             gc              ,    & ! effective shear modulus
             friction_coeff  ,    & ! friction coefficient
             rest_coeff      ,    & ! restitution coefficient
-            beta                   ! damping ratio
+            beta            ,    & ! damping ratio
+            sigmanc_crit           ! critical stress
 
     common/const/                & ! math constants
             pi
