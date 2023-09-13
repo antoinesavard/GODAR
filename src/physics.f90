@@ -43,6 +43,9 @@ subroutine rel_pos_vel (j, i)
 	! relative angular velocity
 	omegarel(j,i) = ( omega(j) - omega(i) )
 
+    ! relative angular position
+    thetarel(j,i) = ( theta(j) - theta(i) )
+
 	! Normal components of the relative velocities:
 	veln(j,i) = ( u(j) - u(i) ) * cosa(j,i) +     &
 				( v(j) - v(i) ) * sina(j,i)

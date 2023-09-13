@@ -36,6 +36,7 @@
                 deltan  (n,n),	&
                 deltat  (n,n),  &
 				omegarel(n,n),  &
+                thetarel(n,n),  &
                 dist    (n,n)
         
     common/variables/        & ! particle variables
@@ -74,4 +75,5 @@
                 deltan  ,  	 & ! normal distance between borders     [m]
                 deltat  ,    & ! tangent overlap                     [m]
 				omegarel,	 & ! relative angular velocity       [rad/s]
+                thetarel,    & ! relative angular position         [rad]
                 dist           ! distance between 2 particles        [m]

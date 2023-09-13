@@ -58,11 +58,11 @@ subroutine contact_forces (j, i)
 
     if ( bond (j, i) .eq. 0 ) then
         ! moments due to rolling
-        mrolling = -krc * omegarel(j, i) * dt
+        mrolling = -krc * ( omegarel(j, i) * dt + thetarel(j, i) )
 
         ! ensures no rolling if moment is too big
-        if ( abs(omegarel(j,i) * dt) > 2 * abs(fcn(j,i)) / knc / &
-                deltat(j,i) ) then
+        if ( abs(omegarel(j,i) * dt + thetarel(j, i) ) >    &
+            2 * abs(fcn(j,i)) / knc / deltat(j,i) ) then
                 
             mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
                         sign(1d0, omegarel(j,i))

@@ -30,14 +30,16 @@ subroutine bond_forces (j, i)
     fbt(j, i) = -ktb(j, i) * sb(j, i) * velt(j, i) * dt
 
 	! moments for bending and twisting motion
-    mbending = -ktb(j, i) * ib(j, i) * omegarel(j, i) * dt
+    mbending = -ktb(j, i) * ib(j, i) * ( omegarel(j, i) * dt + &
+                 thetarel(j, i) )
 
     ! moments due to rolling
-    mrolling = -krb * omegarel(j, i) * dt
+    mrolling = -krb * ( omegarel(j, i) * dt + thetarel(j, i) )
 
     ! ensures no rolling if moment is too big
-    if ( abs(omegarel(j,i)) > 2 * (sqrt(3d0) * sigmacb_crit * hb(j,i) &
-        + abs(fcn(j,i))) / knc * deltat(j,i) ) then
+    if ( abs(( omegarel(j, i) * dt + thetarel(j, i) )) >           &
+        2 * (sqrt(3d0) * sigmacb_crit * hb(j,i) + abs(fcn(j,i))) / &
+        knc * deltat(j,i) ) then
             
         mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
                     sign(1d0, omegarel(j,i))
