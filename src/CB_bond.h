@@ -18,7 +18,8 @@
 				hb		(n,n),	& ! bond thicknesses
 				lb		(n,n),	& ! bond lenght
 				sb		(n,n),	& ! bond cross sectionnal area
-				ib		(n,n)     ! bond moment of inertia
+				ib		(n,n),  & ! bond moment of inertia
+                thetarelb(n,n)    ! bond relative angle
 
 	double precision ::			& ! forces in bonds
 				fbn		(n,n),	& ! force due to floes sliding
@@ -55,7 +56,8 @@
 				hb			 ,	& ! bond thicknesses
 				lb			 ,	& ! bond lenght
 				sb			 ,	& ! bond cross sectionnal area
-				ib		          ! bond moment of inertia
+				ib		     ,  & ! bond moment of inertia
+                thetarelb         ! bond relative angle
 
 	common/bond_var/			& ! forces in bonds
 				fbn			 ,	& ! force due to floes sliding

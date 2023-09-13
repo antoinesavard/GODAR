@@ -23,3 +23,18 @@ subroutine bond_properties (j, i)
 	ktb (j, i) = 5d0 / 6d0 * gb / lb (j, i)
 
 end subroutine bond_properties
+
+
+subroutine reset_bond (j, i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: j, i
+
+    thetarelb(j,i) = 0d0
+
+end subroutine reset_bond

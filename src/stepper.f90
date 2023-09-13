@@ -89,6 +89,10 @@ subroutine stepper (tstep)
                 ! update moment on particule j by particule i due to tangent contact 
                 mc(j) = mc(j) - r(j) * fct(j,i) + mcc(j,i)
 
+            else
+            
+                call reset_contact (j, i)
+
             end if
 
 			! compute forces from bonds between particle i and j
@@ -117,6 +121,10 @@ subroutine stepper (tstep)
                     ! update moment on particule j by i due to bond
                     mb(j) = mb(j) - r(j) * fbt(j,i) + mbb(j, i)
                 end if
+
+            else
+
+                call reset_bond (j, i)
 
 			end if
 

@@ -17,6 +17,8 @@ subroutine contact_forces (j, i)
     deltat(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
                     r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 )
 
+    thetarelc(j,i) = omegarel(j,i) * dt + thetarelc(j,i)
+
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
 
     r_redu =  r(i) * r(j) / ( r(i) + r(j) )
@@ -58,11 +60,11 @@ subroutine contact_forces (j, i)
 
     if ( bond (j, i) .eq. 0 ) then
         ! moments due to rolling
-        mrolling = -krc * ( omegarel(j, i) * dt + thetarel(j, i) )
+        mrolling = -krc * thetarelc(j, i) 
 
         ! ensures no rolling if moment is too big
-        if ( abs(omegarel(j,i) * dt + thetarel(j, i) ) >    &
-            2 * abs(fcn(j,i)) / knc / deltat(j,i) ) then
+        if ( abs( thetarelc(j, i) ) > 2 * abs(fcn(j,i)) / knc / &
+            deltat(j,i) ) then
                 
             mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
                         sign(1d0, omegarel(j,i))

@@ -43,9 +43,6 @@ subroutine rel_pos_vel (j, i)
 	! relative angular velocity
 	omegarel(j,i) = ( omega(j) - omega(i) )
 
-    ! relative angular position
-    thetarel(j,i) = ( theta(j) - theta(i) )
-
 	! Normal components of the relative velocities:
 	veln(j,i) = ( u(j) - u(i) ) * cosa(j,i) +     &
 				( v(j) - v(i) ) * sina(j,i)
@@ -62,3 +59,18 @@ subroutine rel_pos_vel (j, i)
     deltat(j,i)  =  0d0
     
 end subroutine rel_pos_vel
+
+
+subroutine reset_contact (j, i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: j, i
+
+    thetarelc(j,i) = 0d0
+
+end subroutine reset_contact

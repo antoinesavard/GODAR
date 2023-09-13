@@ -99,6 +99,9 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         
         ! initial particle angle
         theta(i)  =  0d0
+        ! relative angular position is 0 at first
+        thetarelc(j,i) = 0d0
+        thetarelb(j,i) = 0d0
 
         ! initial forces
         tfx(i)    =  0d0
