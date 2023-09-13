@@ -19,7 +19,9 @@
 				lb		(n,n),	& ! bond lenght
 				sb		(n,n),	& ! bond cross sectionnal area
 				ib		(n,n),  & ! bond moment of inertia
-                thetarelb(n,n)    ! bond relative angle
+                thetarelb(n,n), & ! bond relative angle
+                deltanb (n,n),  & ! elongation
+                deltatb (n,n)     ! deflection
 
 	double precision ::			& ! forces in bonds
 				fbn		(n,n),	& ! force due to floes sliding
@@ -57,7 +59,9 @@
 				lb			 ,	& ! bond lenght
 				sb			 ,	& ! bond cross sectionnal area
 				ib		     ,  & ! bond moment of inertia
-                thetarelb         ! bond relative angle
+                thetarelb    ,  & ! bond relative angle
+                deltanb      ,  & ! elongation
+                deltatb           ! deflection
 
 	common/bond_var/			& ! forces in bonds
 				fbn			 ,	& ! force due to floes sliding

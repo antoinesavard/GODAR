@@ -2,42 +2,42 @@
 !                   Common block dynamic variables
 !=======================================================================
 
-    double precision ::			& ! particle variables
-                x       (n),    & ! x positions
-                y       (n),    & ! y positions
-                r       (n),    &
-                h       (n),    &
-                hfa     (n),    &
-                hfw     (n),    &
-                mass    (n),    &
-                u       (n),    &
-                v       (n),    &
-                theta   (n),    &
-                omega   (n)
+    double precision ::	    		& ! particle variables
+                x           (n),    & ! x positions
+                y           (n),    & ! y positions
+                r           (n),    &
+                h           (n),    &
+                hfa         (n),    &
+                hfw         (n),    &
+                mass        (n),    &
+                u           (n),    &
+                v           (n),    &
+                theta       (n),    &
+                omega       (n)
 
-    double precision ::         & ! force variables
-                fcn     (n,n),  & ! normal contact forces
-                fct     (n,n),  & ! tangential contact forces
-                fcx     (n)  ,  & ! contact forces in x
-                fcy     (n)  ,  & ! contact forces in y
-                mc      (n)  ,  & ! moment due to contact
-                mcc     (n,n),  & ! moment due to rolling
-                tfx     (n)  ,  & ! total forces in x
-                tfy     (n)  ,  & ! totale forces in y
-                m       (n)  ,  & ! total moment
-                fcorx   (n)  ,  & ! coriolis x force
-                fcory   (n)       ! coriolis y force
+    double precision ::             & ! force variables
+                fcn         (n,n),  & ! normal contact forces
+                fct         (n,n),  & ! tangential contact forces
+                fcx         (n)  ,  & ! contact forces in x
+                fcy         (n)  ,  & ! contact forces in y
+                mc          (n)  ,  & ! moment due to contact
+                mcc         (n,n),  & ! moment due to rolling
+                tfx         (n)  ,  & ! total forces in x
+                tfy         (n)  ,  & ! totale forces in y
+                m           (n)  ,  & ! total moment
+                fcorx       (n)  ,  & ! coriolis x force
+                fcory       (n)       ! coriolis y force
 
-    double precision ::         & ! decomposition variables
-                cosa    (n,n),  &
-                sina    (n,n),  &
-                veln    (n,n),  &
-                velt    (n,n),  &
-                deltan  (n,n),	&
-                deltat  (n,n),  &
-				omegarel(n,n),  &
-                thetarel(n,n),  &
-                dist    (n,n)
+    double precision ::             & ! decomposition variables
+                cosa        (n,n),  &
+                sina        (n,n),  &
+                veln        (n,n),  &
+                velt        (n,n),  &
+                deltan      (n,n),	&
+                deltat      (n,n),  &
+				omegarel    (n,n),  &
+                thetarelc   (n,n),  &
+                dist        (n,n)
         
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
@@ -75,5 +75,5 @@
                 deltan  ,  	 & ! normal distance between borders     [m]
                 deltat  ,    & ! tangent overlap                     [m]
 				omegarel,	 & ! relative angular velocity       [rad/s]
-                thetarel,    & ! relative angular position         [rad]
+                thetarelc,    & ! relative angular position        [rad]
                 dist           ! distance between 2 particles        [m]

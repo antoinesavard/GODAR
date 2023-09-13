@@ -32,9 +32,12 @@ subroutine reset_bond (j, i)
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+    include "CB_bond.h"
 
     integer, intent(in) :: j, i
 
     thetarelb(j,i) = 0d0
+    deltanb(j,i)   = 0d0
+    deltatb(j,i)   = 0d0
 
 end subroutine reset_bond

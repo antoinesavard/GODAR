@@ -99,9 +99,6 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         
         ! initial particle angle
         theta(i)  =  0d0
-        ! relative angular position is 0 at first
-        thetarelc(j,i) = 0d0
-        thetarelb(j,i) = 0d0
 
         ! initial forces
         tfx(i)    =  0d0
@@ -124,6 +121,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             mcc(j,i)  =  0d0
             fbn(j,i)  =  0d0
             fbt(j,i)  =  0d0
+            ! relative angular position is 0 at first
+            thetarelc(j,i) = 0d0
+            thetarelb(j,i) = 0d0
+            ! bond elongation et deflection
+            deltanb(j,i) = 0d0
+            deltatb(j,i) = 0d0
         end do
     end do
 

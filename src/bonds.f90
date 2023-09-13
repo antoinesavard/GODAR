@@ -12,9 +12,12 @@ subroutine bond_forces (j, i)
     double precision :: mbending, mrolling
     double precision :: krb, knc
     double precision :: fit
-    double precision :: r_redu, hmin, hb
+    double precision :: r_redu, hmin
 
     thetarelb(j,i) = omegarel(j,i) * dt + thetarelb(j,i)
+
+    deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
+    deltatb(j,i) = velt(j,i) * dt + deltatb(j,i)
 
     ! rolling stiffness due to bond
     r_redu =  r(i) * r(j) / ( r(i) + r(j) )
@@ -28,8 +31,8 @@ subroutine bond_forces (j, i)
     krb    =  knc * deltat(j,i) ** 2 / 12
 
     ! forces are computed from linear elastic material law
-    fbn(j, i) = -knb(j, i) * sb(j, i) * veln(j, i) * dt
-    fbt(j, i) = -ktb(j, i) * sb(j, i) * velt(j, i) * dt
+    fbn(j, i) = -knb(j, i) * sb(j, i) * deltanb(j, i)
+    fbt(j, i) = -ktb(j, i) * sb(j, i) * deltatb(j, i)
 
 	! moments for bending and twisting motion
     mbending = -ktb(j, i) * ib(j, i) * thetarelb(j,i)
@@ -38,7 +41,7 @@ subroutine bond_forces (j, i)
     mrolling = -krb * thetarelb(j, i)
 
     ! ensures no rolling if moment is too big
-    if ( abs(thetarel(j, i)) > 2 * (sqrt(3d0) * sigmacb_crit * &
+    if ( abs(thetarelb(j, i)) > 2 * (sqrt(3d0) * sigmacb_crit * &
          hb(j,i) + abs(fcn(j,i))) / knc * deltat(j,i) ) then
             
         mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
