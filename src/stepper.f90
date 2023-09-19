@@ -14,6 +14,7 @@ subroutine stepper (tstep)
     include "CB_const.h"
 	include "CB_bond.h"
     include "CB_forcings.h"
+    include "CB_options.h"
 
     integer :: i, j, k
     integer, intent(in) :: tstep
@@ -23,7 +24,7 @@ subroutine stepper (tstep)
 
     ! Build the tree
     tree = KdTree(x, y)
-        
+    
     ! reinitialize force arrays for contact and bonds
     do i = 1, n
         mc(i)    = 0d0
@@ -61,8 +62,8 @@ subroutine stepper (tstep)
             call rel_pos_vel (j, i)
 
 			! bond initialization
-			if ( tstep .eq. 1 ) then
-				if ( -deltan(j, i) .le. 5d-1 * r(i)) then ! can be fancier
+			if ( cohesion .eqv. .true. ) then
+				if ( deltan(j, i) .ge. -5d-1 ) then ! can be fancier
 					bond (j, i) = 1
                 end if
                 call bond_properties (j, i)
@@ -70,7 +71,7 @@ subroutine stepper (tstep)
 
             ! verify if two particles are colliding
             if ( deltan(j,i) .gt. 0 ) then
-
+                
                 call contact_forces (j, i)
 				call bond_creation (j, i) ! to implement
 

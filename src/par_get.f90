@@ -6,6 +6,16 @@ subroutine get_default
     include "CB_const.h"
     include "CB_bond.h"
     include "CB_forcings.h"
+    include "CB_options.h"
+
+
+    !-------------------------------------------------------------------
+    !           set run options
+    !-------------------------------------------------------------------
+
+    dynamics  = .true.             ! dynamical forcings
+    thermodyn = .true.             ! thermo or not
+    cohesion  = .true.             ! bonds/no bond
 
     !-------------------------------------------------------------------
     !           set parameter for the run
@@ -100,6 +110,9 @@ subroutine read_namelist
     character filename*32
 
     !---- namelist variables -------------------------------------------
+    namellist /options_nml/ &
+        dynamics, thermodyn, cohesion
+    
     namelist /numerical_param_nml/ &
         rtree, dt, nt, comp
 
@@ -142,6 +155,14 @@ subroutine read_namelist
     open (filenb, file=filename, status='old', iostat=nml_error)
         
     ! read values inside file    
+    print*,'Reading run options'
+    read(filenb, nml=options_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
+    
     print*,'Reading numerical parameters'
     read(filenb, nml=numerical_param_nml,iostat=nml_error)
     if (nml_error /= 0) then

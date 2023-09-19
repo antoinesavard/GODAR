@@ -1,3 +1,8 @@
+&options_nml
+    dynamics  = .true.             ! dynamical forcing
+    thermodyn = .false.            ! growth/metl
+    cohesion  = .true.             ! bond/no bond
+
 &numerical_param_nml
     rtree   = 999d0                ! search radius in kd-tree
     dt      = 1d-3                 ! length of time step [s]
@@ -27,7 +32,7 @@
 
 &bond_param_nml
     eb			 = 6d9
-	lambda_rb	 = 8d-1
+	lambda_rb	 = 1d0
 	lambda_lb	 = 1d0
 	sigmatb_crit = 1d5
 	sigmacb_crit = 1d6
