@@ -22,7 +22,7 @@ with open("input_files/X1.dat", "w") as f:
 with open("output/y.06", "r") as f:
     ylines1 = f.read().split()
     ylines1 = np.asarray(ylines1).astype(float).reshape(1000, 2500)
-    ylines2 = ylines1[-1] + 20000
+    ylines2 = ylines1[-1]
     ylines = np.concatenate((ylines1[-1], ylines2))
 
 with open("input_files/Y1.dat", "w") as f:
@@ -34,7 +34,7 @@ with open("input_files/Y1.dat", "w") as f:
 with open("output/r.06", "r") as f:
     rlines1 = f.read().split()
     rlines1 = np.asarray(rlines1).astype(float).reshape(1000, 2500)
-    rlines2 = rlines1[-1] + 20000
+    rlines2 = rlines1[-1]
     rlines = np.concatenate((rlines1[-1], rlines2))
 
 with open("input_files/R1.dat", "w") as f:
