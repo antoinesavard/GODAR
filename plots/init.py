@@ -1,3 +1,5 @@
+# file to create experience 06 initial conditions with 2500 particles
+
 import numpy as np
 
 # size factor
@@ -12,7 +14,7 @@ height = np.where(height <= 0.1, 0.1, height)
 lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
 lines = lines.astype(str)
 lines = lines.tolist()
-with open("src/Y.dat", "w") as f:
+with open("input_files/Y.dat", "w") as f:
     for line in lines:
         i = 0
         while i < disks_num_x:
@@ -23,7 +25,7 @@ with open("src/Y.dat", "w") as f:
 lines = sf * np.arange(1, 2 * disks_num_x + 1, 2)
 lines = lines.astype(str)
 lines = lines.tolist()
-with open("src/X.dat", "w") as f:
+with open("input_files/X.dat", "w") as f:
     i = 0
     while i < disks_num_y:
         for line in lines:
@@ -32,13 +34,13 @@ with open("src/X.dat", "w") as f:
         i += 1
 
 lines = radius.astype(str).tolist()
-with open("src/R.dat", "w") as f:
+with open("input_files/R.dat", "w") as f:
     for line in lines:
         f.write(line)
         f.write("\n")
 
 lines = height.astype(str).tolist()
-with open("src/H.dat", "w") as f:
+with open("input_files/H.dat", "w") as f:
     for line in lines:
         f.write(line)
         f.write("\n")
