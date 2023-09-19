@@ -1,7 +1,8 @@
 &options_nml
     dynamics  = .true.             ! dynamical forcing
     thermodyn = .false.            ! growth/metl
-    cohesion  = .true.             ! bond/no bond
+    cohesion  = .false.            ! bond/no bond
+    ridging   = .false.            ! plastic behavior at contact
 
 &numerical_param_nml
     rtree   = 999d0                ! search radius in kd-tree
@@ -41,8 +42,8 @@
     /
 
 &input_files_nml
-    Xfile = "input_files/X_test.dat"
-    Yfile = "input_files/Y_test.dat"
-    Rfile = "input_files/R_test.dat"
-    Hfile = "input_files/H_test.dat"
+    Xfile = "input_files/X1.dat"
+    Yfile = "input_files/Y1.dat"
+    Rfile = "input_files/R1.dat"
+    Hfile = "input_files/H1.dat"
     /

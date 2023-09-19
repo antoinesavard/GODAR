@@ -6,6 +6,7 @@ subroutine contact_forces (j, i)
     include "CB_variables.h"
     include "CB_const.h"
     include "CB_bond.h"
+    include "CB_options.h"
 
     integer, intent(in) :: i, j
 
@@ -49,10 +50,13 @@ subroutine contact_forces (j, i)
     fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
 
     ! verify if we are in the plastic case or not
-    if ( sigmanc_crit * hmin .le. fcn(j,i) / deltat(j,i) / hmin ) then
-        
-        call plastic_contact (j, i, m_redu, hmin, krc)
+    if ( ridging .eqv. .true. ) then
+        if ( sigmanc_crit * hmin .le. fcn(j,i) / deltat(j,i) / hmin ) &
+        then
+            
+            call plastic_contact (j, i, m_redu, hmin, krc)
 
+        end if
     end if
 
 	! make sure that disks are slipping if not enough normal force

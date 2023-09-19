@@ -16,6 +16,7 @@ subroutine get_default
     dynamics  = .true.             ! dynamical forcings
     thermodyn = .true.             ! thermo or not
     cohesion  = .true.             ! bonds/no bond
+    ridging   = .true.             ! plastic behavior at contact
 
     !-------------------------------------------------------------------
     !           set parameter for the run
@@ -79,7 +80,7 @@ subroutine get_default
     !           Winds and currents forcings
     !-------------------------------------------------------------------
 
-    uw = 0d0
+    uw = -200d0
     vw = 0d0
     ua = 0d0
     va = 0d0
