@@ -104,13 +104,14 @@ subroutine read_namelist
     include "CB_const.h"
     include "CB_bond.h"
     include "CB_forcings.h"
+    include "CB_options.h"
     
     integer :: nml_error, filenb
     logical :: exist
     character filename*32
 
     !---- namelist variables -------------------------------------------
-    namellist /options_nml/ &
+    namelist /options_nml/ &
         dynamics, thermodyn, cohesion
     
     namelist /numerical_param_nml/ &

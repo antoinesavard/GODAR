@@ -7,7 +7,7 @@ disks_num_x = int(disks_num_y)
 disks_num = disks_num_y * disks_num_x
 radius = np.random.lognormal(6, 0.25, 2500)
 height = np.random.lognormal(0, 0.25, 2500) - 0.15
-height = np.where(height <= 0, 0.1, height)
+height = np.where(height <= 0.1, 0.1, height)
 
 lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
 lines = lines.astype(str)

@@ -63,10 +63,12 @@ subroutine stepper (tstep)
 
 			! bond initialization
 			if ( cohesion .eqv. .true. ) then
-				if ( deltan(j, i) .ge. -5d-1 ) then ! can be fancier
-					bond (j, i) = 1
+                if ( tstep .eq. 1 ) then
+                    if ( deltan(j, i) .ge. -5d-1 ) then ! can be fancier
+                        bond (j, i) = 1
+                    end if
+                    call bond_properties (j, i)
                 end if
-                call bond_properties (j, i)
 			end if
 
             ! verify if two particles are colliding
