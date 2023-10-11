@@ -1,4 +1,5 @@
 from glob import glob
+import os
 
 # This file sets up the compilation environment for Godar and its libraries.
 
@@ -32,6 +33,7 @@ libs = Dir("#/libs")
 FC = F90 = "gfortran"
 
 env = Environment(
+    PATH=os.environ,
     LIBPATH=[libs],
     FORTRANMODDIR=[include],
     FORTRANMODDIRPREFIX="-J",

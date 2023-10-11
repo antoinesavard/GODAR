@@ -75,7 +75,7 @@ subroutine stepper (tstep)
             if ( deltan(j,i) .gt. 0 ) then
                 
                 call contact_forces (j, i)
-				call bond_creation (j, i) ! to implement
+				!call bond_creation (j, i) ! to implement
 
 				! update contact force on particle i by particle j
                 fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i)

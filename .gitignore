@@ -2,6 +2,8 @@
 # Prerequisites
 *.d
 /output/*
+/input_files/*
+experiences
 
 # Compiled Object files
 *.slo
@@ -43,4 +45,6 @@ config.log
 .sconf_temp
 
 *.mp4
+*.png
+*.pdf
 */__pycache__/*

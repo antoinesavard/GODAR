@@ -5,6 +5,14 @@ from files import *
 import os
 import sys
 
+# ----------------------------------------------------------------------
+
+axis_limits = 100  # in km
+sf = 1e3  # conversion ratio m <-> km
+compression = 1  # data compression
+
+# ----------------------------------------------------------------------
+
 output_dir = "output/"
 try:
     expno = str(sys.argv[1])
@@ -18,9 +26,6 @@ try:
 except:
     print("No argument provided by sys.")
     n = int(input("number of particles = "))
-
-sf = 1e3
-compression = 1
 
 print("Reading the files...")
 
@@ -42,10 +47,10 @@ x, y, r, h, t, o, b = (
     multiload(output_dir, filesb, 1, n),
 )
 
-x = x[::compression] / 1000
-y = y[::compression] / 1000
-r = r[::compression] / 1000
-h = h[::compression] / 1000
+x = x[::compression] / sf
+y = y[::compression] / sf
+r = r[::compression] / sf
+h = h[::compression] / sf
 t = t[::compression]
 o = np.sign(o[::compression])
 b = b[::compression]
@@ -72,8 +77,8 @@ ax.set_xlabel("Position [km]")
 time = ax.text(0.02, 0.95, "", transform=ax.transAxes)
 
 # limits of the plot in kilometers
-ax.set_xlim(0, 10)
-ax.set_ylim(0, 10)
+ax.set_xlim(0, axis_limits)
+ax.set_ylim(0, axis_limits)
 
 disks = []
 radii = []

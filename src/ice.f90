@@ -57,7 +57,7 @@ program ice
     read  *, expno 
     print *, expno 
     write(expno_str,'(i2.2)') expno
-	write(n_str,'(i2.2)') n
+	write(n_str,'(i0)') n
 
     call get_default
 	! overwrite default based on namelist
@@ -102,7 +102,7 @@ program ice
     do tstep = 1, int(nt) + 1
 
         call stepper (tstep)
-        
+
         if (MODULO(tstep, int(comp)) .eq. 0) then
 
             call sea_ice_post (expno_str)
