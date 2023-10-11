@@ -33,7 +33,7 @@ libs = Dir("#/libs")
 FC = F90 = "gfortran"
 
 env = Environment(
-    PATH=os.environ,
+    ENV=os.environ,
     LIBPATH=[libs],
     FORTRANMODDIR=[include],
     FORTRANMODDIRPREFIX="-J",
