@@ -33,7 +33,7 @@ libs = Dir("#/libs")
 FC = F90 = "gfortran"
 
 env = Environment(
-    PATH=os.environ,
+    ENV=os.environ,
     LIBPATH=[libs],
     FORTRANMODDIR=[include],
     FORTRANMODDIRPREFIX="-J",
@@ -43,7 +43,6 @@ env = Environment(
         "-Wno-tabs",
         "-fPIC",
         "-fbackslash",
-        "-O3",
         "-ffast-math",
         "-mcmodel=medium",
         "-fopenmp",
@@ -55,8 +54,8 @@ env = Environment(
     F90=FC,
 )
 
-env.Append(LIBPATH="/aos/home/asavard/coretran/lib")
-env.Append(F90PATH="/aos/home/asavard/coretran/include")
+env.Append(LIBPATH=os.environ.get("EBROOTCORETRAN")+"/lib")
+env.Append(F90PATH=os.environ.get("EBROOTCORETRAN")+"/include/coretran")
 
 # Command line options to modify the build environment.
 # Use scons-3 debug=1 to compile with debugging flags.
@@ -65,10 +64,14 @@ env.Append(F90PATH="/aos/home/asavard/coretran/include")
 DEBUG = ARGUMENTS.get("debug", 0)
 EXE = ARGUMENTS.get("exe", "godar")
 
+if int(DEBUG)==0:
+    env.Append(F90FLAGS="-O3")
+
 if int(DEBUG):
-    env.Append(FORTRANFLAGS="-g")
-    env.Append(FORTRANFLAGS="-static")
-    env.Append(FORTRANFLAGS="-fbacktrace")
+    env.Append(F90FLAGS="-g")
+    env.Append(F90FLAGS="-Og")
+    env.Append(F90FLAGS="-static")
+    env.Append(F90FLAGS="-fbacktrace")
     env.Append(LINKFLAGS="-fbacktrace")
 
 # ----------------------------------------
