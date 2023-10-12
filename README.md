@@ -9,16 +9,18 @@ GODAR is a discrete element model that solves Newton's equations for a given num
 
 There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: https://github.com/leonfoks/coretran. 
 
-Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`.
+Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`, in which you will find the `.so` file and the modules respectively.
+We will need these in the SConstruct file; this is specific to your machine.
 
-1. Change the `LIBPATH` and `F90PATH` values in the SConstruct file (lines 62 and 63) to your `/mycoretran/lib` and `/mycoretran/include` respectively
-2. We want to edit the `.bashrc` file so that we only have to do this operation one, otherwise, you will have to do it everytime you open a new terminal. Open the terminal and run: `emacs ~/.bashrc`
+1. Change the `LIBPATH` and `F90PATH` values in the SConstruct file to your `/mycoretran/lib` and `/mycoretran/include` respectively
+2. Next you will need to add the library path to your external environment variable. To do this we will edit the `~/.bashrc` file so that we only have to do this operation once, otherwise, you will have to do it everytime you open a new terminal. Open the terminal and run: `emacs ~/.bashrc`
 3. Add the following line to this file: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mycoretran/lib` If the line already exist, just append `:/mycoretran/lib` at the end of the line.
 4. `Crtl-x Crtl-s` to save and `Crtl-x Crtl-c` to exit emacs.
+5. Then enter the `source ~/.bashrc` to reload your terminal with the changes.
 
 After these steps, you should be good to go. 
 
-Next, to compile, this program uses `scons-3`. You will have to install it prior to running this program; try doing `pip install SCons==3.0.0`. Then, run `scons-3` with the appropriate parameters to compile the Godar.
+Next, to compile, this program uses `scons`. You will have to install it prior to running this program; try doing `pip install SCons==3.0.0`. Then, run `scons` with the appropriate parameters to compile Godar.
 
 - To compile the code on n cores `scons-3 -j n` 
 - To clear the build: `scons-3 -c`
