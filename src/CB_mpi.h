@@ -19,7 +19,7 @@
     integer, parameter ::           & ! mpi parameter
                 master = 0            ! master process
 
-    common/mpi_var/
+    common/mpi_var/                 &
                 rank           ,    & ! rank of processes
                 n_ranks        ,    & ! number of processes
                 ierr           ,    & ! error variable
