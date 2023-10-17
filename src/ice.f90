@@ -12,17 +12,17 @@ program ice
     include "CB_const.h"
     include "CB_mpi.h"
 
-    ! execute godar only on master rank
-    call mpi_init(ierr)
-    call mpi_comm_rank(mpi_comm_world, rank, ierr)
-    call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
-
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, num_threads
     type(datetime_type) :: tic, tac
     character(len=2) :: expno_str, expno_str_r
     character(10) :: n_str
+
+    ! execute godar only on master rank
+    call mpi_init(ierr)
+    call mpi_comm_rank(mpi_comm_world, rank, ierr)
+    call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
 
     !---------------------------------------------------------------
     !       Read run information
