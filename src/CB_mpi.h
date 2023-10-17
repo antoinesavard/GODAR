@@ -26,5 +26,4 @@
                 iter_per_rank  ,    & ! iteration per rank
                 first_iter     ,    & ! starting iter number 
                 last_iter      ,    & ! ending iter number
-                counts_recv    ,    & ! number of elements for master
-                master                ! master process
+                counts_recv           ! number of elements for master
