@@ -65,7 +65,7 @@ program ice
             ! read restarting experience number
             read *, expno_r
             
-            if ( rank = master ) then
+            if ( rank .eq. master ) then
                 print *, "Restart from experiment number: (XX)"
                 print *, expno_r
             end if
@@ -73,7 +73,7 @@ program ice
             write(expno_str_r,'(i2.2)') expno_r
             read *, nt_r
 
-            if ( rank = master ) then
+            if ( rank .eq. master ) then
                 print *, "Last iteration of restart experiment is:"
                 print *, nt_r
             end if
