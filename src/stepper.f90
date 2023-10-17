@@ -211,13 +211,13 @@ subroutine stepper (tstep)
     end if
 
     call mpi_scatter( &
-    ftx, n, mpi_double_precision, &
-    ftx, n, mpi_double_precision, &
+    tfx, n, mpi_double_precision, &
+    tfx, n, mpi_double_precision, &
     master, mpi_comm_world, ierr)
 
     call mpi_scatter( &
-    fty, n, mpi_double_precision, &
-    fty, n, mpi_double_precision, &
+    tfy, n, mpi_double_precision, &
+    tfy, n, mpi_double_precision, &
     master, mpi_comm_world, ierr)
 
     call mpi_scatter( &
