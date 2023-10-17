@@ -4,26 +4,34 @@ program ice
     use datetime, ONLY: datetime_delta_type, OPERATOR(+), OPERATOR(<), OPERATOR(==), OPERATOR(-)
     use datetime, ONLY: str2dt, datetime_str_6, now, delta_str
     use omp_lib
+    use mpi
 
     implicit none
 
     include "parameter.h"
     include "CB_const.h"
+    include "CB_mpi.h"
+
+    ! execute godar only on master rank
+    call mpi_init(ierr)
+    call mpi_comm_rank(mpi_comm_world, rank, ierr)
+    call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
 
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, num_threads
     type(datetime_type) :: tic, tac
     character(len=2) :: expno_str, expno_str_r
-	character(10) :: n_str
+    character(10) :: n_str
 
-    !-------------------------------------------------------------------
+    !---------------------------------------------------------------
     !       Read run information
-    !-------------------------------------------------------------------
+    !---------------------------------------------------------------
 
-    tic = now()
+    if ( rank = master ) then
+        tic = now()
 
-    print '(a)', &
+        print '(a)', &
         '',&
         '|========================================================|',&
         '|                                                        |',&
@@ -35,43 +43,69 @@ program ice
         '|========================================================|',&
         ''  
 
-    print *, 'Read namelist? (0/1)'
-    read  *, readnamelist
-    print *, readnamelist
+        print *, 'Read namelist? (0/1)'
+    end if
 
-	print *, 'Restart experiment from previous one? (0/1)'
-	read  *, restart
-	print *, restart
+        ! read if inputing namelist or not
+        read  *, readnamelist
 
-	if (restart .eq. 1) then
-        read *, expno_r
-        print *, "Restart from experiment number: (XX)"
-        print *, expno_r
-        write(expno_str_r,'(i2.2)') expno_r
-        read *, nt_r
-        print *, "Last iteration of restart experiment is:"
-        print *, nt_r
-    endif
+    if ( rank = master ) then
+        print *, readnamelist
+        print *, 'Restart experiment from previous one? (0/1)'
+    end if
 
-    print *, 'This experiment number? (XX)'
-    read  *, expno 
-    print *, expno 
-    write(expno_str,'(i2.2)') expno
-	write(n_str,'(i0)') n
+        ! read if restarting or not
+        read  *, restart
 
-    call get_default
-	! overwrite default based on namelist
-    if (readnamelist .eq. 1) then
-        call read_namelist
-    endif
+    if ( rank = master ) then
+        print *, restart
+    end if
 
-    call ini_get (restart, expno_str_r, nt_r)
+        if (restart .eq. 1) then
+            ! read restarting experience number
+            read *, expno_r
+            
+            if ( rank = master ) then
+                print *, "Restart from experiment number: (XX)"
+                print *, expno_r
+            end if
 
-    call clear_posts (expno_str)
+            write(expno_str_r,'(i2.2)') expno_r
+            read *, nt_r
 
-    !number of processor/threads
+            if ( rank = master ) then
+                print *, "Last iteration of restart experiment is:"
+                print *, nt_r
+            end if
+        endif
 
-    print '(a)', &
+    if ( rank = master ) then
+        print *, 'This experiment number? (XX)'
+    end if
+
+        ! read experience number
+        read  *, expno 
+
+    if ( rank = master ) then
+        print *, expno 
+    end if
+
+        write(expno_str,'(i2.2)') expno
+        write(n_str,'(i0)') n
+
+        call get_default
+        ! overwrite default based on namelist
+        if (readnamelist .eq. 1) then
+            call read_namelist
+        endif
+
+        call ini_get (restart, expno_str_r, nt_r)
+
+    if ( rank = master ) then
+        call clear_posts (expno_str)
+
+        !number of processor/threads
+        print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
         '|                                                        |',&
@@ -79,18 +113,28 @@ program ice
         '|                                                        |',&
         '|--------------------------------------------------------|',&
         '' 
+    end if
 
-    proc_num = omp_get_num_procs ( )
-    thread_num = omp_get_max_threads ( )
-    print *, 'Number of processors available: ', proc_num
-    print *, 'Number of threads available:    ', thread_num
-    
-    print *, 'Number of threads to use?'
-	read  *, num_threads
-	print *, num_threads
-    call omp_set_num_threads (num_threads)
+        proc_num = omp_get_num_procs ( )
+        thread_num = omp_get_max_threads ( )
 
-    print '(a)', &
+    if ( rank = master ) then
+        print *, 'Number of processors available: ', proc_num
+        print *, 'Number of threads available:    ', thread_num
+        print *, 'Number of threads to use?'
+    end if
+        
+        ! number of threads to use per rank
+        read  *, num_threads
+
+    if ( rank = master ) then
+        print *, num_threads
+    end if
+
+        call omp_set_num_threads (num_threads)
+
+    if ( rank = master ) then
+        print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
         '|                                                        |',&
@@ -98,27 +142,31 @@ program ice
         '|                                                        |',&
         '|--------------------------------------------------------|',&
         '' 
+    end if
 
-    do tstep = 1, int(nt) + 1
+        do tstep = 1, int(nt) + 1
 
-        call stepper (tstep)
+            call stepper (tstep)
 
-        if (MODULO(tstep, int(comp)) .eq. 0) then
+            if ( rank = master ) then
+                if (MODULO(tstep, int(comp)) .eq. 0) then
 
-            call sea_ice_post (expno_str)
-            if (MODULO(tstep, int(comp*50)) .eq. 0) then
-                print *, "Time step: ", tstep
+                    call sea_ice_post (expno_str)
+                    if (MODULO(tstep, int(comp*50)) .eq. 0) then
+                        print *, "Time step: ", tstep
+                    end if
+
+                endif
             end if
 
-        endif
+        end do
 
-    end do
+    if ( rank = master ) then
+        tac = now()
 
-    tac = now()
+        print*, "Total simulation time: ", delta_str(tac - tic)
 
-    print*, "Total simulation time: ", delta_str(tac - tic)
-
-    print '(a)', &
+        print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
         '|                                                        |',&
@@ -126,11 +174,14 @@ program ice
         '|                                                        |',&
         '|--------------------------------------------------------|',&
         '' 
+    end if
 
-    call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py "//expno_str//' '//n_str)
+        !call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py "//expno_str//' '//n_str)
 
-    tic = now()
+        !tic = now()
 
-    print*, "Total video creation time: ", delta_str(tic - tac)
+        !print*, "Total video creation time: ", delta_str(tic - tac)
+
+    call mpi_finalize(ierr)
     
 end program ice

@@ -1,5 +1,6 @@
 subroutine stepper (tstep)
 
+    use mpi
     use omp_lib
     use m_allocate, only: allocate
     use m_deallocate, only: deallocate
@@ -12,9 +13,10 @@ subroutine stepper (tstep)
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
-	include "CB_bond.h"
+    include "CB_bond.h"
     include "CB_forcings.h"
     include "CB_options.h"
+    include "CB_mpi.h"
 
     integer :: i, j, k
     integer, intent(in) :: tstep
@@ -24,6 +26,23 @@ subroutine stepper (tstep)
 
     ! Build the tree
     tree = KdTree(x, y)
+
+    ! Compute the part of the array to loop over given rank
+    iter_per_rank = n / n_ranks
+
+    if ( mod(n, n_ranks) > 0 ) then
+        iter_per_rank = iter_per_rank + 1
+    end if
+
+    first_iter = rank * iter_per_rank + 1
+    last_iter  = first_iter + iter_per_rank - 1
+
+    allocate(counts(n_ranks))
+    allocate(disp(n_ranks))
+    counts = iter_per_rank
+    do i = 0, n_ranks - 1
+        disp = i * iter_per_rank
+    end do
     
     ! reinitialize force arrays for contact and bonds
     do i = 1, n
@@ -45,7 +64,7 @@ subroutine stepper (tstep)
     !$omp parallel do schedule(guided) &
     !$omp private(i,j,da) &
     !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb)
-    do i = n, 1, -1
+    do i = last_iter, first_iter, -1
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), yQuery = y(i), &
                             radius = r(i) + rtree)
@@ -146,19 +165,70 @@ subroutine stepper (tstep)
     ! deallocate tree memory
     call tree%deallocate()
 
-    ! sum all forces together on particule i
-    do i = 1, n
-        tfx(i) = fcx(i) + fbx(i) + fax(i) + fwx(i) + fcorx(i)
-        tfy(i) = fcy(i) + fby(i) + fay(i) + fwy(i) + fcory(i)
+    ! send data from rank to all other ranks
+    call mpi_gatherv( &
+    fcx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcx, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
 
-        ! sum all moments on particule i together
-        m(i) =  mc(i) + mb(i) + ma(i) + mw(i)
-    end do
+    call mpi_gatherv( &
+    fcy(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcy, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fbx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fbx, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fby(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fby, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    mc(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    mc, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    mb(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    mb, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    if ( rank = master ) then
+        ! sum all forces together on particule i
+        do i = 1, n
+            tfx(i) = fcx(i) + fbx(i) + fax(i) + fwx(i) + fcorx(i)
+            tfy(i) = fcy(i) + fby(i) + fay(i) + fwy(i) + fcory(i)
+
+            ! sum all moments on particule i together
+            m(i) =  mc(i) + mb(i) + ma(i) + mw(i)
+        end do
+    end if
+
+    call mpi_scatter( &
+    ftx, n, mpi_double_precision, &
+    ftx, n, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_scatter( &
+    fty, n, mpi_double_precision, &
+    fty, n, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_scatter( &
+    m, n, mpi_double_precision, &
+    m, n, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    deallocate(counts)
+    deallocate(disp)
 
     ! forces on side particles for experiments
-    call experiment_forces
+    !call experiment_forces
 
-	! integration in time
+    ! integration in time
     call velocity
     call euler
 
@@ -176,7 +246,7 @@ subroutine experiment_forces
     include "CB_forcings.h"
 
 
-    tfx(2) = tfx(2) - 1d8
+    !tfx(2) = tfx(2) - 1d8
 
     !tfx(44) = 0d0
     !tfy(44) = 0d0
