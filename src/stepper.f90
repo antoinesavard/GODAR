@@ -23,6 +23,9 @@ subroutine stepper (tstep)
     type(KdTree) :: tree
     type(KdTreeSearch) :: search
     type(dArgDynamicArray) :: da
+    integer, allocatable ::     &            
+            counts      (:),    & ! number of elements for master
+            disp        (:)       ! displacement number
 
     ! Build the tree
     tree = KdTree(x, y)

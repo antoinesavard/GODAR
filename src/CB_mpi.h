@@ -12,10 +12,6 @@
                 first_iter     ,    & ! starting iter number 
                 last_iter             ! ending iter number
 
-    integer, allocatable ::         &            
-                counts      (:),    & ! number of elements for master
-                disp        (:)       ! displacement number
-
     integer, parameter ::           & ! mpi parameter
                 master = 0            ! master process
 
