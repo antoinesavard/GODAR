@@ -16,7 +16,7 @@
                 counts      (:),    & ! number of elements for master
                 disp        (:)       ! displacement number
 
-    integer, parameter ::      ,    & ! mpi parameter
+    integer, parameter ::           & ! mpi parameter
                 master = 0            ! master process
 
     common/mpi_var/
