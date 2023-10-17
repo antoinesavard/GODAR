@@ -28,7 +28,7 @@ program ice
     !       Read run information
     !---------------------------------------------------------------
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         tic = now()
 
         print '(a)', &
@@ -49,7 +49,7 @@ program ice
         ! read if inputing namelist or not
         read  *, readnamelist
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         print *, readnamelist
         print *, 'Restart experiment from previous one? (0/1)'
     end if
@@ -57,7 +57,7 @@ program ice
         ! read if restarting or not
         read  *, restart
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         print *, restart
     end if
 
@@ -79,14 +79,14 @@ program ice
             end if
         endif
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         print *, 'This experiment number? (XX)'
     end if
 
         ! read experience number
         read  *, expno 
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         print *, expno 
     end if
 
@@ -101,7 +101,7 @@ program ice
 
         call ini_get (restart, expno_str_r, nt_r)
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         call clear_posts (expno_str)
 
         !number of processor/threads
@@ -118,7 +118,7 @@ program ice
         proc_num = omp_get_num_procs ( )
         thread_num = omp_get_max_threads ( )
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         print *, 'Number of processors available: ', proc_num
         print *, 'Number of threads available:    ', thread_num
         print *, 'Number of threads to use?'
@@ -127,13 +127,13 @@ program ice
         ! number of threads to use per rank
         read  *, num_threads
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         print *, num_threads
     end if
 
         call omp_set_num_threads (num_threads)
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
@@ -148,7 +148,7 @@ program ice
 
             call stepper (tstep)
 
-            if ( rank = master ) then
+            if ( rank .eq. master ) then
                 if (MODULO(tstep, int(comp)) .eq. 0) then
 
                     call sea_ice_post (expno_str)
@@ -161,7 +161,7 @@ program ice
 
         end do
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         tac = now()
 
         print*, "Total simulation time: ", delta_str(tac - tic)

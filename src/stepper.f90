@@ -196,7 +196,7 @@ subroutine stepper (tstep)
     mb, counts, disp, mpi_double_precision, &
     master, mpi_comm_world, ierr)
 
-    if ( rank = master ) then
+    if ( rank .eq. master ) then
         ! sum all forces together on particule i
         do i = 1, n
             tfx(i) = fcx(i) + fbx(i) + fax(i) + fwx(i) + fcorx(i)
