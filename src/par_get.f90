@@ -106,7 +106,6 @@ subroutine read_namelist
     include "CB_bond.h"
     include "CB_forcings.h"
     include "CB_options.h"
-    include "CB_mpi.h"
     
     integer :: nml_error, filenb
     logical :: exist
@@ -137,8 +136,7 @@ subroutine read_namelist
     filename ='namelist.nml'
     filenb = 10
 
-    if ( rank .eq. master ) then
-        print '(a)', &
+    print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
         '|                                                        |',&
@@ -148,79 +146,64 @@ subroutine read_namelist
         ''  
     
 
-        inquire (file=filename, exist=exist)
+    inquire (file=filename, exist=exist)
 
-        if (exist .eqv. .False.) then
-            print *, "Error: input file does not exist: ", filename
-            print *, "Default will be used"
-            return
-        end if
+    if (exist .eqv. .False.) then
+        print *, "Error: input file does not exist: ", filename
+        print *, "Default will be used"
+        return
     end if
 
     ! open file
     open (filenb, file=filename, status='old', iostat=nml_error)
         
-    ! read values inside file
-    if ( rank .eq. master ) then    
-        print*,'Reading run options'
-    end if
+    ! read values inside file 
+    print*,'Reading run options'
     read(filenb, nml=options_nml,iostat=nml_error)
-    if ( rank .eq. master ) then
-        if (nml_error /= 0) then
-            print *, '  error, default will be used', nml_error
-        else
-            print *, '  pass'
-        end if
-    
-        print*,'Reading numerical parameters'
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
     end if
+
+    print*,'Reading numerical parameters'
     read(filenb, nml=numerical_param_nml,iostat=nml_error)
-    if ( rank .eq. master ) then
-        if (nml_error /= 0) then
-            print *, '  error, default will be used', nml_error
-        else
-            print *, '  pass'
-        end if
-
-        print*,'Reading physical parameters'
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
     end if
+
+    print*,'Reading physical parameters'
     read(filenb, nml=physical_param_nml,iostat=nml_error)
-    if ( rank .eq. master ) then
-        if (nml_error /= 0) then
-            print *, '  error, default will be used', nml_error
-        else
-            print *, '  pass'
-        end if
-
-        print*,'Reading disk parameters'
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
     end if
+
+    print*,'Reading disk parameters'
     read(filenb, nml=disk_param_nml,iostat=nml_error)
-    if ( rank .eq. master ) then
-        if (nml_error /= 0) then
-            print *, '  error, default will be used', nml_error
-        else
-            print *, '  pass'
-        end if
-
-        print*,'Reading bond parameters'
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
     end if
+
+    print*,'Reading bond parameters'
     read(filenb, nml=bond_param_nml,iostat=nml_error)
-    if ( rank .eq. master ) then
-        if (nml_error /= 0) then
-            print *, '  error, default will be used', nml_error
-        else
-            print *, '  pass'
-        end if
-
-        print*,'Reading input files names'
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
     end if
+
+    print*,'Reading input files names'
     read(filenb, nml=input_files_nml,iostat=nml_error)
-    if ( rank .eq. master ) then
-        if (nml_error /= 0) then
-            print *, '  error, default will be used', nml_error
-        else
-            print *, '  pass'
-        end if
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
     end if
 
     close(filenb)

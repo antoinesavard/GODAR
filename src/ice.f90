@@ -29,6 +29,7 @@ program ice
     !---------------------------------------------------------------
 
     if ( rank .eq. master ) then
+
         tic = now()
 
         print '(a)', &
@@ -43,53 +44,32 @@ program ice
         '|========================================================|',&
         ''  
 
-        print *, 'Read namelist? (0/1)'
-    end if
-
         ! read if inputing namelist or not
+        print *, 'Read namelist? (0/1)'
         read  *, readnamelist
-
-    if ( rank .eq. master ) then
         print *, readnamelist
-        print *, 'Restart experiment from previous one? (0/1)'
-    end if
 
         ! read if restarting or not
+        print *, 'Restart experiment from previous one? (0/1)'
         read  *, restart
-
-    if ( rank .eq. master ) then
         print *, restart
-    end if
 
         if (restart .eq. 1) then
             ! read restarting experience number
             read *, expno_r
-            
-            if ( rank .eq. master ) then
-                print *, "Restart from experiment number: (XX)"
-                print *, expno_r
-            end if
-
+            print *, "Restart from experiment number: (XX)"
+            print *, expno_r
             write(expno_str_r,'(i2.2)') expno_r
             read *, nt_r
 
-            if ( rank .eq. master ) then
-                print *, "Last iteration of restart experiment is:"
-                print *, nt_r
-            end if
+            print *, "Last iteration of restart experiment is:"
+            print *, nt_r
         endif
 
-    if ( rank .eq. master ) then
-        print *, 'This experiment number? (XX)'
-    end if
-
         ! read experience number
+        print *, 'This experiment number? (XX)'
         read  *, expno 
-
-    if ( rank .eq. master ) then
         print *, expno 
-    end if
-
         write(expno_str,'(i2.2)') expno
         write(n_str,'(i0)') n
 
@@ -101,7 +81,6 @@ program ice
 
         call ini_get (restart, expno_str_r, nt_r)
 
-    if ( rank .eq. master ) then
         call clear_posts (expno_str)
 
         !number of processor/threads
@@ -113,27 +92,18 @@ program ice
         '|                                                        |',&
         '|--------------------------------------------------------|',&
         '' 
-    end if
 
         proc_num = omp_get_num_procs ( )
         thread_num = omp_get_max_threads ( )
 
-    if ( rank .eq. master ) then
         print *, 'Number of processors available: ', proc_num
         print *, 'Number of threads available:    ', thread_num
         print *, 'Number of threads to use?'
-    end if
         
         ! number of threads to use per rank
         read  *, num_threads
-
-    if ( rank .eq. master ) then
         print *, num_threads
-    end if
 
-        call omp_set_num_threads (num_threads)
-
-    if ( rank .eq. master ) then
         print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
@@ -142,24 +112,35 @@ program ice
         '|                                                        |',&
         '|--------------------------------------------------------|',&
         '' 
+
+        ! broadcast the data to all the other ranks
+        call broadcasting (num_threads)
+
     end if
 
-        do tstep = 1, int(nt) + 1
+    ! set openmp in all ranks
+    call omp_set_num_threads (num_threads)
 
-            call stepper (tstep)
+    !-------------------------------------------------------------------
+    ! Main (time) loop of the program
+    !-------------------------------------------------------------------
 
-            if ( rank .eq. master ) then
-                if (MODULO(tstep, int(comp)) .eq. 0) then
+    do tstep = 1, int(nt) + 1
 
-                    call sea_ice_post (expno_str)
-                    if (MODULO(tstep, int(comp*50)) .eq. 0) then
-                        print *, "Time step: ", tstep
-                    end if
+        call stepper (tstep)
 
-                endif
-            end if
+        if ( rank .eq. master ) then
+            if (MODULO(tstep, int(comp)) .eq. 0) then
 
-        end do
+                call sea_ice_post (expno_str)
+                if (MODULO(tstep, int(comp*50)) .eq. 0) then
+                    print *, "Time step: ", tstep
+                end if
+
+            endif
+        end if
+
+    end do
 
     if ( rank .eq. master ) then
         tac = now()
