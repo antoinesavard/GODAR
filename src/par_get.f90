@@ -136,7 +136,8 @@ subroutine read_namelist
     filename ='namelist.nml'
     filenb = 10
 
-    print '(a)', &
+    if ( rank .eq. master ) then
+        print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
         '|                                                        |',&
@@ -145,64 +146,80 @@ subroutine read_namelist
         '|--------------------------------------------------------|',&
         ''  
     
-    inquire (file=filename, exist=exist)
 
-    if (exist .eqv. .False.) then
-        print *, "Error: input file does not exist: ", filename
-        print *, "Default will be used"
-        return
+        inquire (file=filename, exist=exist)
+
+        if (exist .eqv. .False.) then
+            print *, "Error: input file does not exist: ", filename
+            print *, "Default will be used"
+            return
+        end if
     end if
 
     ! open file
     open (filenb, file=filename, status='old', iostat=nml_error)
         
-    ! read values inside file    
-    print*,'Reading run options'
+    ! read values inside file
+    if ( rank .eq. master ) then    
+        print*,'Reading run options'
+    end if
     read(filenb, nml=options_nml,iostat=nml_error)
-    if (nml_error /= 0) then
-        print *, '  error, default will be used', nml_error
-    else
-        print *, '  pass'
-    end if
+    if ( rank .eq. master ) then
+        if (nml_error /= 0) then
+            print *, '  error, default will be used', nml_error
+        else
+            print *, '  pass'
+        end if
     
-    print*,'Reading numerical parameters'
+        print*,'Reading numerical parameters'
+    end if
     read(filenb, nml=numerical_param_nml,iostat=nml_error)
-    if (nml_error /= 0) then
-        print *, '  error, default will be used', nml_error
-    else
-        print *, '  pass'
-    end if
+    if ( rank .eq. master ) then
+        if (nml_error /= 0) then
+            print *, '  error, default will be used', nml_error
+        else
+            print *, '  pass'
+        end if
 
-    print*,'Reading physical parameters'
+        print*,'Reading physical parameters'
+    end if
     read(filenb, nml=physical_param_nml,iostat=nml_error)
-    if (nml_error /= 0) then
-        print *, '  error, default will be used', nml_error
-    else
-        print *, '  pass'
-    end if
+    if ( rank .eq. master ) then
+        if (nml_error /= 0) then
+            print *, '  error, default will be used', nml_error
+        else
+            print *, '  pass'
+        end if
 
-    print*,'Reading disk parameters'
+        print*,'Reading disk parameters'
+    end if
     read(filenb, nml=disk_param_nml,iostat=nml_error)
-    if (nml_error /= 0) then
-        print *, '  error, default will be used', nml_error
-    else
-        print *, '  pass'
-    end if
+    if ( rank .eq. master ) then
+        if (nml_error /= 0) then
+            print *, '  error, default will be used', nml_error
+        else
+            print *, '  pass'
+        end if
 
-    print*,'Reading bond parameters'
+        print*,'Reading bond parameters'
+    end if
     read(filenb, nml=bond_param_nml,iostat=nml_error)
-    if (nml_error /= 0) then
-        print *, '  error, default will be used', nml_error
-    else
-        print *, '  pass'
-    end if
+    if ( rank .eq. master ) then
+        if (nml_error /= 0) then
+            print *, '  error, default will be used', nml_error
+        else
+            print *, '  pass'
+        end if
 
-    print*,'Reading input files names'
+        print*,'Reading input files names'
+    end if
     read(filenb, nml=input_files_nml,iostat=nml_error)
-    if (nml_error /= 0) then
-        print *, '  error, default will be used', nml_error
-    else
-        print *, '  pass'
+    if ( rank .eq. master ) then
+        if (nml_error /= 0) then
+            print *, '  error, default will be used', nml_error
+        else
+            print *, '  pass'
+        end if
     end if
 
     close(filenb)
