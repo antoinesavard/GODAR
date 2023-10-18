@@ -7,6 +7,7 @@ subroutine get_default
     include "CB_bond.h"
     include "CB_forcings.h"
     include "CB_options.h"
+    include "CB_mpi.h"
 
 
     !-------------------------------------------------------------------
