@@ -7,7 +7,6 @@ subroutine get_default
     include "CB_bond.h"
     include "CB_forcings.h"
     include "CB_options.h"
-    include "CB_mpi.h"
 
 
     !-------------------------------------------------------------------
@@ -107,6 +106,7 @@ subroutine read_namelist
     include "CB_bond.h"
     include "CB_forcings.h"
     include "CB_options.h"
+    include "CB_mpi.h"
     
     integer :: nml_error, filenb
     logical :: exist
