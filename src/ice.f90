@@ -56,13 +56,13 @@ program ice
 
         if (restart .eq. 1) then
             ! read restarting experience number
-            read *, expno_r
             print *, "Restart from experiment number: (XX)"
+            read *, expno_r
             print *, expno_r
             write(expno_str_r,'(i2.2)') expno_r
-            read *, nt_r
-
+            
             print *, "Last iteration of restart experiment is:"
+            read *, nt_r
             print *, nt_r
         endif
 
@@ -119,6 +119,7 @@ program ice
     end if
 
     ! set openmp in all ranks
+    call mpi_barrier (mpi_comm_world, ierr)
     call omp_set_num_threads (num_threads)
 
     !-------------------------------------------------------------------
