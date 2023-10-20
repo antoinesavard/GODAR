@@ -210,20 +210,14 @@ subroutine stepper (tstep)
         end do
     end if
 
-    call mpi_scatter( &
-    tfx, n, mpi_double_precision, &
-    tfx, n, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
+    call mpi_bcast(tfx, n, mpi_double_precision,    &
+                    master, mpi_comm_world, ierr)
 
-    call mpi_scatter( &
-    tfy, n, mpi_double_precision, &
-    tfy, n, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
+    call mpi_bcast(tfy, n, mpi_double_precision,    &
+                    master, mpi_comm_world, ierr)
 
-    call mpi_scatter( &
-    m, n, mpi_double_precision, &
-    m, n, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
+    call mpi_bcast(m, n, mpi_double_precision,      &
+                    master, mpi_comm_world, ierr)
 
     deallocate(counts)
     deallocate(disp)
