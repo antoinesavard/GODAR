@@ -78,7 +78,7 @@ program ice
         if (readnamelist .eq. 1) then
             call read_namelist
         endif
-
+        print *, rank
         call ini_get (restart, expno_str_r, nt_r)
 
         call clear_posts (expno_str)
@@ -114,14 +114,17 @@ program ice
         '' 
 
         ! broadcast the data to all the other ranks
+        print *, rank
         call broadcasting (num_threads)
-
+        print *, rank
+        
     end if
 
     ! set openmp in all ranks
+    print *, rank
     call mpi_barrier (mpi_comm_world, ierr)
     call omp_set_num_threads (num_threads)
-
+    
     !-------------------------------------------------------------------
     ! Main (time) loop of the program
     !-------------------------------------------------------------------
