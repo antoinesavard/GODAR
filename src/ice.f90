@@ -15,6 +15,7 @@ program ice
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, num_threads
+    integer :: i
     type(datetime_type) :: tic, tac
     character(len=2) :: expno_str, expno_str_r
     character(10) :: n_str
