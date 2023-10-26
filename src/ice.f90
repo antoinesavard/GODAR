@@ -72,8 +72,11 @@ program ice
         print *, expno 
         write(expno_str,'(i2.2)') expno
         write(n_str,'(i0)') n
+    end if
 
-        call get_default
+    call get_default
+    
+    if ( rank .eq. master ) then
         ! overwrite default based on namelist
         if (readnamelist .eq. 1) then
             call read_namelist
@@ -112,14 +115,14 @@ program ice
         '|                                                        |',&
         '|--------------------------------------------------------|',&
         '' 
-
-        ! broadcast the data to all the other ranks
-        print *, rank
-        call broadcasting (num_threads)
-        print *, rank
         
     end if
 
+    ! broadcast the data to all the other ranks
+    print *, rank
+    call broadcasting_ini (num_threads)
+    print *, rank
+    
     ! set openmp in all ranks
     print *, rank
     call mpi_barrier (mpi_comm_world, ierr)
@@ -128,6 +131,25 @@ program ice
     !-------------------------------------------------------------------
     ! Main (time) loop of the program
     !-------------------------------------------------------------------
+
+    ! set mpi variables
+    ! Compute the part of the array to loop over given rank
+    iter_per_rank = n / n_ranks
+
+    if ( mod(n, n_ranks) > 0 ) then
+        iter_per_rank = iter_per_rank + 1
+    end if
+
+    first_iter = rank * iter_per_rank + 1
+    last_iter  = first_iter + iter_per_rank - 1
+
+    allocate(counts(n_ranks))
+    allocate(disp(n_ranks))
+    
+    counts = iter_per_rank
+    do i = 0, n_ranks - 1
+        disp = i * iter_per_rank
+    end do
 
     do tstep = 1, int(nt) + 1
 
@@ -145,6 +167,9 @@ program ice
         end if
 
     end do
+
+    deallocate(counts)
+    deallocate(disp)
 
     if ( rank .eq. master ) then
         tac = now()

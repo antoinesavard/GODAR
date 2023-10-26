@@ -23,30 +23,10 @@ subroutine stepper (tstep)
     type(KdTree) :: tree
     type(KdTreeSearch) :: search
     type(dArgDynamicArray) :: da
-    integer, allocatable ::     &            
-            counts      (:),    & ! number of elements for master
-            disp        (:)       ! displacement number
 
     ! Build the tree
     tree = KdTree(x, y)
 
-    ! Compute the part of the array to loop over given rank
-    iter_per_rank = n / n_ranks
-
-    if ( mod(n, n_ranks) > 0 ) then
-        iter_per_rank = iter_per_rank + 1
-    end if
-
-    first_iter = rank * iter_per_rank + 1
-    last_iter  = first_iter + iter_per_rank - 1
-
-    allocate(counts(n_ranks))
-    allocate(disp(n_ranks))
-    counts = iter_per_rank
-    do i = 0, n_ranks - 1
-        disp = i * iter_per_rank
-    end do
-    
     ! reinitialize force arrays for contact and bonds
     do i = 1, n
         mc(i)    = 0d0
@@ -169,35 +149,7 @@ subroutine stepper (tstep)
     call tree%deallocate()
 
     ! send data from rank to all other ranks
-    call mpi_gatherv( &
-    fcx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcx, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fcy(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcy, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fbx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fbx, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fby(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fby, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    mc(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    mc, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    mb(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    mb, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
+    call gathering_tstep
 
     if ( rank .eq. master ) then
         ! sum all forces together on particule i
@@ -210,17 +162,7 @@ subroutine stepper (tstep)
         end do
     end if
 
-    call mpi_bcast(tfx, n, mpi_double_precision,    &
-                    master, mpi_comm_world, ierr)
-
-    call mpi_bcast(tfy, n, mpi_double_precision,    &
-                    master, mpi_comm_world, ierr)
-
-    call mpi_bcast(m, n, mpi_double_precision,      &
-                    master, mpi_comm_world, ierr)
-
-    deallocate(counts)
-    deallocate(disp)
+    call broadcast_forces
 
     ! forces on side particles for experiments
     !call experiment_forces
