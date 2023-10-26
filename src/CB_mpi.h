@@ -12,7 +12,7 @@
                 first_iter     ,    & ! starting iter number 
                 last_iter             ! ending iter number
 
-    integer, allocatable ::         & ! allocatable variables
+    integer, pointer ::             & ! allocatable variables
                 counts     (:) ,    & ! number of elements for master
                 disp       (:)        ! displacement number
 
