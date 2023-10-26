@@ -58,7 +58,7 @@ subroutine broadcasting_ini (num_threads)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(cohesion, 1, mpi_logical,            &
                     master, mpi_comm_world, ierr)   
-    call mpi_bcast(ridgind, 1, mpi_logical,             &
+    call mpi_bcast(ridging, 1, mpi_logical,             &
                     master, mpi_comm_world, ierr) 
 
     ! numerical_param
@@ -94,13 +94,13 @@ subroutine broadcasting_ini (num_threads)
     ! disk_param
     call mpi_bcast(e_modul, 1, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
-    call mpi_bcast(poisson_ratio, 1, mpi_double_precision,  &
+    call mpi_bcast(poiss_ratio, 1, mpi_double_precision,    &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(friction_coeff, 1, mpi_double_precision, &
                     master, mpi_comm_world, ierr)   
     call mpi_bcast(rest_coeff, 1, mpi_double_precision,     &
                     master, mpi_comm_world, ierr)   
-    call mpi_bcast(signmanc_crit, 1, mpi_double_precision,  &
+    call mpi_bcast(sigmanc_crit, 1, mpi_double_precision,   &
                     master, mpi_comm_world, ierr)
 
     ! bond_param
@@ -110,7 +110,7 @@ subroutine broadcasting_ini (num_threads)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(lambda_lb, 1, mpi_double_precision,      &
                     master, mpi_comm_world, ierr)   
-    call mpi_bcast(signmatb_crit, 1, mpi_double_precision,  &
+    call mpi_bcast(sigmatb_crit, 1, mpi_double_precision,   &
                     master, mpi_comm_world, ierr)   
     call mpi_bcast(sigmacb_crit, 1, mpi_double_precision,   &
                     master, mpi_comm_world, ierr)
@@ -126,7 +126,7 @@ subroutine gathering_tstep
 
     use mpi
 
-    include none
+    implicit none
 
     include "parameter.h"
     include "CB_variables.h"
