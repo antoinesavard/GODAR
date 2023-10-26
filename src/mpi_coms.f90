@@ -39,6 +39,14 @@ subroutine broadcasting_ini (num_threads)
                     master, mpi_comm_world, ierr)
 
     !-------------------------------------------------------------------
+    ! other variable broadcast
+    !-------------------------------------------------------------------
+    call mpi_bcast(u, n, mpi_double_precision,          &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(v, n, mpi_double_precision,          &
+                    master, mpi_comm_world, ierr)
+
+    !-------------------------------------------------------------------
     ! constants broadcast
     !-------------------------------------------------------------------
     call mpi_bcast(mass, n, mpi_double_precision,       &
@@ -154,6 +162,36 @@ subroutine gathering_tstep
     call mpi_gatherv( &
     fby(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
     fby, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fax(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcx, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fay(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcy, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fwx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcx, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fwy(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcy, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fcorx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcx, counts, disp, mpi_double_precision, &
+    master, mpi_comm_world, ierr)
+
+    call mpi_gatherv( &
+    fcory(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
+    fcy, counts, disp, mpi_double_precision, &
     master, mpi_comm_world, ierr)
 
     call mpi_gatherv( &

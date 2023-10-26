@@ -147,9 +147,11 @@ program ice
     do i = 0, n_ranks - 1
         disp = i * iter_per_rank
     end do
-
-    print *, "Time step: ", 1
     
+    if ( rank .eq. master ) then
+        print *, "Time step: ", 1
+    end if
+
     do tstep = 1, int(nt) + 1
 
         call stepper (tstep)
