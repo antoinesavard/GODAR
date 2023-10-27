@@ -54,8 +54,8 @@ env = Environment(
     F90=FC,
 )
 
-env.Append(LIBPATH=os.environ.get("EBROOTCORETRAN")+"/lib")
-env.Append(F90PATH=os.environ.get("EBROOTCORETRAN")+"/include/coretran")
+env.Append(LIBPATH="/aos/home/asavard/coretran/lib")
+env.Append(F90PATH="/aos/home/asavard/coretran/include")
 
 # Command line options to modify the build environment.
 # Use scons-3 debug=1 to compile with debugging flags.
@@ -64,7 +64,7 @@ env.Append(F90PATH=os.environ.get("EBROOTCORETRAN")+"/include/coretran")
 DEBUG = ARGUMENTS.get("debug", 0)
 EXE = ARGUMENTS.get("exe", "godar")
 
-if int(DEBUG)==0:
+if int(DEBUG) == 0:
     env.Append(F90FLAGS="-O3")
 
 if int(DEBUG):
@@ -72,6 +72,7 @@ if int(DEBUG):
     env.Append(F90FLAGS="-Og")
     env.Append(F90FLAGS="-static")
     env.Append(F90FLAGS="-fbacktrace")
+    env.Append(F90FLAGS="-fcheck=all")
     env.Append(LINKFLAGS="-fbacktrace")
 
 # ----------------------------------------
