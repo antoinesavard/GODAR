@@ -99,6 +99,7 @@ program ice
         proc_num = omp_get_num_procs ( )
         thread_num = omp_get_max_threads ( )
 
+        print *, 'Number of processes: ', n_ranks
         print *, 'Number of processors available: ', proc_num
         print *, 'Number of threads available:    ', thread_num
         print *, 'Number of threads to use?'
@@ -116,6 +117,8 @@ program ice
         '|--------------------------------------------------------|',&
         '' 
         
+        print *, 'Broadcasting initialization to all processes'
+
     end if
 
     ! broadcast the data to all the other ranks
