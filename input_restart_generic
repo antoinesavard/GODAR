@@ -1,0 +1,6 @@
+1                   input namelist
+1					input restart
+09                  restart exp
+34                  restart time    
+91                  exp version
+10                  number of threads

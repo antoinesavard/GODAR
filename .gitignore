@@ -4,6 +4,12 @@
 /output/*
 /input_files/*
 experiences
+SConstruct
+namelist.nml
+start.sh
+input
+input_restart
+start.sh
 
 # Compiled Object files
 *.slo
@@ -40,6 +46,7 @@ build/
 # for projects that use SCons for building: http://http://www.scons.org/
 .sconsign.dblite
 godar
+SConstruct
 # When configure fails, SCons outputs these
 config.log
 .sconf_temp
