@@ -35,10 +35,19 @@ subroutine stepper (tstep)
         fcy(i)   = 0d0
         fbx(i)   = 0d0
         fby(i)   = 0d0
+        mc_r(i)    = 0d0
+        mb_r(i)    = 0d0
+        fcx_r(i)   = 0d0
+        fcy_r(i)   = 0d0
+        fbx_r(i)   = 0d0
+        fby_r(i)   = 0d0
         ! and total force arrays
         m(i)   = 0d0
 		tfx(i) = 0d0
         tfy(i) = 0d0
+        m_r(i)   = 0d0
+		tfx_r(i) = 0d0
+        tfy_r(i) = 0d0
     end do
     
     ! put yourself in the referential of the ith particle
@@ -148,20 +157,19 @@ subroutine stepper (tstep)
     ! deallocate tree memory
     call tree%deallocate()
 
-    ! send data from rank to all other ranks
-    call gathering_tstep
+    ! reduce all the force variables
+    call force_reduction
 
-    if ( rank .eq. master ) then
-        ! sum all forces together on particule i
-        do i = 1, n
-            tfx(i) = fcx(i) + fbx(i) + fax(i) + fwx(i) + fcorx(i)
-            tfy(i) = fcy(i) + fby(i) + fay(i) + fwy(i) + fcory(i)
+    ! sum all forces together on particule i
+    do i = first_iter, last_iter
+        tfx_r(i) = fcx_r(i) + fbx_r(i) + fax(i) + fwx(i) + fcorx(i)
+        tfy_r(i) = fcy_r(i) + fby_r(i) + fay(i) + fwy(i) + fcory(i)
 
-            ! sum all moments on particule i together
-            m(i) =  mc(i) + mb(i) + ma(i) + mw(i)
-        end do
-    end if
+        ! sum all moments on particule i together
+        m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i)
+    end do
 
+    ! broadcast forces to all so that they can each update their x and u
     call broadcast_forces
 
     ! forces on side particles for experiments

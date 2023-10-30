@@ -130,85 +130,12 @@ subroutine broadcasting_ini (num_threads)
 end subroutine broadcasting_ini
 
 
-subroutine gathering_tstep
-
-    use mpi
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
-    include "CB_mpi.h"
-
-    call mpi_gatherv( &
-    fcx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcx, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fcy(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcy, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fbx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fbx, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fby(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fby, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fax(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcx, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fay(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcy, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fwx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcx, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fwy(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcy, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fcorx(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcx, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    fcory(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    fcy, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    mc(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    mc, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-    call mpi_gatherv( &
-    mb(first_iter:last_iter), iter_per_rank, mpi_double_precision, &
-    mb, counts, disp, mpi_double_precision, &
-    master, mpi_comm_world, ierr)
-
-end subroutine gathering_tstep
-
-
 subroutine broadcast_forces
 
+    ! this routine broadcasts (and reduce) the total forces and moments
+    ! at the end of each time step so that each process can compute 
+    ! their own time stepping using the total forces
+
     use mpi
 
     implicit none
@@ -221,14 +148,63 @@ subroutine broadcast_forces
     include "CB_options.h"
     include "CB_mpi.h"
 
-    call mpi_bcast(tfx, n, mpi_double_precision,    &
-                    master, mpi_comm_world, ierr)
+    call mpi_allreduce( &
+    tfx_r, tfx, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
 
-    call mpi_bcast(tfy, n, mpi_double_precision,    &
-                    master, mpi_comm_world, ierr)
+    call mpi_allreduce( &
+    tfy_r, tfy, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
 
-    call mpi_bcast(m, n, mpi_double_precision,      &
-                    master, mpi_comm_world, ierr)
+    call mpi_allreduce( &
+    m_r, m, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
 
 end subroutine broadcast_forces
+
+
+subroutine force_reduction
+
+    ! this routine reduces and broadcast to all processes the
+    ! intermediate forces (contact, bond) and moments before each 
+    ! process combines their section into total forecs and moments.
+    ! this is needed because the program uses Newton's third law.
+
+    use mpi
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_forcings.h"
+    include "CB_options.h"
+    include "CB_mpi.h"
+
+    call mpi_allreduce( &
+    fcx, fcx_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fcy, fcy_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fbx, fbx_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fby, fby_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    mc, mc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    mb, mb_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+end subroutine force_reduction
 

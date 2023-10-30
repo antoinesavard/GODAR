@@ -73,6 +73,11 @@ program ice
         print *, expno 
         write(expno_str,'(i2.2)') expno
         write(n_str,'(i0)') n
+
+        ! number of particles
+        print *, 'Number of particles is this simulation:'
+        print *, n
+        
     end if
 
     call get_default
