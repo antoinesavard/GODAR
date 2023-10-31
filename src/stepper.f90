@@ -35,7 +35,7 @@ subroutine stepper (tstep)
     !$omp parallel do schedule(guided) &
     !$omp private(i,j,da) &
     !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb)
-    do i = last_iter, first_iter, -n_ranks
+    do i = last_iter, first_iter, -1
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), yQuery = y(i), &
                             radius = r(i) + rtree)
@@ -140,7 +140,7 @@ subroutine stepper (tstep)
     call force_reduction
 
     ! sum all forces together on particule i
-    do i = last_iter, first_iter, -n_ranks
+    do i = last_iter, first_iter, -1
         tfx_r(i) = fcx_r(i) + fbx_r(i) + fax(i) + fwx(i) + fcorx(i)
         tfy_r(i) = fcy_r(i) + fby_r(i) + fay(i) + fwy(i) + fcory(i)
 

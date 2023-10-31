@@ -146,11 +146,8 @@ program ice
         iter_per_rank = iter_per_rank + 1
     end if
 
-    !first_iter = rank * iter_per_rank + 1
-    !last_iter  = first_iter + iter_per_rank - 1
-
-    first_iter = rank + 1
-    last_iter  = n - rank
+    first_iter = rank * iter_per_rank + 1
+    last_iter  = first_iter + iter_per_rank - 1
     
     if ( rank .eq. master ) then
         print *, "Time step: ", 1
