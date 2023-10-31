@@ -1,14 +1,15 @@
 &options_nml
     dynamics  = .true.             ! dynamical forcing
-    thermodyn = .false.            ! growth/metl
+    thermodyn = .false.            ! growth/melt
     cohesion  = .false.            ! bond/no bond
     ridging   = .false.            ! plastic behavior at contact
+    /
 
 &numerical_param_nml
     rtree   = 999d0                ! search radius in kd-tree
     dt      = 1d-3                 ! length of time step [s]
-    nt      = 1d6                  ! number of tstep
-    comp    = 1d3                  ! output steps
+    nt      = 1d4                  ! number of tstep
+    comp    = 1d2                  ! output steps
     /
 
 &physical_param_nml

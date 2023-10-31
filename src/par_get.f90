@@ -145,6 +145,7 @@ subroutine read_namelist
         '|--------------------------------------------------------|',&
         ''  
     
+
     inquire (file=filename, exist=exist)
 
     if (exist .eqv. .False.) then
@@ -156,7 +157,7 @@ subroutine read_namelist
     ! open file
     open (filenb, file=filename, status='old', iostat=nml_error)
         
-    ! read values inside file    
+    ! read values inside file 
     print*,'Reading run options'
     read(filenb, nml=options_nml,iostat=nml_error)
     if (nml_error /= 0) then
@@ -164,7 +165,7 @@ subroutine read_namelist
     else
         print *, '  pass'
     end if
-    
+
     print*,'Reading numerical parameters'
     read(filenb, nml=numerical_param_nml,iostat=nml_error)
     if (nml_error /= 0) then

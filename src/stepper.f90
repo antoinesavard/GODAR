@@ -1,5 +1,6 @@
 subroutine stepper (tstep)
 
+    use mpi
     use omp_lib
     use m_allocate, only: allocate
     use m_deallocate, only: deallocate
@@ -12,9 +13,10 @@ subroutine stepper (tstep)
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
-	include "CB_bond.h"
+    include "CB_bond.h"
     include "CB_forcings.h"
     include "CB_options.h"
+    include "CB_mpi.h"
 
     integer :: i, j, k
     integer, intent(in) :: tstep
@@ -24,7 +26,7 @@ subroutine stepper (tstep)
 
     ! Build the tree
     tree = KdTree(x, y)
-    
+
     ! reinitialize force arrays for contact and bonds
     do i = 1, n
         mc(i)    = 0d0
@@ -33,10 +35,19 @@ subroutine stepper (tstep)
         fcy(i)   = 0d0
         fbx(i)   = 0d0
         fby(i)   = 0d0
+        mc_r(i)    = 0d0
+        mb_r(i)    = 0d0
+        fcx_r(i)   = 0d0
+        fcy_r(i)   = 0d0
+        fbx_r(i)   = 0d0
+        fby_r(i)   = 0d0
         ! and total force arrays
         m(i)   = 0d0
 		tfx(i) = 0d0
         tfy(i) = 0d0
+        m_r(i)   = 0d0
+		tfx_r(i) = 0d0
+        tfy_r(i) = 0d0
     end do
     
     ! put yourself in the referential of the ith particle
@@ -45,7 +56,7 @@ subroutine stepper (tstep)
     !$omp parallel do schedule(guided) &
     !$omp private(i,j,da) &
     !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb)
-    do i = n, 1, -1
+    do i = last_iter, first_iter, -1
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), yQuery = y(i), &
                             radius = r(i) + rtree)
@@ -146,19 +157,25 @@ subroutine stepper (tstep)
     ! deallocate tree memory
     call tree%deallocate()
 
+    ! reduce all the force variables
+    call force_reduction
+
     ! sum all forces together on particule i
-    do i = 1, n
-        tfx(i) = fcx(i) + fbx(i) + fax(i) + fwx(i) + fcorx(i)
-        tfy(i) = fcy(i) + fby(i) + fay(i) + fwy(i) + fcory(i)
+    do i = first_iter, last_iter
+        tfx_r(i) = fcx_r(i) + fbx_r(i) + fax(i) + fwx(i) + fcorx(i)
+        tfy_r(i) = fcy_r(i) + fby_r(i) + fay(i) + fwy(i) + fcory(i)
 
         ! sum all moments on particule i together
-        m(i) =  mc(i) + mb(i) + ma(i) + mw(i)
+        m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i)
     end do
 
-    ! forces on side particles for experiments
-    call experiment_forces
+    ! broadcast forces to all so that they can each update their x and u
+    call broadcast_forces
 
-	! integration in time
+    ! forces on side particles for experiments
+    !call experiment_forces
+
+    ! integration in time
     call velocity
     call euler
 
@@ -176,7 +193,7 @@ subroutine experiment_forces
     include "CB_forcings.h"
 
 
-    tfx(2) = tfx(2) - 1d8
+    !tfx(2) = tfx(2) - 1d8
 
     !tfx(44) = 0d0
     !tfy(44) = 0d0
