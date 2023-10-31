@@ -3,7 +3,7 @@
 
 ### What does GODAR do?
 
-GODAR is a discrete element model that solves Newton's equations for a given number of cylindrical floes of ice. The disks have a radius, a thickness initial positions and bonds specified by the user, from which the model advances time. The forces at play are contact forces computed from Hertzian mechanics, bond forces computed from a simple beam theory, coriolis, atmopheric and oceanic forces computed from a quadratic drag law. Sheltering is taken into account, meaning that small floes can hide behind large floes and receive less wind or currents because of that. In order to find all interactions, a nearest neighbor search algorithm has been implemented: we use a kd-tree to find interacting floes. Moreover, the code is parallelized, and therfore GODAR is suitable for large number of floes $\mathcal{O}(10^3)$.
+GODAR is a discrete element model that solves Newton's equations for a given number of cylindrical floes of ice. The disks have a radius, a thickness initial positions and bonds specified by the user, from which the model advances time. The forces at play are contact forces computed from Hertzian mechanics, bond forces computed from a simple beam theory, coriolis, atmopheric and oceanic forces computed from a quadratic drag law. Sheltering is taken into account, meaning that small floes can hide behind large floes and receive less wind or currents because of that. In order to find all interactions, a nearest neighbor search algorithm has been implemented: we use a kd-tree to find interacting floes. Moreover, the code is parallelized using mpi and openmp, and therefore GODAR is suitable for large number of floes on the order of $\mathcal{O}(10^3)$ particles.
 
 ### How to setup GODAR
 
@@ -22,10 +22,19 @@ After these steps, you should be good to go.
 
 Next, to compile, this program uses `scons`. You will have to install it prior to running this program; try doing `pip install SCons==3.0.0`. Then, run `scons` with the appropriate parameters to compile Godar.
 
-- To compile the code on n cores `scons-3 -j n` 
-- To clear the build: `scons-3 -c`
-- Debug the code: `scons-3 debug=1`
-- Run the executable in the background: `./godar < input &`
+- To compile the code on n cores `scons -j n` 
+- To clear the build: `scons -c`
+- Debug the code: `scons debug=1`
+- Run the executable in the background: `sh start.sh`
+
+You can use the `start.sh` file if you are working on your own machin. It contains the following line:
+
+```bash
+mpirun --bind-to none -n 1 ./godar < input_restart > out
+```
+
+The `--bind-to none` makes all threads available to the program (you can then specify this number in the openmp part), while the `-n 1` simply tells how many copies of the program you want to run (on different machines for example). For example, let's say your machine has 2 cores 12 threads per core, you could either run 1 process on 24 threads using openmp or 2 processes (1 per core) with 12 threads using both mpi and openmp.
+When working on clusters, you will usually encounter scheduler like slurm. In that case, don't use the `start.sh` file.
 
 The input_file is a simple file to pass along to the main program when executing that can take the following arguments in this order: 
 - NEED`[bool]   input namelist`
@@ -45,9 +54,9 @@ To use it, change the path to your python interpreter and the location of the py
 
 ### How to modify the parameters in GODAR
 
-All physical and numerical parameters are contained in the namelist.nml file. Therefore, if you want to play with the physics, you can simply change the values in this file without recompiling the code; this permits the use of batch job using an appropriate bash script that modifies the parameters that you want. If you forget the default parameters, they are all set in the `get_default` subroutine in the par_get.f90 file. You can also opt to not use the namelist by setting the read namelist option to false in the input file. 
+All physical and numerical parameters as well as options are contained in the namelist.nml file. Therefore, if you want to play with the physics, you can simply change the values in this file without recompiling the code; this permits the use of batch job using an appropriate bash script that modifies the parameters that you want. If you forget the default parameters, they are all set in the `get_default` subroutine in the par_get.f90 file. You can also opt to not use the namelist by setting the read namelist option to false in the input file. 
 
-The only parameters that are set at compilation are the number of particles (because we use this value for setting the lenght of all arrays) and the size of the domain (for future developement where we will superimpose a grid over the domain to have spatially varying forcings). We are curently worknig on a way to work around this issue. (Probably using the input files.)
+The only parameters that are set at compilation are the number of particles (because we use this value for setting the lenght of all arrays), the size of the domain (for future developement where we will superimpose a grid over the domain to have spatially varying forcings), and the rank of the master thread. We are curently worknig on a way to work around this issue. (Probably using the input files and allocatable arrays in modules.)
 
 The input files are setting the run informations: experiment number, whether to use the namelist or not, whether restarting from a previous experiement or not, etc. (This is why we think setting the particle number in there would be good.)
 
@@ -65,10 +74,13 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
 
 ```bash
 - godar/
-    - experiences
-    - input
-    - input_restart
-    - namelist.nml
+    - init.sh
+    - generic/
+        - input_genreric
+        - input_restart_genreric
+        - namelist_genreric.nml
+        - SConstruct_genreric
+        - start_genreric.sh
     - src/
         - bonds.f90
         - boundaries.f90
@@ -78,6 +90,7 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
         - ice.f90
         - ini_get.f90
         - integration.f90
+        - mpi_coms.f90
         - par_get.f90
         - physics_bonds.f90
         - physics.f90
@@ -87,6 +100,8 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
         - CB_const.h
         - CB_forcings.h
         - CB_variables.h
+        - CB_mpi.h
+        - CB_options
         - parameter.h
     - datetime/
         - date_mod.f90
@@ -102,7 +117,4 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
         - video.py
     - output/
     - input_files/
-    - build/
-    - include/
-    - libs/
 ```
