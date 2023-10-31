@@ -17,7 +17,7 @@ program ice
     integer :: proc_num, thread_num, num_threads
     integer :: i
     type(datetime_type) :: tic, tac
-    character(len=2) :: expno_str, expno_str_r
+    character(len=4) :: expno_str, expno_str_r
     character(10) :: n_str
 
     ! execute godar only on master rank
@@ -90,6 +90,8 @@ program ice
         call ini_get (restart, expno_str_r, nt_r)
 
         call clear_posts (expno_str)
+        
+        call info (expno_str)
 
         !number of processor/threads
         print '(a)', &

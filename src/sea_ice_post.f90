@@ -8,7 +8,7 @@ implicit none
 	include "CB_bond.h"
 
     integer :: i, j
-	character(len=2), intent(in) :: expno_str
+	character(len=4), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
                          filet, fileo, fileb
 
@@ -60,10 +60,10 @@ implicit none
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, stat (9)
+    integer :: i, stat (10)
 	character(len=2), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
-                         filet, fileo, fileb
+                         filet, fileo, fileb, fileinfo
 
 	filex = "output/x." // trim(adjustl(expno_str))
 	filey = "output/y." // trim(adjustl(expno_str))
@@ -74,6 +74,7 @@ implicit none
 	filet = "output/theta." // trim(adjustl(expno_str))
 	fileo = "output/omega." // trim(adjustl(expno_str))
 	fileb = "output/bond." // trim(adjustl(expno_str))
+    fileinfo = "output/info." // trim(adjustl(expno_str))
 
 	open (10, file = filex, iostat = stat(1), status = 'old')
 	open (11, file = filey, iostat = stat(2), status = 'old')
@@ -84,8 +85,9 @@ implicit none
 	open (16, file = filet, iostat = stat(7), status = 'old')
 	open (17, file = fileo, iostat = stat(8), status = 'old')
 	open (18, file = fileb, iostat = stat(9), status = 'old')
+    open (19, file = fileinfo, iostat = stat(10), status = 'old')
 
-    do i = 10, 18
+    do i = 10, 19
         if (stat(i-9) .eq. 0) then
 			close(i, status = 'delete') 
 		else 
@@ -94,5 +96,105 @@ implicit none
     end do
 
 end subroutine clear_posts
+
+
+subroutine info (expno_str)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_forcings.h"
+    include "CB_options.h"
+
+    character(len=4), intent(in) :: expno_str
+    character(len=30) :: fileinfo, ffmt, lfmt
+
+    ffmt = "(es25.3e1)"
+    lfmt = "(l25)"
+
+    fileinfo = 'output/info.' // trim(adjustl(expno_str))
+
+    open (10, file = fileinfo, status = 'unknown')
+
+    write(10,*) ('OPTIONS')
+    write(10,*) ('')
+    write(10,*) ('dynamics =')
+    write(10,lfmt) (dynamics)
+    write(10,*) ('thermodyn =')
+    write(10,lfmt) (thermodyn)
+    write(10,*) ('cohesion =') 
+    write(10,lfmt) (cohesion)
+    write(10,*) ('ridging =') 
+    write(10,lfmt) (ridging)
+
+    write(10,*) ('')
+    write(10,*) ('NUMERICAL PARAMETERS')
+    write(10,*) ('')
+    write(10,*) ('rtree =')
+    write(10,ffmt) (rtree)
+    write(10,*) ('dt =')
+    write(10,ffmt) (dt)
+    write(10,*) ('nt =') 
+    write(10,ffmt) (nt)
+    write(10,*) ('comp =') 
+    write(10,ffmt) (comp)
+
+    write(10,*) ('')
+    write(10,*) ('PHYSICAL PARAMETERS')
+    write(10,*) ('')
+    write(10,*) ('Cdair =')
+    write(10,ffmt) (Cdair)
+    write(10,*) ('Csair =')
+    write(10,ffmt) (Csair)
+    write(10,*) ('Cdwater = ')
+    write(10,ffmt) (Cdwater)
+    write(10,*) ('Cswater =')
+    write(10,ffmt) (Cswater)
+    write(10,*) ('z0w =')
+    write(10,ffmt) (z0w)
+    write(10,*) ('lat =')
+    write(10,ffmt) (lat)
+    write(10,*) ('rhoair =')
+    write(10,ffmt) (rhoair)
+    write(10,*) ('rhoice')
+    write(10,ffmt) (rhoice)
+    write(10,*) ('rhowater')
+    write(10,ffmt) (rhowater)
+    
+    write(10,*) ('')
+    write(10,*) ('DISK PARAMETERS')
+    write(10,*) ('')
+    write(10,*) ('e_modul = ')
+    write(10,ffmt) (e_modul)
+    write(10,*) ('poiss_ratio =')
+    write(10,ffmt) (poiss_ratio)
+    write(10,*) ('friction_coeff =')
+    write(10,ffmt) (friction_coeff)
+    write(10,*) ('rest_coeff =')
+    write(10,ffmt) (rest_coeff)
+    write(10,*) ('sigmanc_crit =')
+    write(10,ffmt) (sigmanc_crit)
+    
+    write(10,*) ('')
+    write(10,*) ('BOND PARAMETERS')
+    write(10,*) ('')
+    write(10,*) ('eb = ')
+    write(10,ffmt) (eb)
+    write(10,*) ('lambda_rb =')
+    write(10,ffmt) (lambda_rb)
+    write(10,*) ('lambda_lb =')
+    write(10,ffmt) (lambda_lb)
+    write(10,*) ('sigmatb_crit =')
+    write(10,ffmt) (sigmatb_crit)
+    write(10,*) ('sigmacb_crit =')
+    write(10,ffmt) (sigmacb_crit)
+    write(10,*) ('tau_crit')
+    write(10,ffmt) (tau_crit)
+    write(10,*) ('gamma_d')
+    write(10,ffmt) (gamma_d)
+
+end subroutine info
 
 
