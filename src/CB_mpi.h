@@ -12,10 +12,6 @@
                 first_iter     ,    & ! starting iter number 
                 last_iter             ! ending iter number
 
-    integer, pointer ::             & ! allocatable variables
-                counts     (:) ,    & ! number of elements for master
-                disp       (:)        ! displacement number
-
     double precision ::             & ! mpi force receive buffers
                 fcx_r       (n),    &
                 fcy_r       (n),    &
@@ -33,9 +29,7 @@
                 ierr           ,    & ! error variable
                 iter_per_rank  ,    & ! iteration per rank
                 first_iter     ,    & ! starting iter number 
-                last_iter      ,    & ! ending iter number
-                counts         ,    & !
-                disp                  !
+                last_iter             ! ending iter number
 
     common/mpi_var_reduc/           &
                 fcx_r          ,    &

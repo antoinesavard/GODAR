@@ -10,6 +10,7 @@ start.sh
 input
 input_restart
 start.sh
+out*
 
 # Compiled Object files
 *.slo

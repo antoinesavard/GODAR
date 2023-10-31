@@ -15,7 +15,6 @@ program ice
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, num_threads
-    integer :: i
     type(datetime_type) :: tic, tac
     character(len=4) :: expno_str, expno_str_r
     character(10) :: n_str
@@ -147,16 +146,11 @@ program ice
         iter_per_rank = iter_per_rank + 1
     end if
 
-    first_iter = rank * iter_per_rank + 1
-    last_iter  = first_iter + iter_per_rank - 1
+    !first_iter = rank * iter_per_rank + 1
+    !last_iter  = first_iter + iter_per_rank - 1
 
-    allocate(counts(n_ranks))
-    allocate(disp(n_ranks))
-    
-    counts = iter_per_rank
-    do i = 0, n_ranks - 1
-        disp = i * iter_per_rank
-    end do
+    first_iter = rank + 1
+    last_iter  = n - rank
     
     if ( rank .eq. master ) then
         print *, "Time step: ", 1
@@ -178,9 +172,6 @@ program ice
         end if
 
     end do
-
-    deallocate(counts)
-    deallocate(disp)
 
     if ( rank .eq. master ) then
         tac = now()

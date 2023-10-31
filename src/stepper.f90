@@ -27,28 +27,7 @@ subroutine stepper (tstep)
     ! Build the tree
     tree = KdTree(x, y)
 
-    ! reinitialize force arrays for contact and bonds
-    do i = 1, n
-        mc(i)    = 0d0
-        mb(i)    = 0d0
-        fcx(i)   = 0d0
-        fcy(i)   = 0d0
-        fbx(i)   = 0d0
-        fby(i)   = 0d0
-        mc_r(i)    = 0d0
-        mb_r(i)    = 0d0
-        fcx_r(i)   = 0d0
-        fcy_r(i)   = 0d0
-        fbx_r(i)   = 0d0
-        fby_r(i)   = 0d0
-        ! and total force arrays
-        m(i)   = 0d0
-		tfx(i) = 0d0
-        tfy(i) = 0d0
-        m_r(i)   = 0d0
-		tfx_r(i) = 0d0
-        tfy_r(i) = 0d0
-    end do
+    call reset_forces
     
     ! put yourself in the referential of the ith particle
 	! loop through all j particles and compute interactions
@@ -56,7 +35,7 @@ subroutine stepper (tstep)
     !$omp parallel do schedule(guided) &
     !$omp private(i,j,da) &
     !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb)
-    do i = last_iter, first_iter, -1
+    do i = last_iter, first_iter, -n_ranks
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), yQuery = y(i), &
                             radius = r(i) + rtree)
@@ -161,7 +140,7 @@ subroutine stepper (tstep)
     call force_reduction
 
     ! sum all forces together on particule i
-    do i = first_iter, last_iter
+    do i = last_iter, first_iter, -n_ranks
         tfx_r(i) = fcx_r(i) + fbx_r(i) + fax(i) + fwx(i) + fcorx(i)
         tfy_r(i) = fcy_r(i) + fby_r(i) + fay(i) + fwy(i) + fcory(i)
 
