@@ -109,10 +109,11 @@ subroutine info (expno_str)
     include "CB_options.h"
 
     character(len=4), intent(in) :: expno_str
-    character(len=30) :: fileinfo, ffmt, lfmt
+    character(len=30) :: fileinfo, ffmt, lfmt, ifmt
 
     ffmt = "(es25.3e1)"
     lfmt = "(l25)"
+    ifmt = "(i25)"
 
     fileinfo = 'output/info.' // trim(adjustl(expno_str))
 
@@ -141,7 +142,7 @@ subroutine info (expno_str)
     write(10,*) ('comp =') 
     write(10,ffmt) (comp)
     write(10,*) ('n = ')
-    write(10,ffmt) (n)
+    write(10,ifmt) (n)
     write(10,*) ('nx = ')
     write(10,ffmt) (nx)
     write(10,*) ('ny = ')
