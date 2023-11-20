@@ -130,7 +130,7 @@ subroutine broadcasting_ini (num_threads)
 end subroutine broadcasting_ini
 
 
-subroutine broadcast_forces
+subroutine broadcast_total_forces
 
     ! this routine broadcasts (and reduce) the total forces and moments
     ! at the end of each time step so that each process can compute 
@@ -160,7 +160,7 @@ subroutine broadcast_forces
     m_r, m, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
-end subroutine broadcast_forces
+end subroutine broadcast_total_forces
 
 
 subroutine force_reduction

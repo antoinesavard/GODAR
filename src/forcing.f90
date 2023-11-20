@@ -105,13 +105,13 @@ subroutine sheltering (j, i)
 
     integer, intent(in) :: i, j
 
-    double precision :: H_shelter
+    double precision :: S_shelter
 
     ! sheltering height from air and water
-    hsfa(j, i) = H_shelter(hfa(i), hfa(j), deltan(j,i), cosa(j,i), &
-                    sina(j,i), ua - u(j), va - v(j))
-    hsfw(j, i) = H_shelter(hfw(i), hfw(j), deltan(j,i), cosa(j,i), &
-                    sina(j,i), uw - u(j), vw - v(j))
+    hsfa(j, i) = S_shelter(hfa(i), hfa(j), deltan(j,i), cosa(j,i), &
+                    sina(j,i), ua, va)
+    hsfw(j, i) = S_shelter(hfw(i), hfw(j), deltan(j,i), cosa(j,i), &
+                    sina(j,i), uw, vw)
 
 end subroutine
 
@@ -158,7 +158,7 @@ double precision function heaviside (x)
 
 end function heaviside
 
-double precision function H_shelter (hfi, hfj, deltan, cosa, sina, uf, vf)
+double precision function S_shelter (hfi, hfj, deltan, cosa, sina, uf, vf)
 
     implicit none
 
@@ -167,7 +167,7 @@ double precision function H_shelter (hfi, hfj, deltan, cosa, sina, uf, vf)
     
     double precision :: heaviside
 
-    H_shelter = (                                               &
+    S_shelter = (                                               &
                 heaviside(deltan) * heaviside(hfi - hfj) *      &
                 (1 - hfj / hfi) + ( 1 - heaviside(deltan) ) *   &
                 ( 1 - exp(- 0.18 * abs(deltan) / hfj) )         &
@@ -177,7 +177,7 @@ double precision function H_shelter (hfi, hfj, deltan, cosa, sina, uf, vf)
                 heaviside(-cosa * uf) + heaviside(-sina * vf)   &
                 )
 
-end function H_shelter
+end function S_shelter
 
 
 double precision function L2norm (u, v)

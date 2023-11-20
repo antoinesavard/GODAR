@@ -122,7 +122,9 @@ subroutine stepper (tstep)
 			end if
 
 			! compute sheltering height for particule j on particle i for air and water drag
+            ! you have to check both sides of the matrix because it is not symmetric
             call sheltering(j, i)
+            call sheltering(i, j)
 
         end do
 
@@ -149,7 +151,7 @@ subroutine stepper (tstep)
     end do
 
     ! broadcast forces to all so that they can each update their x and u
-    call broadcast_forces
+    call broadcast_total_forces
 
     ! forces on side particles for experiments
     !call experiment_forces

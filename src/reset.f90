@@ -68,11 +68,10 @@ subroutine reset_forces
         m_r(i)   = 0d0
 		tfx_r(i) = 0d0
         tfy_r(i) = 0d0
-        ! and shelter height
-        do j = 1, n
-            hsfa(j,i) = 0d0
-            hsfw(j,i) = 0d0
-        end do
     end do
+
+    ! and shelter height
+    hsfa = 0d0
+    hsfw = 0d0
 
 end subroutine reset_forces
