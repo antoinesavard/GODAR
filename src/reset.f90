@@ -43,7 +43,7 @@ subroutine reset_forces
     include "CB_options.h"
     include "CB_mpi.h"
 
-    integer :: i, j
+    integer :: i
 
     ! reinitialize force arrays for contact and bonds
     do i = 1, n
