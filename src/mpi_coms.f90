@@ -12,7 +12,7 @@ subroutine broadcasting_ini (num_threads)
     include "CB_options.h"
 
 
-    integer, intent(in) :: num_threads
+    integer, intent(inout) :: num_threads
     
     !-------------------------------------------------------------------
     ! openmp variable

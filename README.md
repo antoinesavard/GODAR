@@ -16,11 +16,19 @@ We will need these in the SConstruct file; this is specific to your machine.
 2. Next you will need to add the library path to your external environment variable. To do this we will edit the `~/.bashrc` file so that we only have to do this operation once, otherwise, you will have to do it everytime you open a new terminal. Open the terminal and run: `emacs ~/.bashrc`
 3. Add the following line to this file: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mycoretran/lib` If the line already exist, just append `:/mycoretran/lib` at the end of the line.
 4. `Crtl-x Crtl-s` to save and `Crtl-x Crtl-c` to exit emacs.
-5. Then enter the `source ~/.bashrc` to reload your terminal with the changes.
+5. Then enter the `exec bash` to reload your terminal with the changes.
 
 After these steps, you should be good to go. 
 
-Next, to compile, this program uses `scons`. You will have to install it prior to running this program; try doing `pip install SCons==3.0.0`. Then, run `scons` with the appropriate parameters to compile Godar.
+Next, to compile, this program uses `scons`. You will have to install it prior to running this program. The proper way of doing this is by creating a virtual environment first in which we will be able to install scons. If you already have your own python environment please skip ahead.
+
+1. `python -m venv path/to/my/env` to create a virtual environment named `env`
+2. The there are two options, you either always run the command `source path/to/my/env/bin/activate` or you put this line in your `~/.bashrc` file so that everytime you open a session, this specific environment gets loaded. To deactivate the environment: `deactivate`.
+3. Then you install scons `python -m pip install scons`. 
+
+After that, you need to execute the `init.sh` file in order to setup the folders. It will create an output folder and some default input files that you can edit. These files are actually in the `generic` folder, so that you can modify the ones created by the `init.sh` as you please (if you don't remember the syntax, you can go have a look at the ones in the `generic` directory).
+
+Then, run `scons` with the appropriate parameters to compile Godar.
 
 - To compile the code on n cores `scons -j n` 
 - To clear the build: `scons -c`
