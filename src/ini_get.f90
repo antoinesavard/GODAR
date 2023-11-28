@@ -45,9 +45,22 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 			read (107, *)
 		end do
 
+        do j = k, k
+			read (102, *) ( x(i), 		i = 1, n)
+			read (103, *) ( y(i), 		i = 1, n)
+			read (104, *) ( r(i), 		i = 1, n)
+			read (105, *) ( h(i), 		i = 1, n)
+			read (106, *) ( theta(i), 	i = 1, n)
+			read (107, *) ( omega(i), 	i = 1, n)
+		end do
+
         do j = 1, (n + 1) * (k - 1)
             read (108, *)
         end do
+
+        do i = 102, 107
+			close(i)
+		end do
 
 		do j = k, k
 			read (102, *) ( x(i), 		i = 1, n)
@@ -62,9 +75,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             read (108, *) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
         end do
 		
-		do i = 102, 108
-			close(i)
-		end do
+        close(108)
 
 	else
 
