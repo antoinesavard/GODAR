@@ -11,7 +11,9 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 	character(2), intent(in) :: expno_str_r
 
     integer :: i, j, k
-    character :: Xfile, Yfile, Rfile, Hfile, Tfile*32, Ofile*32, Bfile*32
+    character :: Tfile*32, Ofile*32, Bfile*32
+
+    double precision :: test
 
 	! load restart files
 	if ( restart .eq. 1 ) then
@@ -37,7 +39,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 		k = int(nt_r)
 
 		do j = 1, k-1
-			read (102, *)
+			read (102, *) test
+            print *, test
 			read (103, *)
 			read (104, *)
 			read (105, *)
