@@ -127,6 +127,16 @@ subroutine broadcasting_ini (num_threads)
     call mpi_bcast(gamma_d, 1, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
 
+    ! other variables computed from namelist values
+    call mpi_bcast(t, 1, mpi_double_precision,              &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(ec, mpi_double_precision,                &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(gc, 1, mpi_double_precision,             &
+                    master, mpi_comm_world, ierr)   
+    call mpi_bcast(beta, 1, mpi_double_precision,           &
+                    master, mpi_comm_world, ierr)   
+
 end subroutine broadcasting_ini
 
 

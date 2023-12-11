@@ -39,8 +39,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 		k = int(nt_r)
 
 		do j = 1, k-1
-			read (102, *) test
-            print *, test
+			read (102, *)
 			read (103, *)
 			read (104, *)
 			read (105, *)
