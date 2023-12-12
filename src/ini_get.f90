@@ -25,47 +25,70 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 		Tfile = 'output/theta.' // trim(adjustl(expno_str_r))
 		Ofile = 'output/omega.' // trim(adjustl(expno_str_r))
         Bfile = 'output/bond.' // trim(adjustl(expno_str_r))
-
-        open(102, file = Xfile, status='old')
-		open(103, file = Yfile, status='old')
-		open(104, file = Rfile, status='old')
-		open(105, file = Hfile, status='old')
-		open(106, file = Tfile, status='old')
-		open(107, file = Ofile, status='old')
-        open(108, file = Bfile, status='old')
 		
 		k = int(nt_r)
 
+        open(102, file = Xfile, status='old')
 		do j = 1, k-1
 			read (102, *)
-			read (103, *)
-			read (104, *)
-			read (105, *)
-			read (106, *)
-			read (107, *)
-		end do
-
+        end do
         do j = k, k
 			read (102, *) ( x(i), 		i = 1, n)
+        end do
+        close(102)
+
+        open(103, file = Yfile, status='old')
+        do j = 1, k-1
+			read (103, *)
+        end do
+        do j = k, k
 			read (103, *) ( y(i), 		i = 1, n)
+        end do
+        close(103)
+
+        open(104, file = Rfile, status='old')
+        do j = 1, k-1
+			read (104, *)
+        end do
+        do j = k, k
 			read (104, *) ( r(i), 		i = 1, n)
+        end do
+        close(104)
+
+        open(105, file = Hfile, status='old')
+        do j = 1, k-1
+			read (105, *)
+        end do
+        do j = k, k
 			read (105, *) ( h(i), 		i = 1, n)
-			read (106, *) ( theta(i), 	i = 1, n)
-			read (107, *) ( omega(i), 	i = 1, n)
-		end do
+        end do
+        close(105)
 
-        do i = 102, 107
-			close(i)
-		end do
+        open(106, file = Tfile, status='old')
+        do j = 1, k-1
+			read (106, *)
+        end do
+        do j = k, k
+			read (106, *) ( theta(i),	i = 1, n)
+        end do
+        close(106)
 
+        open(107, file = Ofile, status='old')
+        do j = 1, k-1
+			read (107, *)
+		end do
+        do j = k, k
+			read (107, *) ( omega(i),	i = 1, n)
+        end do
+        close(107)
+
+        open(108, file = Bfile, status='old')
         do j = 1, (n + 1) * (k - 1)
             read (108, *)
         end do
-
         do j = (n + 1) * k - n, (n + 1) * k - 1
             read (108, *) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
         end do
-		
         close(108)
 
 	else
