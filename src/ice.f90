@@ -124,6 +124,7 @@ program ice
         '' 
         
         print *, 'Broadcasting initialization to all processes'
+        print *, 'Verify that you loop over all particles'
 
     end if
 
@@ -140,14 +141,14 @@ program ice
 
     ! set mpi variables
     ! Compute the part of the array to loop over given rank
-    iter_per_rank = n / n_ranks
 
-    if ( mod(n, n_ranks) > 0 ) then
-        iter_per_rank = iter_per_rank + 1
-    end if
+    first_iter = int(n * ( 1 - &
+                sqrt(1. * (n_ranks - rank) / n_ranks) )) + 1
 
-    first_iter = rank * iter_per_rank + 1
-    last_iter  = first_iter + iter_per_rank - 1
+    last_iter = int(n * ( 1 - &
+                sqrt(1. * (n_ranks - rank - 1) / n_ranks) ))
+
+    print*, rank, first_iter, last_iter
     
     if ( rank .eq. master ) then
         print *, "Time step: ", 1

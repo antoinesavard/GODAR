@@ -80,7 +80,7 @@ subroutine get_default
     !           Winds and currents forcings
     !-------------------------------------------------------------------
 
-    uw = -200d0
+    uw = 0d0
     vw = 0d0
     ua = 0d0
     va = 0d0
