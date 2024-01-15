@@ -113,6 +113,11 @@ subroutine sheltering (j, i)
     hsfw(j, i) = S_shelter(hfw(i), hfw(j), deltan(j,i), cosa(j,i), &
                     sina(j,i), uw, vw)
 
+    ! sheltering for the reverse direction
+    hsfa(j, i) = S_shelter(hfa(j), hfa(i), deltan(j,i), -cosa(j,i), &
+                    -sina(j,i), ua, va)
+    hsfw(j, i) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
+                    -sina(j,i), uw, vw)
 end subroutine
 
 

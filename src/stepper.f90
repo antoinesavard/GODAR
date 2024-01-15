@@ -123,8 +123,9 @@ subroutine stepper (tstep)
 
 			! compute sheltering height for particule j on particle i for air and water drag
             ! you have to check both sides of the matrix because it is not symmetric
-            call sheltering(j, i)
-            call sheltering(i, j)
+            if ( shelter .eqv. .true. ) then
+                call sheltering(j, i)
+            end if
 
         end do
 

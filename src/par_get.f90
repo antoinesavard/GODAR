@@ -17,7 +17,8 @@ subroutine get_default
     thermodyn = .true.             ! thermo or not
     cohesion  = .true.             ! bonds/no bond
     ridging   = .true.             ! plastic behavior at contact
-
+    shelter   = .true.             ! sheltering from forcings
+    
     !-------------------------------------------------------------------
     !           set parameter for the run
     !-------------------------------------------------------------------
@@ -113,7 +114,7 @@ subroutine read_namelist
 
     !---- namelist variables -------------------------------------------
     namelist /options_nml/ &
-        dynamics, thermodyn, cohesion, ridging
+        dynamics, thermodyn, cohesion, ridging, shelter
     
     namelist /numerical_param_nml/ &
         rtree, dt, nt, comp

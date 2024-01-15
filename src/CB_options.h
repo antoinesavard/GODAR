@@ -6,11 +6,13 @@
                 dynamics        ,   &
                 thermodyn       ,   &
                 cohesion        ,   &
-                ridging
+		ridging         ,   &
+		shelter
 
         
     common/options/                 & ! options for the model
                 dynamics        ,   & ! dynamical forcings
                 thermodyn       ,   & ! melt/growth
                 cohesion        ,   & ! bond/no bond
-                ridging               ! plastic behavior at contact
+		ridging         ,   & ! plastic behavior at contact
+		shelter               ! sheltering between particles from forcings
