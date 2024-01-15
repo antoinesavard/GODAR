@@ -32,7 +32,7 @@ subroutine stepper (tstep)
     ! put yourself in the referential of the ith particle
 	! loop through all j particles and compute interactions
 
-    !$omp parallel do schedule(dynamic) &
+    !$omp parallel do schedule(dynamic, 1) &
     !$omp private(i,j,da) &
     !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb)
     do i = last_iter, first_iter, -1

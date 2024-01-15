@@ -159,7 +159,7 @@ program ice
     
     if ( rank .eq. master ) then
         tic = now()
-        print *, "Time step: ", 1
+        print *, "Time step: ", 1, "/", nt
     end if
 
     do tstep = 1, int(nt) + 1
