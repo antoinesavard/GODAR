@@ -3,6 +3,7 @@
     thermodyn = .false.            ! growth/melt
     cohesion  = .false.            ! bond/no bond
     ridging   = .false.            ! plastic behavior at contact
+    shelter   = .false.            ! sheltering from other particles
     /
 
 &numerical_param_nml
