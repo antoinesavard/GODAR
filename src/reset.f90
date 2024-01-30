@@ -70,8 +70,23 @@ subroutine reset_forces
         tfy_r(i) = 0d0
     end do
 
-    ! and shelter height
-    hsfa = 0d0
-    hsfw = 0d0
-
 end subroutine reset_forces
+
+
+subroutine reset_shelter
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_forcings.h"
+    include "CB_options.h"
+    include "CB_mpi.h"
+
+    ! reinitialize sheltering height
+    hsfa = 1d0
+    hsfw = 1d0
+
+end subroutine reset_shelter

@@ -27,7 +27,11 @@ subroutine stepper (tstep)
     ! Build the tree
     tree = KdTree(x, y)
 
+    ! reset the forces and sheltering height
     call reset_forces
+    if ( shelter .eqv. .true. ) then
+        call reset_shelter
+    end if
     
     ! put yourself in the referential of the ith particle
 	! loop through all j particles and compute interactions

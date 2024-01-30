@@ -6,6 +6,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
     include "CB_variables.h"
     include "CB_const.h"
 	include "CB_bond.h"
+    include "CB_forcings.h"
 
 	integer, intent(in) :: restart, nt_r
 	character(2), intent(in) :: expno_str_r
@@ -152,6 +153,9 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             ! bond elongation et deflection
             deltanb(j,i) = 0d0
             deltatb(j,i) = 0d0
+            ! sheltering coefficient
+            hsfa(j, i) = 1d0
+            hsfw(j, i) = 1d0
         end do
     end do
 

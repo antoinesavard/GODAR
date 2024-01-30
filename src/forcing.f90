@@ -15,9 +15,9 @@ subroutine forcing (i)
     double precision :: log_profile, L2norm
     double precision :: shelter_coeff_a(n), shelter_coeff_w(n)
 
-    ! unitless maximum sheltering
-    shelter_coeff_a = maxval(hsfa, dim=1)
-    shelter_coeff_w = maxval(hsfw, dim=1) 
+    ! unitless minimum sheltering coefficient
+    shelter_coeff_a = minval(hsfa, dim=1)
+    shelter_coeff_w = minval(hsfw, dim=1) 
     
     ! wind drag forcing
     fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *      &
