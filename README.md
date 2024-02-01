@@ -7,22 +7,22 @@ GODAR is a discrete element model that solves Newton's equations for a given num
 
 ### How to setup GODAR
 
-## Creating the config files
+#### Creating the config files
 
 The first step will be to execute `sh init.sh` file in order to setup the folders. It will create an output folder and some default input files that you can edit. These files are actually in the `generic` folder, so that you can modify the ones created by the `init.sh` as you please (if you don't remember the syntax, you can go have a look at the ones in the `generic` directory).
 
-## Installing scons and creating a virtual environment
+#### Installing scons and creating a virtual environment
 
 To install packages on super computer, it is usually better to do so in a virtual environment. So do that first otherwise, skip to just the pip install of scons.
 
 Next, to compile, this program uses `scons`. You will have to install it prior to running this program. The proper way of doing this is by creating a virtual environment first in which we will be able to install scons. If you already have your own python environment please skip ahead.
 
-# Optional virtual environment
+##### Optional virtual environment
 
 1. `python -m venv path/to/my/env` to create a virtual environment named `env`
 2. The there are two options, you either always run the command `source path/to/my/env/bin/activate` or you put this line in your `~/.bashrc` file so that everytime you open a session, this specific environment gets loaded. To deactivate the environment: `deactivate`. 
 
-# Install scons
+##### Install scons
 
 Then you install scons `python -m pip install scons`. 
 
@@ -31,7 +31,7 @@ Then you install scons `python -m pip install scons`.
 - Debug the code: `scons debug=1`
 - Run the executable in the background: `sh start.sh`
 
-## Intalling coretran
+#### Intalling coretran
 
 Next you will need to install a few things. There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: https://github.com/leonfoks/coretran. 
 
@@ -44,7 +44,7 @@ Linux: /usr/local/lib
 Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`, in which you will find the `.so` file (`.dylib` on OSX) and the modules respectively.
 We will need these in the SConstruct file; this is specific to your machine.
 
-# Linux
+##### Linux
 
 The following fix should work on all machines, although it is a bit of a work-around.
 
@@ -54,7 +54,7 @@ The following fix should work on all machines, although it is a bit of a work-ar
 4. `Crtl-x Crtl-s` to save and `Crtl-x Crtl-c` to exit emacs.
 5. Then enter the `exec bash` to reload your terminal with the changes.
 
-# OSX
+##### OSX
 
 On mac, there is an extra step to be taken as well.
 
@@ -67,7 +67,7 @@ install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib
 
 After these steps, you should be good to go. 
 
-## How to run godar
+#### How to run godar
 
 You can use the `start.sh` file if you are working on your own machine. It contains the following line:
 
