@@ -1,4 +1,5 @@
 # GODAR
+
 ## Granular Discrete Arctic Rheology: DEM for sea ice modeling
 
 ### What does GODAR do?
@@ -20,20 +21,20 @@ Next, to compile, this program uses `scons`. You will have to install it prior t
 ##### Optional virtual environment
 
 1. `python -m venv path/to/my/env` to create a virtual environment named `env`
-2. The there are two options, you either always run the command `source path/to/my/env/bin/activate` or you put this line in your `~/.bashrc` file so that everytime you open a session, this specific environment gets loaded. To deactivate the environment: `deactivate`. 
+2. The there are two options, you either always run the command `source path/to/my/env/bin/activate` or you put this line in your `~/.bashrc` file so that everytime you open a session, this specific environment gets loaded. To deactivate the environment: `deactivate`.
 
 ##### Install scons
 
-Then you install scons `python -m pip install scons`. 
+Then you install scons `python -m pip install scons`.
 
-- To compile the code on n cores `scons -j n` 
+- To compile the code on n cores `scons -j n`
 - To clear the build: `scons -c`
 - Debug the code: `scons debug=1`
 - Run the executable in the background: `sh start.sh`
 
 #### Intalling coretran
 
-Next you will need to install a few things. There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: https://github.com/leonfoks/coretran. 
+Next you will need to install a few things. There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: <https://github.com/leonfoks/coretran>.
 
 I would suggest to follow the detailed instructions provided in coretran's readme as it well written and easy to use. I would recommend that coretran be installed in:
 
@@ -65,7 +66,7 @@ On mac, there is an extra step to be taken as well.
 install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib godar
 ```
 
-After these steps, you should be good to go. 
+After these steps, you should be good to go.
 
 #### How to run godar
 
@@ -78,7 +79,8 @@ mpirun --bind-to none -n 1 ./godar < input_restart > out
 The `--bind-to none` makes all threads available to the program (you can then specify this number in the openmp part), while the `-n 1` simply tells how many copies of the program you want to run (on different machines for example). For example, let's say your machine has 2 cores 12 threads per core, you could either run 1 process on 24 threads using openmp or 2 processes (1 per core) with 12 threads using both mpi and openmp.
 When working on clusters, you will usually encounter scheduler like slurm. In that case, don't use the `start.sh` file.
 
-The input_file is a simple file to pass along to the main program when executing that can take the following arguments in this order: 
+The input_file is a simple file to pass along to the main program when executing that can take the following arguments in this order:
+
 - NEED`[bool]   input namelist`
 - NEED`[bool]   input restart`
 - OPT `[int]    restart version`
@@ -86,7 +88,7 @@ The input_file is a simple file to pass along to the main program when executing
 - NEED`[int]    exp version`
 - NEED`[int]    number of threads`
 
-The code executes automatically a python script to output a video file of the collisions. This is saved in collisionXX.mp4 file. To suppress, just comment the line 
+The code executes automatically a python script to output a video file of the collisions. This is saved in collisionXX.mp4 file. To suppress, just comment the line
 
 ```fortran
 call execute_command_line("python /plots/video.py")
@@ -96,7 +98,7 @@ To use it, change the path to your python interpreter and the location of the py
 
 ### How to modify the parameters in GODAR
 
-All physical and numerical parameters as well as options are contained in the namelist.nml file. Therefore, if you want to play with the physics, you can simply change the values in this file without recompiling the code; this permits the use of batch job using an appropriate bash script that modifies the parameters that you want. If you forget the default parameters, they are all set in the `get_default` subroutine in the par_get.f90 file. You can also opt to not use the namelist by setting the read namelist option to false in the input file. 
+All physical and numerical parameters as well as options are contained in the namelist.nml file. Therefore, if you want to play with the physics, you can simply change the values in this file without recompiling the code; this permits the use of batch job using an appropriate bash script that modifies the parameters that you want. If you forget the default parameters, they are all set in the `get_default` subroutine in the par_get.f90 file. You can also opt to not use the namelist by setting the read namelist option to false in the input file.
 
 The only parameters that are set at compilation are the number of particles (because we use this value for setting the lenght of all arrays), the size of the domain (for future developement where we will superimpose a grid over the domain to have spatially varying forcings), and the rank of the master thread. We are curently worknig on a way to work around this issue. (Probably using the input files and allocatable arrays in modules.)
 
