@@ -7,10 +7,46 @@ GODAR is a discrete element model that solves Newton's equations for a given num
 
 ### How to setup GODAR
 
-There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: https://github.com/leonfoks/coretran. 
+## Creating the config files
 
-Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`, in which you will find the `.so` file and the modules respectively.
+The first step will be to execute `sh init.sh` file in order to setup the folders. It will create an output folder and some default input files that you can edit. These files are actually in the `generic` folder, so that you can modify the ones created by the `init.sh` as you please (if you don't remember the syntax, you can go have a look at the ones in the `generic` directory).
+
+## Installing scons and creating a virtual environment
+
+To install packages on super computer, it is usually better to do so in a virtual environment. So do that first otherwise, skip to just the pip install of scons.
+
+Next, to compile, this program uses `scons`. You will have to install it prior to running this program. The proper way of doing this is by creating a virtual environment first in which we will be able to install scons. If you already have your own python environment please skip ahead.
+
+# Optional virtual environment
+
+1. `python -m venv path/to/my/env` to create a virtual environment named `env`
+2. The there are two options, you either always run the command `source path/to/my/env/bin/activate` or you put this line in your `~/.bashrc` file so that everytime you open a session, this specific environment gets loaded. To deactivate the environment: `deactivate`. 
+
+# Install scons
+
+Then you install scons `python -m pip install scons`. 
+
+- To compile the code on n cores `scons -j n` 
+- To clear the build: `scons -c`
+- Debug the code: `scons debug=1`
+- Run the executable in the background: `sh start.sh`
+
+## Intalling coretran
+
+Next you will need to install a few things. There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: https://github.com/leonfoks/coretran. 
+
+I would suggest to follow the detailed instructions provided in coretran's readme as it well written and easy to use. I would recommend that coretran be installed in:
+
+OSX: /opt/coretran
+
+Linux: /usr/local/lib
+
+Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`, in which you will find the `.so` file (`.dylib` on OSX) and the modules respectively.
 We will need these in the SConstruct file; this is specific to your machine.
+
+# Linux
+
+The following fix should work on all machines, although it is a bit of a work-around.
 
 1. Change the `LIBPATH` and `F90PATH` values in the SConstruct file to your `/mycoretran/lib` and `/mycoretran/include` respectively
 2. Next you will need to add the library path to your external environment variable. To do this we will edit the `~/.bashrc` file so that we only have to do this operation once, otherwise, you will have to do it everytime you open a new terminal. Open the terminal and run: `emacs ~/.bashrc`
@@ -18,24 +54,22 @@ We will need these in the SConstruct file; this is specific to your machine.
 4. `Crtl-x Crtl-s` to save and `Crtl-x Crtl-c` to exit emacs.
 5. Then enter the `exec bash` to reload your terminal with the changes.
 
+# OSX
+
+On mac, there is an extra step to be taken as well.
+
+1. Change the `LIBPATH` and `F90PATH` values in the SConstruct file to your `/mycoretran/lib` and `/mycoretran/include` respectively
+2. In the `start.sh` file, copy the following line above the `mpirun` command. This line will tell the executable where to look for the dynamically shared libraries.
+
+```bash
+install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib godar
+```
+
 After these steps, you should be good to go. 
 
-Next, to compile, this program uses `scons`. You will have to install it prior to running this program. The proper way of doing this is by creating a virtual environment first in which we will be able to install scons. If you already have your own python environment please skip ahead.
+## How to run godar
 
-1. `python -m venv path/to/my/env` to create a virtual environment named `env`
-2. The there are two options, you either always run the command `source path/to/my/env/bin/activate` or you put this line in your `~/.bashrc` file so that everytime you open a session, this specific environment gets loaded. To deactivate the environment: `deactivate`.
-3. Then you install scons `python -m pip install scons`. 
-
-After that, you need to execute the `init.sh` file in order to setup the folders. It will create an output folder and some default input files that you can edit. These files are actually in the `generic` folder, so that you can modify the ones created by the `init.sh` as you please (if you don't remember the syntax, you can go have a look at the ones in the `generic` directory).
-
-Then, run `scons` with the appropriate parameters to compile Godar.
-
-- To compile the code on n cores `scons -j n` 
-- To clear the build: `scons -c`
-- Debug the code: `scons debug=1`
-- Run the executable in the background: `sh start.sh`
-
-You can use the `start.sh` file if you are working on your own machin. It contains the following line:
+You can use the `start.sh` file if you are working on your own machine. It contains the following line:
 
 ```bash
 mpirun --bind-to none -n 1 ./godar < input_restart > out
