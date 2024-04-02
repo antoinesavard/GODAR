@@ -15,7 +15,7 @@ subroutine velocity
 end subroutine velocity
 
 
-subroutine euler
+subroutine position
 
     implicit none
 
@@ -36,4 +36,4 @@ subroutine euler
 
     end do
 
-end subroutine euler
+end subroutine position

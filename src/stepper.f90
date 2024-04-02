@@ -158,17 +158,25 @@ subroutine stepper (tstep)
     ! broadcast forces to all so that they can each update their x and u
     call broadcast_total_forces
 
-    ! forces on side particles for experiments
-    !call experiment_forces
+    ! normal forces on side of the plate
+    do i = int(n / 2 + 1), n
+        call normal_forces(i)
+    end do
 
     ! integration in time
     call velocity
-    call euler
+
+    ! set speed of plate
+    do i = 4800, n
+        call plate_velocity(i)
+    end do
+
+    call position
 
 end subroutine stepper
 
 
-subroutine experiment_forces
+subroutine normal_forces (i)
 
     implicit none
 
@@ -178,36 +186,30 @@ subroutine experiment_forces
 	include "CB_bond.h"
     include "CB_forcings.h"
 
+    integer, intent(in) :: i
 
-    !tfx(2) = tfx(2) - 1d8
+    if ( x(i) -  r(i) >= 27d3 ) then
 
-    !tfx(44) = 0d0
-    !tfy(44) = 0d0
-    !tfx(45) = 0d0
-    !tfy(45) = 0d0
+        tfx(i) = tfx(i) + 1d8
 
-    ! bottom plate on the left
-    !tfy(1) = tfy(1) + 1d8
-    !tfy(2) = tfy(2) + 1d8
-    !tfy(3) = tfy(3) + 1d8
+    end if  
 
-    ! top plate on the right
-    !tfy(6) = tfy(6) - 5d7
-    !tfy(4) = tfy(4) - 5d7
-    !tfy(7) = tfy(7) - 5d7
 
-    ! left plate
-    !tfx(2) = tfx(2) + 1d8
-    !tfx(8) = tfx(8) + 1d8
-    !tfx(14) = tfx(14) + 1d8
-    !tfx(20) = tfx(20) + 1d8
-    !tfx(26) = tfx(26) + 1d8
+end subroutine normal_forces
 
-    ! right plate
-    !tfx(7) = tfx(7) - 5d7
-    !tfx(13) = tfx(13) - 5d7
-    !tfx(19) = tfx(19) - 5d7
-    !tfx(25) = tfx(25) - 5d7
-    !tfx(31) = tfx(31) - 5d7
+subroutine plate_velocity (i)
 
-end subroutine experiment_forces
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+	include "CB_bond.h"
+    include "CB_forcings.h"
+
+    integer, intent(in) :: i
+        
+    v(i) = 2d-1
+
+
+end subroutine plate_velocity
