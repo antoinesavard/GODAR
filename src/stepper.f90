@@ -159,7 +159,7 @@ subroutine stepper (tstep)
     call broadcast_total_forces
 
     ! normal forces on side of the plate
-    do i = int(n / 2 + 1), n
+    do i = 1, n
         call normal_forces(i)
     end do
 
@@ -188,11 +188,17 @@ subroutine normal_forces (i)
 
     integer, intent(in) :: i
 
-    if ( x(i) -  r(i) >= 27d3 ) then
+    if ( x(i) >= 27d3 ) then
 
         tfx(i) = tfx(i) + 1d8
 
     end if  
+
+    if ( x(i) <= 3d3 ) then
+
+        tfy(i) = 0d0
+
+    end if
 
 
 end subroutine normal_forces
