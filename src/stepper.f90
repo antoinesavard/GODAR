@@ -188,15 +188,16 @@ subroutine normal_forces (i)
 
     integer, intent(in) :: i
 
-    if ( x(i) >= 27d3 ) then
+    if ( x(i) >= 29d3 ) then
 
-        tfx(i) = tfx(i) + 1d8
+        tfx(i) = tfx(i) - 1d8
 
     end if  
 
-    if ( x(i) <= 3d3 ) then
+    if ( x(i) <= 2d3 ) then
 
         tfy(i) = 0d0
+        tfx(i) = 0d0
 
     end if
 
@@ -215,7 +216,7 @@ subroutine plate_velocity (i)
 
     integer, intent(in) :: i
         
-    v(i) = 2d-1
+    v(i) = 5d-1
 
 
 end subroutine plate_velocity
