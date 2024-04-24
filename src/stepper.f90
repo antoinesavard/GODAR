@@ -167,7 +167,7 @@ subroutine stepper (tstep)
     call velocity
 
     ! set speed of plate
-    do i = 4800, n
+    do i = 2300, n
         call plate_velocity(i)
     end do
 

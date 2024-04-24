@@ -1,56 +1,39 @@
-# file to create experience 07 initial conditions with 5000 particles
+# file that creates initial conditions from experience 09 to experience 01 the reason why we need this is because the 5000 particles in 09 were costing too much computational time and we need to cut the number of particles. In this I will cut everything above 50 km (essentially cutting the number of particles roughly in half). this should speed up the code a lot so that we can day daily simulations
 
 import numpy as np
+import subprocess
 
-domain = 100
-size = 0.5
+expno = "08"
+n = 5000
+cut = 50000
+saveas = "10"
 
-# x
-with open("output/x.06", "r") as f:
-    xlines1 = f.read().split()
-    xlines1 = np.asarray(xlines1).astype(float).reshape(1000, 5000)
-    xlines2 = np.ones_like(ylines2)
-    xlines = np.concatenate((xlines1[-1], xlines2))
-    xlines3 = np.ones_like(xlines2)
-    xlines = np.concatenate((xlines, xlines3))
-
-with open("input_files/X1.dat", "w") as f:
-    for i, xline in enumerate(xlines):
-        f.write(str(xline))
-        f.write("\n")
+out = subprocess.run(["wc", "-l", "output/x." + expno], capture_output=True, text=True)
+num = int(out.stdout[6:8])
 
 # y
-with open("output/y.06", "r") as f:
-    ylines1 = f.read().split()
-    ylines1 = np.asarray(ylines1).astype(float).reshape(1000, 2500)
-    ylines2 = np.arange(start=0.5, stop=domain, step=2*size)
-    ylines = np.concatenate((ylines1[-1], ylines2))
+with open("output/y." + expno, "r") as f:
+    ylines = f.read().split()
+    ylines = np.asarray(ylines).astype(float).reshape(num, n)
+    ylast = ylines[-1]
+    idx_keep = np.argwhere(ylast < cut)
+    ylast = ylast[idx_keep]
 
-with open("input_files/Y1.dat", "w") as f:
-    for i, yline in enumerate(ylines):
-        f.write(str(yline))
+with open("input_files/y.dat", "w") as f:
+    for i, yline in enumerate(ylast):
+        f.write(str(yline[0]))
         f.write("\n")
 
-# r
-with open("output/r.06", "r") as f:
-    rlines1 = f.read().split()
-    rlines1 = np.asarray(rlines1).astype(float).reshape(1000, 2500)
-    rlines2 = 
-    rlines = np.concatenate((rlines1[-1], rlines2))
+vars = ["x", "h", "r", "u", "v", "theta", "omega"]
+# all others
+for var in vars:
+    with open("output/" + var + "." + expno, "r") as f:
+        lines = f.read().split()
+        lines = np.asarray(lines).astype(float).reshape(num, n)
+        last = lines[-1]
+        last = last[idx_keep]
 
-with open("input_files/R1.dat", "w") as f:
-    for i, rline in enumerate(rlines):
-        f.write(str(rline))
-        f.write("\n")
-
-# h
-with open("output/h.06", "r") as f:
-    hlines1 = f.read().split()
-    hlines1 = np.asarray(hlines1).astype(float).reshape(1000, 2500)
-    hlines2 = 
-    hlines = np.concatenate((hlines1[-1], hlines2))
-
-with open("input_files/H1.dat", "w") as f:
-    for i, hline in enumerate(hlines):
-        f.write(str(hline))
-        f.write("\n")
+    with open("input_files/" + var + ".dat", "w") as f:
+        for i, line in enumerate(last):
+            f.write(str(line[0]))
+            f.write("\n")

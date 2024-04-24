@@ -101,6 +101,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 		open(103, file = Yfile, status='old')
 		open(104, file = Rfile, status='old')
 		open(105, file = Hfile, status='old')
+        open(106, file = Tfile, status='old')
+        open(107, file = Ofile, status='old')
 
 		do i = 1, n
 
@@ -108,10 +110,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 			read(103,*) y(i)
 			read(104,*) r(i)
 			read(105,*) h(i)
+            read(106,*) theta(i)
+            read(107,*) omega(i)
 			
 		end do
 
-		do i = 102, 105
+		do i = 102, 107
 			close(i)
 		end do
         
@@ -122,9 +126,6 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         u(i)      =  0d0
         v(i)      =  0d0
         omega(i)  =  0d0
-        
-        ! initial particle angle
-        theta(i)  =  0d0
 
         ! initial forces
         tfx(i)    =  0d0
