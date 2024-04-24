@@ -9,7 +9,7 @@ cut = 50000
 saveas = "10"
 
 out = subprocess.run(["wc", "-l", "output/x." + expno], capture_output=True, text=True)
-num = int(out.stdout[6:8])
+num = int(out.stdout.split()[0])
 
 # y
 with open("output/y." + expno, "r") as f:
