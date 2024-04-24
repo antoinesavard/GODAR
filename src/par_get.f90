@@ -131,7 +131,7 @@ subroutine read_namelist
         sigmacb_crit, tau_crit, gamma_d
 
     namelist /input_files_nml/ &
-        Xfile, Yfile, Rfile, Hfile
+        Xfile, Yfile, Rfile, Hfile, Tfile, Ofile
     !-------------------------------------------------------------------
 
     filename ='namelist.nml'

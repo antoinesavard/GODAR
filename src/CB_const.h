@@ -52,4 +52,6 @@
             Xfile           ,    &
             Yfile           ,    &
             Rfile           ,    &
-            Hfile
+            Hfile           ,    &
+            Tfile           ,    &
+            Ofile
