@@ -12,7 +12,6 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 	character(2), intent(in) :: expno_str_r
 
     integer :: i, j, k
-    character :: Tfile*32, Ofile*32, Bfile*32
 
 	! load restart files
 	if ( restart .eq. 1 ) then
