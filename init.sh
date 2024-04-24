@@ -5,3 +5,4 @@ cp generic/input_restart_generic input_restart
 cp generic/start_generic.sh start.sh
 
 mkdir output
+mkdir files
