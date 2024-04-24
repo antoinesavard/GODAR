@@ -2,7 +2,7 @@
 # Prerequisites
 *.d
 /output/*
-/input_files/*
+/files/*
 experiences
 SConstruct
 namelist.nml

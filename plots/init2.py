@@ -19,7 +19,7 @@ with open("output/y." + expno, "r") as f:
     idx_keep = np.argwhere(ylast < cut)
     ylast = ylast[idx_keep]
 
-with open("input_files/y.dat", "w") as f:
+with open("files/y.dat", "w") as f:
     for i, yline in enumerate(ylast):
         f.write(str(yline[0]))
         f.write("\n")
@@ -33,7 +33,7 @@ for var in vars:
         last = lines[-1]
         last = last[idx_keep]
 
-    with open("input_files/" + var + ".dat", "w") as f:
+    with open("files/" + var + ".dat", "w") as f:
         for i, line in enumerate(last):
             f.write(str(line[0]))
             f.write("\n")
