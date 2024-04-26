@@ -7,7 +7,7 @@ import sys
 
 # ----------------------------------------------------------------------
 
-axis_limits = 100  # in km
+axis_limits = 50  # in km
 sf = 1e3  # conversion ratio m <-> km
 compression = 1  # data compression
 
@@ -146,9 +146,7 @@ def animate(k):
                 bond.angle = (
                     angleb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
                 )
-                bond.set_width(
-                    lb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
-                )
+                bond.set_width(lb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]])
     time.set_text("t = {}".format(k + 1))
 
     return disks, radii, bonds
