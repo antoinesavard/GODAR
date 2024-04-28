@@ -74,7 +74,7 @@ ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
 ax.set_ylabel("Position [km]", rotation=90)
 ax.set_xlabel("Position [km]")
 
-time = ax.text(0.02, 0.95, "", transform=ax.transAxes)
+time = ax.text(0.8, 1.02, "", transform=ax.transAxes)
 
 # limits of the plot in kilometers
 ax.set_xlim(0, axis_limits)
