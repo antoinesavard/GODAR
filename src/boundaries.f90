@@ -8,11 +8,11 @@ subroutine bc_verify (i)
 
     integer, intent(in) :: i
     
-    if ( y(i) - r(i) <= 0 ) then
+    !if ( y(i) - r(i) <= 0 ) then
 
-        v(i) = - v(i)
+    !    v(i) = - v(i)
 
-    end if
+    !end if
 
     if ( y(i) + r(i) >= ny ) then
 
