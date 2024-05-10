@@ -58,7 +58,7 @@ subroutine stepper (tstep)
 			! bond initialization
 			if ( cohesion .eqv. .true. ) then
                 if ( tstep .eq. 1 ) then
-                    if ( deltan(j, i) .ge. -5d-1 ) then ! can be fancier
+                    if ( deltan(j, i) .ge. -1d2 ) then ! can be fancier
                         bond (j, i) = 1
                     end if
                     call bond_properties (j, i)
@@ -216,7 +216,7 @@ subroutine plate_velocity (i)
 
     integer, intent(in) :: i
         
-    v(i) = 5d-1
+    v(i) = -5d-1
 
 
 end subroutine plate_velocity
