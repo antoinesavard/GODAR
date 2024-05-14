@@ -96,7 +96,7 @@ subroutine stepper (tstep)
 			if ( bond (j, i) .eq. 1 ) then
 
 				call bond_forces (j, i)
-				!call bond_breaking (j, i)
+				call bond_breaking (j, i)
 
                 if ( bond (j, i) .eq. 1 ) then
                     ! update force on particle i by j due to bond
@@ -155,22 +155,21 @@ subroutine stepper (tstep)
         m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i)
     end do
 
-    ! broadcast forces to all so that they can each update their x and u
-    call broadcast_total_forces
-
     ! normal forces on side of the plate
     do i = 1, n
         call normal_forces(i)
     end do
 
-    ! integration in time
-    call velocity
-
-    ! set speed of plate
+    ! set speed of plate by inputing a constant force
     do i = 2300, n
-        call plate_velocity(i)
+        call plate_force(i)
     end do
 
+    ! broadcast forces to all so that the nodes can each update their x and u
+    call broadcast_total_forces
+
+    ! integration in time
+    call velocity
     call position
 
 end subroutine stepper
@@ -190,7 +189,7 @@ subroutine normal_forces (i)
 
     if ( x(i) >= 29d3 ) then
 
-        tfx(i) = tfx(i) - 1d8
+        tfx(i) = tfx(i) - 5d7
 
     end if  
 
@@ -204,7 +203,7 @@ subroutine normal_forces (i)
 
 end subroutine normal_forces
 
-subroutine plate_velocity (i)
+subroutine plate_force (i)
 
     implicit none
 
@@ -216,7 +215,7 @@ subroutine plate_velocity (i)
 
     integer, intent(in) :: i
         
-    v(i) = -5d-1
+    tfy(i) = tfy(i) - 5d7
 
 
-end subroutine plate_velocity
+end subroutine plate_force
