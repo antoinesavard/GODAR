@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from files import *
+import files as ff
 import os
 import sys
 
 # ----------------------------------------------------------------------
 
-axis_limits = 50  # in km
+axis_limits = 30  # in km
 sf = 1e3  # conversion ratio m <-> km
 compression = 1  # data compression
 
@@ -29,22 +29,22 @@ except:
 
 print("Reading the files...")
 
-filesx = list_files(output_dir, "x", expno)
-filesy = list_files(output_dir, "y", expno)
-filesr = list_files(output_dir, "r", expno)
-filesh = list_files(output_dir, "h", expno)
-filest = list_files(output_dir, "theta", expno)
-fileso = list_files(output_dir, "omega", expno)
-filesb = list_files(output_dir, "bond", expno)
+filesx = ff.list_files(output_dir, "x", expno)
+filesy = ff.list_files(output_dir, "y", expno)
+filesr = ff.list_files(output_dir, "r", expno)
+filesh = ff.list_files(output_dir, "h", expno)
+filest = ff.list_files(output_dir, "theta", expno)
+fileso = ff.list_files(output_dir, "omega", expno)
+filesb = ff.list_files(output_dir, "bond", expno)
 
 x, y, r, h, t, o, b = (
-    multiload(output_dir, filesx),
-    multiload(output_dir, filesy),
-    multiload(output_dir, filesr),
-    multiload(output_dir, filesh),
-    multiload(output_dir, filest),
-    multiload(output_dir, fileso),
-    multiload(output_dir, filesb, 1, n),
+    ff.multiload(output_dir, filesx),
+    ff.multiload(output_dir, filesy),
+    ff.multiload(output_dir, filesr),
+    ff.multiload(output_dir, filesh),
+    ff.multiload(output_dir, filest),
+    ff.multiload(output_dir, fileso),
+    ff.multiload(output_dir, filesb, 1, n),
 )
 
 x = x[::compression] / sf
@@ -64,8 +64,8 @@ angleb = np.zeros_like(b)
 print("Compute the length and orientation of the bonds...")
 for i in range(b.shape[-1] - 1):
     for j in range(i + 1, b.shape[-1]):
-        lb[:, i, j] = lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
-        angleb[:, i, j] = angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+        lb[:, i, j] = ff.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+        angleb[:, i, j] = ff.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
 
 os.chdir("plots/")
 
@@ -90,14 +90,14 @@ def init():
     print("Initial drawing...")
     for i in range(x.shape[-1]):
         p = np.array([x[0, i], y[0, i]])
-        disk, rad = draw(ax, p, r[0, i], t[0, i], edge[0, i])
+        disk, rad = ff.draw(ax, p, r[0, i], t[0, i], edge[0, i])
         if i == len(x[-1]) - 1:
             disks.append(disk)
             radii.append(rad)
             continue
         for j in range(i + 1, b.shape[-1]):
             if b[0, i, j]:
-                bond = draw_bond(
+                bond = ff.draw_bond(
                     ax,
                     p,
                     lb[0, i, j],
@@ -162,4 +162,4 @@ anim = FuncAnimation(
     blit=False,
 )
 
-save_or_show_animation(anim, 1, "collision{}.mp4".format(expno))
+ff.save_or_show_animation(anim, 1, "collision{}.mp4".format(expno))
