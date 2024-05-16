@@ -17,6 +17,7 @@ program ice
     integer :: proc_num, thread_num, num_threads
     type(datetime_type) :: tic, tac
     character(len=4) :: expno_str, expno_str_r
+    character(len=16) :: namelist_name
     character(10) :: n_str
 
     ! execute godar only on master rank
@@ -46,6 +47,12 @@ program ice
         print *, 'Read namelist? (0/1)'
         read  *, readnamelist
         print *, readnamelist
+
+        if (readnamelist .eq. 1) then
+            print *, 'Namelist name? (XXnamelist.nml)'
+            read  *, namelist_name
+            print *, namelist_name
+        end if
 
         ! read if restarting or not
         print *, 'Restart experiment from previous one? (0/1)'
@@ -82,7 +89,7 @@ program ice
     if ( rank .eq. master ) then
         ! overwrite default based on namelist
         if (readnamelist .eq. 1) then
-            call read_namelist
+            call read_namelist (namelist_name)
         endif
         call ini_get (restart, expno_str_r, nt_r)
 

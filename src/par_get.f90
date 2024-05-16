@@ -98,7 +98,7 @@ subroutine get_default
 end subroutine get_default
 
 
-subroutine read_namelist
+subroutine read_namelist (namelist_name)
 
     implicit none
 
@@ -111,6 +111,7 @@ subroutine read_namelist
     integer :: nml_error, filenb
     logical :: exist
     character filename*32
+    character(16), intent(in) :: namelist_name
 
     !---- namelist variables -------------------------------------------
     namelist /options_nml/ &
@@ -134,7 +135,7 @@ subroutine read_namelist
         Xfile, Yfile, Rfile, Hfile, Tfile, Ofile
     !-------------------------------------------------------------------
 
-    filename ='namelist.nml'
+    filename = namelist_name
     filenb = 10
 
     print '(a)', &
