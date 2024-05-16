@@ -9,7 +9,7 @@ expno = "08"
 n = 5000
 cuty = 30000
 cutx = 10000
-position = 12000
+position = 20000
 # ---------------------------
 
 # compute the number of lines in the files to get the last one
