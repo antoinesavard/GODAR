@@ -1,6 +1,6 @@
 1                   input namelist
-1					input restart
 namelist.nml        namelist name
+1					input restart
 XX                  restart exp
 XX                  restart time    
 XX                  exp version

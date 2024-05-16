@@ -1,4 +1,5 @@
 1                   input namelist
+namelist.nml        namelist name
 0					input restart
 XX                  exp version
 01                  number of threads
