@@ -156,9 +156,9 @@ subroutine stepper (tstep)
     end do
 
     ! normal forces on side of the plate
-    do i = 1, n
-        call normal_forces(i)
-    end do
+    !do i = 1, n
+    !    call normal_forces(i)
+    !end do
 
     ! set speed of plate by inputing a constant force
     !do i = 950, n
