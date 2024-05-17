@@ -10,6 +10,7 @@ n = 5000
 cuty = 30000
 cutx = 10000
 position = 20000
+offset = 1000
 # ---------------------------
 
 # compute the number of lines in the files to get the last one
@@ -27,10 +28,23 @@ with open("output/y." + expno, "r") as f:
 
 with open("files/y.dat", "w") as f:
     for i, yline in enumerate(ylast):
-        f.write(str(yline[0]))
+        f.write(str(yline[0] + offset))
         f.write("\n")
 
-vars = ["x", "h", "r", "u", "v", "theta", "omega"]
+# for offset
+with open("output/x." + expno, "r") as f:
+    xlines = f.read().split()
+    xlines = np.asarray(xlines).astype(float).reshape(num, n)
+    xlast = xlines[-1]
+    xlast = xlast[idx_keepy]
+
+with open("files/x.dat", "w") as f:
+    for i, xline in enumerate(xlast):
+        f.write(str(xline[0] + offset))
+        f.write("\n")
+
+
+vars = ["h", "r", "u", "v", "theta", "omega"]
 # all others
 for var in vars:
     with open("output/" + var + "." + expno, "r") as f:
@@ -54,19 +68,34 @@ num = int(out.stdout.split()[0])
 with open("files/x.dat", "r") as f:
     xlines = f.read().split()
     xlines = np.asarray(xlines).astype(float)
-    idx_keepx = np.argwhere(xlines < cutx)
+    idx_keepx = np.argwhere(xlines < cutx + offset)
     xlast = xlines[idx_keepx]
 
 with open("files/x1.dat", "w") as f:
     for i, xline in enumerate(xlast):
-        f.write(str(xline[0]))
+        f.write(str(xline[0] + offset))
         f.write("\n")
     # this is for 2nd plate
     for i, xline in enumerate(xlast):
-        f.write(str(xline[0] + position))
+        f.write(str(xline[0] + position + offset))
         f.write("\n")
 
-vars = ["y", "h", "r", "u", "v", "theta", "omega"]
+# for offset
+with open("files/y.dat", "r") as f:
+    ylines = f.read().split()
+    ylines = np.asarray(ylines).astype(float)
+    ylast = ylast[idx_keepx]
+
+with open("files/y1.dat", "w") as f:
+    for i, yline in enumerate(ylast):
+        f.write(str(yline[0] + offset))
+        f.write("\n")
+    # this is for 2nd plate
+    for i, yline in enumerate(ylast):
+        f.write(str(yline[0] + offset))
+        f.write("\n")
+
+vars = ["h", "r", "u", "v", "theta", "omega"]
 # all others
 for var in vars:
     with open("files/" + var + ".dat", "r") as f:
