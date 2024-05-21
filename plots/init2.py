@@ -84,7 +84,7 @@ with open("files/x1.dat", "w") as f:
 with open("files/y.dat", "r") as f:
     ylines = f.read().split()
     ylines = np.asarray(ylines).astype(float)
-    ylast = ylast[idx_keepx]
+    ylast = ylines[idx_keepx]
 
 with open("files/y1.dat", "w") as f:
     for i, yline in enumerate(ylast):

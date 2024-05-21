@@ -7,7 +7,7 @@ import sys
 
 # ----------------------------------------------------------------------
 
-axis_limits = 30  # in km
+axis_limits = 35  # in km
 sf = 1e3  # conversion ratio m <-> km
 compression = 1  # data compression
 
