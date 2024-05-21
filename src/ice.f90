@@ -178,7 +178,7 @@ program ice
 
                 call sea_ice_post (expno_str)
                 if (MODULO(tstep, int(comp*10)) .eq. 0) then
-                    print *, "Time step: ", tstep, "/", nt
+                    print *, "Time step: ", tstep, "/", int(nt)
                 end if
 
             endif
