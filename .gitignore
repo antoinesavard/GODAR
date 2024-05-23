@@ -3,12 +3,10 @@
 *.d
 /output/*
 /files/*
+/inputs/*
+/namelist/*
 experiences
 SConstruct
-namelist.nml
-start.sh
-input
-input_restart
 start.sh
 out*
 

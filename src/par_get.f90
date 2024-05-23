@@ -90,10 +90,10 @@ subroutine get_default
     !           Default input files to use
     !-------------------------------------------------------------------
 
-    Xfile = "input_files/X.dat"
-    Yfile = "input_files/Y.dat"
-    Rfile = "input_files/R.dat"
-    Hfile = "input_files/H.dat"
+    Xfile = "files/x.dat"
+    Yfile = "files/y.dat"
+    Rfile = "files/r.dat"
+    Hfile = "files/h.dat"
 
 end subroutine get_default
 
@@ -131,11 +131,14 @@ subroutine read_namelist (namelist_name)
         eb, lambda_rb, lambda_lb, sigmatb_crit, &
         sigmacb_crit, tau_crit, gamma_d
 
+    namelist /forcings_nml/ &
+        uw, vw, ua, va 
+
     namelist /input_files_nml/ &
         Xfile, Yfile, Rfile, Hfile, Tfile, Ofile
     !-------------------------------------------------------------------
 
-    filename = namelist_name
+    filename = 'namelist/' // trim(adjustl(namelist_name))
     filenb = 10
 
     print '(a)', &
@@ -194,6 +197,14 @@ subroutine read_namelist (namelist_name)
 
     print*,'Reading bond parameters'
     read(filenb, nml=bond_param_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
+
+    print*,'Reading forcings'
+    read(filenb, nml=forcings_nml,iostat=nml_error)
     if (nml_error /= 0) then
         print *, '  error, default will be used', nml_error
     else
