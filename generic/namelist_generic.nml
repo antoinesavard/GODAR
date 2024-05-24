@@ -51,8 +51,10 @@
     /
 
 &input_files_nml
-    Xfile = "input_files/X1.dat"
-    Yfile = "input_files/Y1.dat"
-    Rfile = "input_files/R1.dat"
-    Hfile = "input_files/H1.dat"
+    Xfile = "files/x1.dat"
+    Yfile = "files/y1.dat"
+    Rfile = "files/r1.dat"
+    Hfile = "files/h1.dat"
+    Tfile = "files/theta1.dat"
+    Ofile = "files/omega1.dat"
     /
