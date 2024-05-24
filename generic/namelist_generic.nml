@@ -50,6 +50,11 @@
     va  = 0d0
     /
 
+&plates_nml
+    pfn = 5d7
+    pfs = 5d7
+    /
+
 &input_files_nml
     Xfile = "files/x1.dat"
     Yfile = "files/y1.dat"

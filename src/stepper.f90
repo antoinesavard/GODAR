@@ -189,7 +189,7 @@ subroutine normal_forces (i)
 
     if ( x(i) >= 22d3 ) then
 
-        tfx(i) = tfx(i) - 5d7
+        tfx(i) = tfx(i) - pfn
 
     end if  
 
@@ -215,7 +215,7 @@ subroutine plate_force (i)
 
     integer, intent(in) :: i
         
-    tfy(i) = tfy(i) - 5d7
+    tfy(i) = tfy(i) - pfs
 
 
 end subroutine plate_force

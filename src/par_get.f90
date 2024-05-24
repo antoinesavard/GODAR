@@ -87,6 +87,12 @@ subroutine get_default
     va = 0d0
 
     !-------------------------------------------------------------------
+    !           Forcings on the plates
+    !-------------------------------------------------------------------    
+    pfn = 5d7
+    pfs = 5d7
+
+    !-------------------------------------------------------------------
     !           Default input files to use
     !-------------------------------------------------------------------
 
@@ -94,6 +100,8 @@ subroutine get_default
     Yfile = "files/y.dat"
     Rfile = "files/r.dat"
     Hfile = "files/h.dat"
+    Tfile = "files/theta.dat"
+    Ofile = "files/omega.dat"
 
 end subroutine get_default
 
@@ -133,6 +141,9 @@ subroutine read_namelist (namelist_name)
 
     namelist /forcings_nml/ &
         uw, vw, ua, va 
+
+    namelist /plates_nml/ &
+        pfn, pfs
 
     namelist /input_files_nml/ &
         Xfile, Yfile, Rfile, Hfile, Tfile, Ofile
@@ -205,6 +216,14 @@ subroutine read_namelist (namelist_name)
 
     print*,'Reading forcings'
     read(filenb, nml=forcings_nml,iostat=nml_error)
+    if (nml_error /= 0) then
+        print *, '  error, default will be used', nml_error
+    else
+        print *, '  pass'
+    end if
+
+    print*,'Reading plate forces'
+    read(filenb, nml=plates_nml,iostat=nml_error)
     if (nml_error /= 0) then
         print *, '  error, default will be used', nml_error
     else

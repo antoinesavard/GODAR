@@ -37,3 +37,7 @@
                 fwy     ,       & ! water force in y                 [N]
                 mw      ,       & ! water drag moment              [N*m]
                 ma                ! air drag moment                [N*m]
+
+    common/plates_var/          & ! plates variables
+                pfn     ,       & ! normal force on the plates
+                pfs               ! shear shear on the plates
