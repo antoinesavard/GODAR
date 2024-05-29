@@ -5,7 +5,7 @@
 /files/*
 /inputs/*
 /namelist/*
-/utils/*.nml
+/utils/*.dat
 experiences
 SConstruct
 start.sh

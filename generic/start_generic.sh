@@ -1,1 +1,3 @@
-mpirun --bind-to none -n 1 ./godar < input_restart > out
+#!/bin/bash
+
+mpirun --bind-to none -n 1 ./godar <input_restart >out

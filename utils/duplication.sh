@@ -9,16 +9,21 @@
 # modified are: the forcings, the plate forcings, and the
 # input file to use.
 #
+# It does the same with the input files necessary for
+# godar to be launched. It creates files with the correct
+# experience number and the appropriate number of cores
+# and pointing towards the proper namelist file.
+#
 # There is a companion program that creates the job
 # scripts in SLURM for Alliance Can associated with the
-# same experiment, as well as the input file required by
-# the program to find the appropriate namelist.
+# same experiments.
 #
 # The program can work with a lot of different argument
-# types. For example, it absolutely needs 3 arguments
+# types. For example, it absolutely needs 4 arguments
 # which corresponds to the basic things needed to
 # duplicate a file: the namefile, and the start and end
-# of the experiment numbers.
+# of the experiment numbers and the number of cores to
+# use in openmp.
 #
 # You can also provide the program with an forcing
 # variable and 3 parameters. E.g. uw 0 20 1, which would
@@ -45,6 +50,23 @@ search_file() {
     if [ -e "${location}" ]; then
         echo "${location}"
     fi
+}
+
+get_cores() {
+    if command -v nproc &>/dev/null; then
+        # Linux
+        num_cores=$(nproc)
+    elif [[ "$(uname)" == "Darwin" ]]; then
+        # macOS
+        num_cores=$(sysctl -n hw.ncpu)
+    elif command -v getconf &>/dev/null; then
+        # POSIX-compliant
+        num_cores=$(getconf _NPROCESSORS_ONLN)
+    else
+        # Fallback
+        num_cores="Unknown"
+    fi
+    echo "Total number of CPU cores: $num_cores"
 }
 
 # function to prompt the user for arguments
@@ -75,11 +97,7 @@ prompt_for_inputs() {
             break
         fi
     done
-}
 
-forcings() {
-    local list
-    local input
     # last="USER INPUT"
     while true; do
         read -rp "Enter the last experiment number: " last
@@ -93,6 +111,25 @@ forcings() {
         fi
     done
     echo ""
+
+    # cores="USER INPUT"
+    while true; do
+        read -rp "Enter the number of openmp cores to use: " cores
+        echo "You want to use ${cores} cores."
+        get_cores
+        if [ "${cores}" -gt "${num_cores}" ]; then
+            echo "Your machine does not have enough cores (${num_cores})."
+            exit 1
+        else
+            break
+        fi
+    done
+    echo ""
+}
+
+forcings() {
+    local list
+    local input
 
     # forcings to modify
     while true; do
@@ -251,7 +288,7 @@ fi
 for i in "${!exp_num[@]}"; do
     # create the file
     generic="namelist.nml"
-    filename="${exp_num[i]}${generic}"
+    filename=../namelist/"${exp_num[i]}${generic}"
     cp "${path_to_file}" "${filename}"
     echo "Creating namelist file with name ${exp_num[i]}${generic}"
 
@@ -261,6 +298,38 @@ for i in "${!exp_num[@]}"; do
     sed -i "" "s/^    Hfile.*/    Hfile = h${exp_num[i]}.dat/" "${filename}"
     sed -i "" "s/^    Tfile.*/    Tfile = theta${exp_num[i]}.dat/" "${filename}"
     sed -i "" "s/^    Ofile.*/    Ofile = omega${exp_num[i]}.dat/" "${filename}"
+
+    # create the associate input file
+    filename=../inputs/"${exp_num[i]}input"
+
+    # Create the file and write the contents
+    cat <<EOL >"${filename}"
+1                   input namelist
+${exp_num[i]}${generic}      namelist name
+0                   input restart
+${exp_num[i]}                  exp version
+${cores}                  number of threads
+EOL
+
+    # Print a message indicating the file was created
+    echo "Input file ${exp_num[i]}input has been created."
+
+    # create the associate input file
+    filename=../inputs/"${exp_num[i]}input_restart"
+
+    # Create the file and write the contents
+    cat <<EOL >"${filename}"
+1                   input namelist
+${exp_num[i]}${generic}      namelist name
+1                   input restart
+${exp_num[i]}                  restart exp
+03                  restart time
+${exp_num[i]}                  exp version
+${cores}                  number of threads
+EOL
+
+    # Print a message indicating the file was created
+    echo "Input file ${exp_num[i]}input_restart has been created."
 done
 
 # loop through the file and modify the values at the correct places
@@ -273,7 +342,7 @@ for i in "${!uw[@]}"; do
                     for o in "${!pfs[@]}"; do
 
                         generic="namelist.nml"
-                        filename="${itnum}${generic}"
+                        filename="../namelist/${itnum}${generic}"
 
                         # change the forcings here
                         sed -i "" "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
