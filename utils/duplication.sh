@@ -292,12 +292,25 @@ for i in "${!exp_num[@]}"; do
     cp "${path_to_file}" "${filename}"
     echo "Creating namelist file with name ${exp_num[i]}${generic}"
 
-    sed -i "" "s/^    Xfile.*/    Xfile = x${exp_num[i]}.dat/" "${filename}"
-    sed -i "" "s/^    Yfile.*/    Yfile = y${exp_num[i]}.dat/" "${filename}"
-    sed -i "" "s/^    Rfile.*/    Rfile = r${exp_num[i]}.dat/" "${filename}"
-    sed -i "" "s/^    Hfile.*/    Hfile = h${exp_num[i]}.dat/" "${filename}"
-    sed -i "" "s/^    Tfile.*/    Tfile = theta${exp_num[i]}.dat/" "${filename}"
-    sed -i "" "s/^    Ofile.*/    Ofile = omega${exp_num[i]}.dat/" "${filename}"
+    if command -v nproc &>/dev/null; then
+        # Linux
+        sed -i "s/^    Xfile.*/    Xfile = x${exp_num[i]}.dat/" "${filename}"
+        sed -i "s/^    Yfile.*/    Yfile = y${exp_num[i]}.dat/" "${filename}"
+        sed -i "s/^    Rfile.*/    Rfile = r${exp_num[i]}.dat/" "${filename}"
+        sed -i "s/^    Hfile.*/    Hfile = h${exp_num[i]}.dat/" "${filename}"
+        sed -i "s/^    Tfile.*/    Tfile = theta${exp_num[i]}.dat/" "${filename}"
+        sed -i "s/^    Ofile.*/    Ofile = omega${exp_num[i]}.dat/" "${filename}"
+    elif [[ "$(uname)" == "Darwin" ]]; then
+        # macOS
+        sed -i "" "s/^    Xfile.*/    Xfile = x${exp_num[i]}.dat/" "${filename}"
+        sed -i "" "s/^    Yfile.*/    Yfile = y${exp_num[i]}.dat/" "${filename}"
+        sed -i "" "s/^    Rfile.*/    Rfile = r${exp_num[i]}.dat/" "${filename}"
+        sed -i "" "s/^    Hfile.*/    Hfile = h${exp_num[i]}.dat/" "${filename}"
+        sed -i "" "s/^    Tfile.*/    Tfile = theta${exp_num[i]}.dat/" "${filename}"
+        sed -i "" "s/^    Ofile.*/    Ofile = omega${exp_num[i]}.dat/" "${filename}"
+    else
+        echo "I don't know what to do with this..."
+    fi
 
     # create the associate input file
     filename=../inputs/"${exp_num[i]}input"
@@ -343,16 +356,33 @@ for i in "${!uw[@]}"; do
 
                         generic="namelist.nml"
                         filename="../namelist/${itnum}${generic}"
+                        if command -v nproc &>/dev/null; then
+                            # Linux
+                            # change the forcings here
+                            sed -i "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
+                            sed -i "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
+                            sed -i "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
+                            sed -i "s/^    va.*/    va = ${va[l]}/" "${filename}"
 
-                        # change the forcings here
-                        sed -i "" "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
-                        sed -i "" "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
-                        sed -i "" "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
-                        sed -i "" "s/^    va.*/    va = ${va[l]}/" "${filename}"
+                            # change the plate normal and shear forces here
+                            sed -i "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
+                            sed -i "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
 
-                        # change the plate normal and shear forces here
-                        sed -i "" "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
-                        sed -i "" "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
+                        elif [[ "$(uname)" == "Darwin" ]]; then
+                            # macOS
+                            # change the forcings here
+                            sed -i "" "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
+                            sed -i "" "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
+                            sed -i "" "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
+                            sed -i "" "s/^    va.*/    va = ${va[l]}/" "${filename}"
+
+                            # change the plate normal and shear forces here
+                            sed -i "" "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
+                            sed -i "" "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
+
+                        else
+                            echo "I don't know that to do..."
+                        fi
 
                         itnum=$((itnum + 1))
                     done
