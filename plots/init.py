@@ -265,8 +265,8 @@ try:
     print("Data written.")
 
 except:
-    print("Reading the init file.")
     print("The input file for initiation of particles does not exist.")
+    print("Or maybe you are not running this script from the base directory /GODAR")
     n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist = reading_input()
 
 for i in range(len(n)):
