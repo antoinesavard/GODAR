@@ -6,6 +6,7 @@
 /inputs/*
 /namelist/*
 /utils/*.dat
+/plots/*.dat
 experiences
 SConstruct
 start.sh

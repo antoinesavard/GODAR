@@ -278,8 +278,8 @@ count "${force[@]}"
 
 if [ "${#exp_num}" -ne "${total_count}" ]; then
     echo "The number of experiment provided was not accurate."
-    total_count=$((total_count + first - 1))
-    exp_num=($(seq "${first}" 1 "${total_count}"))
+    last=$((total_count + first - 1))
+    exp_num=($(seq "${first}" 1 "${last}"))
     echo "It now has been adjusted."
     echo ""
 fi
@@ -361,3 +361,23 @@ for i in "${!uw[@]}"; do
         done
     done
 done
+
+# creation of the slurm sbatch script
+cat <<EOL >"../bash/init_plate.sh"
+#!/bin/bash
+
+#SBATCH --array=${first}-${last}
+#SBATCH --time=3-0:0
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=${cores}
+#SBATCH --mem=3G
+#SBATCH --output=${SLURM_ARRAY_TASK_ID}.out
+
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+cd ..
+
+srun --cpus-per-task=$SLURM_CPUS_PER_TASK ./godar < ${SLURM_ARRAY_TASK_ID}input
+
+EOL
