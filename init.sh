@@ -13,3 +13,4 @@ cp generic/input_restart_generic inputs/input_restart
 cp generic/start_generic.sh jobs/start.sh
 cp generic/args_generic.dat namelist/args.dat
 cp generic/input_init_generic plots/input_init.dat
+cp generic/pyargs_generic.dat utils/pyargs.dat
