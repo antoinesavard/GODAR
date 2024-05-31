@@ -156,14 +156,14 @@ subroutine stepper (tstep)
     end do
 
     ! normal forces on side of the plate
-    do i = 1, n
-        call normal_forces(i)
-    end do
+!    do i = 1, n
+!        call normal_forces(i)
+!    end do
 
     ! set speed of plate by inputing a constant force
-    do i = 950, n
-        call plate_force(i)
-    end do
+!    do i = 950, n
+!        call plate_force(i)
+!    end do
 
     ! broadcast forces to all so that the nodes can each update their x and u
     call broadcast_total_forces

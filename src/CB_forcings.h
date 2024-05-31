@@ -19,7 +19,11 @@
                 fwy     (n),    &
                 mw      (n),    &
                 ma      (n)
-        
+
+    double precision ::         & ! plate variable
+		pfn       ,	&
+		pfs
+									  
     common/forcings_const/      & ! wind and current forcings
                 ua        ,     & ! wind in x                      [m/s]
                 va        ,     & ! wind in y                      [m/s]
