@@ -441,7 +441,7 @@ cat <<EOL >"../jobs/init_plate.sh"
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=${cores}
-#SBATCH --mem=3G
+#SBATCH --mem=4G
 #SBATCH --output=\${SLURM_ARRAY_TASK_ID}.out
 
 export OMP_NUM_THREADS=\$SLURM_CPUS_PER_TASK
