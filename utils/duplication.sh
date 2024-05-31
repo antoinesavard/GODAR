@@ -163,8 +163,8 @@ forcings() {
                     uw=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     uw=()
-                    for ((i = 0; i < fstart; i++)); do
-                        uw+=(${fend})
+                    for ((i = 0; i < fend; i++)); do
+                        uw+=(${fstart})
                     done
                 fi
                 echo "The list to use is uw =" "${uw[@]}"
@@ -174,8 +174,8 @@ forcings() {
                     vw=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     vw=()
-                    for ((i = 0; i < fstart; i++)); do
-                        vw+=(${fend})
+                    for ((i = 0; i < fend; i++)); do
+                        vw+=(${fstart})
                     done
                 fi
                 echo "The list to use is vw =" "${vw[@]}"
@@ -185,8 +185,8 @@ forcings() {
                     ua=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     ua=()
-                    for ((i = 0; i < fstart; i++)); do
-                        ua+=(${fend})
+                    for ((i = 0; i < fend; i++)); do
+                        ua+=(${fstart})
                     done
                 fi
                 echo "The list to use is ua =" "${ua[@]}"
@@ -196,8 +196,8 @@ forcings() {
                     va=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     va=()
-                    for ((i = 0; i < fstart; i++)); do
-                        va+=(${fend})
+                    for ((i = 0; i < fend; i++)); do
+                        va+=(${fstart})
                     done
                 fi
                 echo "The list to use is va =" "${va[@]}"
@@ -207,8 +207,8 @@ forcings() {
                     pfn=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     pfn=()
-                    for ((i = 0; i < fstart; i++)); do
-                        pfn+=(${fend})
+                    for ((i = 0; i < fend; i++)); do
+                        pfn+=(${fstart})
                     done
                 fi
                 echo "The list to use is pfn =" "${pfn[@]}"
@@ -218,8 +218,8 @@ forcings() {
                     pfs=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     pfs=()
-                    for ((i = 0; i < fstart; i++)); do
-                        pfs+=(${fend})
+                    for ((i = 0; i < fend; i++)); do
+                        pfs+=(${fstart})
                     done
                 fi
                 echo "The list to use is pfs =" "${pfs[@]}"
