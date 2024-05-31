@@ -334,20 +334,20 @@ for i in "${!exp_num[@]}"; do
 
     if command -v nproc &>/dev/null; then
         # Linux
-        sed -i "s/^    Xfile.*/    Xfile = x${exp_num[i]}.dat/" "${filename}"
-        sed -i "s/^    Yfile.*/    Yfile = y${exp_num[i]}.dat/" "${filename}"
-        sed -i "s/^    Rfile.*/    Rfile = r${exp_num[i]}.dat/" "${filename}"
-        sed -i "s/^    Hfile.*/    Hfile = h${exp_num[i]}.dat/" "${filename}"
-        sed -i "s/^    Tfile.*/    Tfile = theta${exp_num[i]}.dat/" "${filename}"
-        sed -i "s/^    Ofile.*/    Ofile = omega${exp_num[i]}.dat/" "${filename}"
+        sed -i "s/^    Xfile.*/    Xfile = \"files\/x${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "s/^    Yfile.*/    Yfile = \"files\/y${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "s/^    Rfile.*/    Rfile = \"files\/r${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "s/^    Hfile.*/    Hfile = \"files\/h${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "s/^    Tfile.*/    Tfile = \"files\/theta${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "s/^    Ofile.*/    Ofile = \"files\/omega${exp_num[i]}.dat\"/" "${filename}"
     elif [[ "$(uname)" == "Darwin" ]]; then
         # macOS
-        sed -i "" "s/^    Xfile.*/    Xfile = x${exp_num[i]}.dat/" "${filename}"
-        sed -i "" "s/^    Yfile.*/    Yfile = y${exp_num[i]}.dat/" "${filename}"
-        sed -i "" "s/^    Rfile.*/    Rfile = r${exp_num[i]}.dat/" "${filename}"
-        sed -i "" "s/^    Hfile.*/    Hfile = h${exp_num[i]}.dat/" "${filename}"
-        sed -i "" "s/^    Tfile.*/    Tfile = theta${exp_num[i]}.dat/" "${filename}"
-        sed -i "" "s/^    Ofile.*/    Ofile = omega${exp_num[i]}.dat/" "${filename}"
+        sed -i "" "s/^    Xfile.*/    Xfile = \"files\/x${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "" "s/^    Yfile.*/    Yfile = \"files\/y${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "" "s/^    Rfile.*/    Rfile = \"fiels\/r${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "" "s/^    Hfile.*/    Hfile = \"files\/h${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "" "s/^    Tfile.*/    Tfile = \"files\/theta${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "" "s/^    Ofile.*/    Ofile = \"files\/omega${exp_num[i]}.dat\"/" "${filename}"
     else
         echo "I don't know what to do with this..."
     fi
@@ -436,13 +436,13 @@ done
 cat <<EOL >"../jobs/init_plate.sh"
 #!/bin/bash
 
-#SBATCH --array=${first}-${last}
+#SBATCH --array=${first}-${last}%$((${last} - ${first} + 1))
 #SBATCH --time=3-0:0
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=${cores}
 #SBATCH --mem=4G
-#SBATCH --output="${SLURM_ARRAY_TASK_ID}".out
+#SBATCH --output=../output/out.%a
 
 export OMP_NUM_THREADS=\$SLURM_CPUS_PER_TASK
 
