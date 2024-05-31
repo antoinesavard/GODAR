@@ -316,7 +316,7 @@ exp_num=($(seq "${first}" 1 "${last}"))
 force=("uw" "vw" "ua" "va" "pfn" "pfs")
 count "${force[@]}"
 
-if [ "${#exp_num}" -ne "${total_count}" ]; then
+if [ "${#exp_num[@]}" -ne "${total_count}" ]; then
     echo "The number of experiment provided was not accurate."
     last=$((total_count + first - 1))
     exp_num=($(seq "${first}" 1 "${last}"))
