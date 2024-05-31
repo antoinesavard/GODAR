@@ -285,3 +285,5 @@ for i in range(len(n)):
         dist[i],
         adn[i],
     )
+
+print("Compile godar with {} particles".format(disks_num))
