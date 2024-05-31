@@ -442,12 +442,12 @@ cat <<EOL >"../jobs/init_plate.sh"
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=${cores}
 #SBATCH --mem=4G
-#SBATCH --output=\${SLURM_ARRAY_TASK_ID}.out
+#SBATCH --output="${SLURM_ARRAY_TASK_ID}".out
 
 export OMP_NUM_THREADS=\$SLURM_CPUS_PER_TASK
 
 cd ..
 
-srun --cpus-per-task=\$SLURM_CPUS_PER_TASK ./godar < \${SLURM_ARRAY_TASK_ID}input
+srun --cpus-per-task=\$SLURM_CPUS_PER_TASK ./godar < inputs/\${SLURM_ARRAY_TASK_ID}input
 
 EOL
