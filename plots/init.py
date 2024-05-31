@@ -91,7 +91,6 @@ def init(n):
     sf = 1e3
     disks_num_y = 15
     disks_num_x = (n / disks_num_y).astype(int)
-    print(disks_num_x)
     disks_num = disks_num_y * disks_num_x
     return sf, disks_num_x, disks_num_y, disks_num
 
