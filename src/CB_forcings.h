@@ -21,8 +21,8 @@
                 ma      (n)
 
     double precision ::         & ! plate variable
-		pfn       ,	&
-		pfs
+		            pfn       ,	&
+		            pfs
 									  
     common/forcings_const/      & ! wind and current forcings
                 ua        ,     & ! wind in x                      [m/s]
