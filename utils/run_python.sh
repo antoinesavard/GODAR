@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the Python script
-python_script="../plots/video.py"
+python_script="/plots/video.py"
 
 # Define the input file containing argument pairs
 input_file="pyargs.dat"
