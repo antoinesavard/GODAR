@@ -89,8 +89,9 @@ def reading_input():
 def init(n):
     # size factor
     sf = 1e3
-    disks_num_y = np.sqrt(n).astype(int)
-    disks_num_x = disks_num_y.astype(int)
+    disks_num_y = 15
+    disks_num_x = (n / disks_num_y).astype(int)
+    print(disks_num_x)
     disks_num = disks_num_y * disks_num_x
     return sf, disks_num_x, disks_num_y, disks_num
 
@@ -287,3 +288,5 @@ for i in range(len(n)):
     )
 
 print("Compile godar with {} particles".format(disks_num))
+print("Compile godar with {} km in x".format(disks_num_x * 2))
+print("Compile godar with {} km in y".format(disks_num_y * 2))
