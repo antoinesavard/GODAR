@@ -154,34 +154,74 @@ forcings() {
         while true; do
             echo "You provided ${var} as variable to modify."
             echo "The inputs are:" "${fstart}" "${fend}" "${fstep}"
-            if [ -z "${fstart}" ] || [ -z "${fend}" ] || [ -z "${fstep}" ]; then
+            if [ -z "${fstart}" ] || [ -z "${fend}" ]; then
                 echo "You need to provide start point, end point and step size."
-                break
-            elif [ "${fend}" -lt "${fstart}" ]; then
-                echo "The end point needs to be bigger or equal than the start point."
+                echo "Or value and number of copies"
                 break
             elif [ "${var}" = "uw" ]; then
-                uw=($(seq "${fstart}" "${fstep}" "${fend}"))
+                if [ -n "${fstep}" ]; then
+                    uw=($(seq "${fstart}" "${fstep}" "${fend}"))
+                elif [ -z "${fstep}" ]; then
+                    uw=()
+                    for ((i = 0; i < fstart; i++)); do
+                        uw+=(${fend})
+                    done
+                fi
                 echo "The list to use is uw =" "${uw[@]}"
                 break
             elif [ "${var}" = "vw" ]; then
-                vw=($(seq "${fstart}" "${fstep}" "${fend}"))
+                if [ -n "${fstep}" ]; then
+                    vw=($(seq "${fstart}" "${fstep}" "${fend}"))
+                elif [ -z "${fstep}" ]; then
+                    vw=()
+                    for ((i = 0; i < fstart; i++)); do
+                        vw+=(${fend})
+                    done
+                fi
                 echo "The list to use is vw =" "${vw[@]}"
                 break
             elif [ "${var}" = "ua" ]; then
-                ua=($(seq "${fstart}" "${fstep}" "${fend}"))
+                if [ -n "${fstep}" ]; then
+                    ua=($(seq "${fstart}" "${fstep}" "${fend}"))
+                elif [ -z "${fstep}" ]; then
+                    ua=()
+                    for ((i = 0; i < fstart; i++)); do
+                        ua+=(${fend})
+                    done
+                fi
                 echo "The list to use is ua =" "${ua[@]}"
                 break
             elif [ "${var}" = "va" ]; then
-                va=($(seq "${fstart}" "${fstep}" "${fend}"))
+                if [ -n "${fstep}" ]; then
+                    va=($(seq "${fstart}" "${fstep}" "${fend}"))
+                elif [ -z "${fstep}" ]; then
+                    va=()
+                    for ((i = 0; i < fstart; i++)); do
+                        va+=(${fend})
+                    done
+                fi
                 echo "The list to use is va =" "${va[@]}"
                 break
             elif [ "${var}" = "pfn" ]; then
-                pfn=($(seq "${fstart}" "${fstep}" "${fend}"))
+                if [ -n "${fstep}" ]; then
+                    pfn=($(seq "${fstart}" "${fstep}" "${fend}"))
+                elif [ -z "${fstep}" ]; then
+                    pfn=()
+                    for ((i = 0; i < fstart; i++)); do
+                        pfn+=(${fend})
+                    done
+                fi
                 echo "The list to use is pfn =" "${pfn[@]}"
                 break
             elif [ "${var}" = "pfs" ]; then
-                pfs=($(seq "${fstart}" "${fstep}" "${fend}"))
+                if [ -n "${fstep}" ]; then
+                    pfs=($(seq "${fstart}" "${fstep}" "${fend}"))
+                elif [ -z "${fstep}" ]; then
+                    pfs=()
+                    for ((i = 0; i < fstart; i++)); do
+                        pfs+=(${fend})
+                    done
+                fi
                 echo "The list to use is pfs =" "${pfs[@]}"
                 break
             else
@@ -280,7 +320,7 @@ if [ "${#exp_num}" -ne "${total_count}" ]; then
     echo "The number of experiment provided was not accurate."
     last=$((total_count + first - 1))
     exp_num=($(seq "${first}" 1 "${last}"))
-    echo "It now has been adjusted."
+    echo "It now has been adjusted to ${#exp_num[@]}"
     echo ""
 fi
 
