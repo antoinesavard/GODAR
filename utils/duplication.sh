@@ -433,7 +433,7 @@ for i in "${!uw[@]}"; do
 done
 
 # creation of the slurm sbatch script
-cat <<EOL >"../bash/init_plate.sh"
+cat <<EOL >"../jobs/init_plate.sh"
 #!/bin/bash
 
 #SBATCH --array=${first}-${last}

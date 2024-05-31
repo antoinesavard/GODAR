@@ -7,9 +7,9 @@
 /namelist/*
 /utils/*.dat
 /plots/*.dat
+/jobs/*
 experiences
 SConstruct
-start.sh
 out*
 
 # Compiled Object files
