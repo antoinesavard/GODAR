@@ -70,7 +70,7 @@ for i in range(b.shape[-1] - 1):
 
 os.chdir("plots/")
 
-fig = plt.figure(dpi=300, figsize=(4, 4))
+fig = plt.figure(dpi=300, figsize=(4*xaxis_limits/yaxis_limits, 4))
 ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
 ax.set_ylabel("Position [km]", rotation=90)
 ax.set_xlabel("Position [km]")
