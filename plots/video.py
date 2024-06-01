@@ -7,7 +7,8 @@ import sys
 
 # ----------------------------------------------------------------------
 
-axis_limits = 35  # in km
+xaxis_limits = 70  # in km
+yaxis_limits = 30  # in km
 sf = 1e3  # conversion ratio m <-> km
 compression = 1  # data compression
 
@@ -77,8 +78,8 @@ ax.set_xlabel("Position [km]")
 time = ax.text(0.8, 1.02, "", transform=ax.transAxes)
 
 # limits of the plot in kilometers
-ax.set_xlim(0, axis_limits)
-ax.set_ylim(0, axis_limits)
+ax.set_xlim(0, xaxis_limits)
+ax.set_ylim(0, yaxis_limits)
 
 disks = []
 radii = []
