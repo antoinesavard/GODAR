@@ -19,7 +19,7 @@ cat "$input_file" | while IFS=' ' read -r arg1 arg2; do
     # Run the Python script with the arguments
     python "$python_script" "$arg1" "$arg2" &
 
-done
+done < $input_file
 
 # Wait for all background jobs to finish
 wait
