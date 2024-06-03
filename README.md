@@ -104,6 +104,18 @@ The only parameters that are set at compilation are the number of particles (bec
 
 The input files are setting the run informations: experiment number, whether to use the namelist or not, whether restarting from a previous experiement or not, etc. (This is why we think setting the particle number in there would be good.)
 
+### How to run large number of simulations using SLURM
+
+Usually, you will run GODAR on a super computer, which requires a job scheduler like slurm. The scripts in /utils have been written with that usage in mind.
+
+First, you can run the `python init.py` script, which will create initial conditions for your runs. It reads the input_init.dat file, where you can enter various distributions and parameters for both radius and thickness, the rest is handled by the program.
+
+Second, you can run `sh duplication.sh < args.dat` which will create namelists based on the arguments provided in the input file. This is for when you want to run the same experiment with multiple types forcings, or different experiments with the same forcing.
+
+Third, you simply run the slurm file the previous program created in `/jobs`. This is where you can modify the allocated time and memory, etc.
+
+Finally, when your jobs have finished running, you can run `sh utils/run_python.sh` to create all the videos.
+
 ### How to improve GODAR
 
 Godar is a very simple model. Here are some ideas to explore, or that we want to include in the future:

@@ -198,7 +198,7 @@ def file_creation(
     lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
     lines = lines.astype(str)
     lines = lines.tolist()
-    with open("files/y" + adn + ".dat", "w") as f:
+    with open("../files/y" + adn + ".dat", "w") as f:
         for line in lines:
             i = 0
             while i < disks_num_x:
@@ -209,7 +209,7 @@ def file_creation(
     lines = sf * np.arange(1, 2 * disks_num_x + 1, 2)
     lines = lines.astype(str)
     lines = lines.tolist()
-    with open("files/x" + adn + ".dat", "w") as f:
+    with open("../files/x" + adn + ".dat", "w") as f:
         i = 0
         while i < disks_num_y:
             for line in lines:
@@ -221,25 +221,25 @@ def file_creation(
     radius, thick = f(param1_r, param2_r, param1_t, param2_t, disks_num, offset, cutoff)
 
     lines = radius.astype(str).tolist()
-    with open("files/r" + adn + ".dat", "w") as f:
+    with open("../files/r" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
 
     lines = thick.astype(str).tolist()
-    with open("files/h" + adn + ".dat", "w") as f:
+    with open("../files/h" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
 
     other = np.zeros_like(radius)
     lines = other.astype(str).tolist()
-    with open("files/theta" + adn + ".dat", "w") as f:
+    with open("../files/theta" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
 
-    with open("files/omega" + adn + ".dat", "w") as f:
+    with open("../files/omega" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
@@ -251,7 +251,7 @@ def file_creation(
 
 try:
     print("Reading the init file.")
-    with open("plots/input_init.dat", "r") as f:
+    with open("input_init.dat", "r") as f:
         lines = f.read().split()
         n = np.asarray(lines[0::9]).astype(int)
         param1_r = np.asarray(lines[1::9]).astype(float)
@@ -266,7 +266,7 @@ try:
 
 except:
     print("The input file for initiation of particles does not exist.")
-    print("Or maybe you are not running this script from the base directory /GODAR")
+    print("Or maybe you are not running this script from /GODAR/utils")
     n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist = reading_input()
 
 for i in range(len(n)):
@@ -286,6 +286,9 @@ for i in range(len(n)):
         adn[i],
     )
 
+print(
+    "You will need {} namelists when running the duplication.sh program".format(len(n))
+)
 print("Compile godar with {} particles".format(disks_num))
 print("Compile godar with {} km in x".format(disks_num_x * 2))
 print("Compile godar with {} km in y".format(disks_num_y * 2))

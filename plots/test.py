@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-x = np.random.lognormal(0, 0.25, 2500) - 0.15
-y = np.random.lognormal(6, 0.25, 2500)
+x = np.random.normal(450, 150, 525)
+y = np.random.lognormal(6, 0.5, 525)
 
-count, bins, ignored = plt.hist(y, 20, density=1)
+count, bins, ignored = plt.hist(x, 20)
 
 
 plt.show()
