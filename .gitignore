@@ -56,3 +56,4 @@ config.log
 *.png
 *.pdf
 */__pycache__/*
+*~
