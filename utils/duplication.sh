@@ -87,12 +87,23 @@ prompt_for_inputs() {
     done
     echo ""
 
+    # restart="USER INPUT"
+    while true; do
+        read -rp "Should we use restart template (0/1): " restart
+	echo "You said ${restart} restart"
+        if [ "${restart}" -ne 1 ] && [ "${restart}" -ne 0 ]; then
+            echo "This should be 0 or 1"
+        else
+            break
+        fi
+    done
+    
     # first="USER INPUT"
     while true; do
         read -rp "Enter the first experiment number: " first
-        echo "You provided ${first} as a starting point."
+	echo "You provided ${first} as a starting point."
         if [ "${first}" -gt 99 ]; then
-            echo "This number is above max value (99)."
+	    echo "This number is above max value (99)."
         else
             break
         fi
@@ -160,7 +171,7 @@ forcings() {
                 break
             elif [ "${var}" = "uw" ]; then
                 if [ -n "${fstep}" ]; then
-                    uw=($(seq "${fstart}" "${fstep}" "${fend}"))
+                    LANG=C uw=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     uw=()
                     for ((i = 0; i < fend; i++)); do
@@ -171,7 +182,7 @@ forcings() {
                 break
             elif [ "${var}" = "vw" ]; then
                 if [ -n "${fstep}" ]; then
-                    vw=($(seq "${fstart}" "${fstep}" "${fend}"))
+                    LANG=C vw=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     vw=()
                     for ((i = 0; i < fend; i++)); do
@@ -182,7 +193,7 @@ forcings() {
                 break
             elif [ "${var}" = "ua" ]; then
                 if [ -n "${fstep}" ]; then
-                    ua=($(seq "${fstart}" "${fstep}" "${fend}"))
+                    LANG=C ua=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     ua=()
                     for ((i = 0; i < fend; i++)); do
@@ -193,7 +204,7 @@ forcings() {
                 break
             elif [ "${var}" = "va" ]; then
                 if [ -n "${fstep}" ]; then
-                    va=($(seq "${fstart}" "${fstep}" "${fend}"))
+                    LANG=C va=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     va=()
                     for ((i = 0; i < fend; i++)); do
@@ -204,7 +215,7 @@ forcings() {
                 break
             elif [ "${var}" = "pfn" ]; then
                 if [ -n "${fstep}" ]; then
-                    pfn=($(seq "${fstart}" "${fstep}" "${fend}"))
+                    LANG=C pfn=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     pfn=()
                     for ((i = 0; i < fend; i++)); do
@@ -215,7 +226,7 @@ forcings() {
                 break
             elif [ "${var}" = "pfs" ]; then
                 if [ -n "${fstep}" ]; then
-                    pfs=($(seq "${fstart}" "${fstep}" "${fend}"))
+                    LANG=C pfs=($(seq "${fstart}" "${fstep}" "${fend}"))
                 elif [ -z "${fstep}" ]; then
                     pfs=()
                     for ((i = 0; i < fend; i++)); do
@@ -332,7 +343,7 @@ for i in "${!exp_num[@]}"; do
     cp "${path_to_file}" "${filename}"
     echo "Creating namelist file with name ${exp_num[i]}${generic}"
 
-    if command -v nproc &>/dev/null; then
+    if [[ "$(uname)" == "Linux" ]]; then
         # Linux
         sed -i "s/^    Xfile.*/    Xfile = \"files\/x${exp_num[i]}.dat\"/" "${filename}"
         sed -i "s/^    Yfile.*/    Yfile = \"files\/y${exp_num[i]}.dat\"/" "${filename}"
@@ -352,11 +363,12 @@ for i in "${!exp_num[@]}"; do
         echo "I don't know what to do with this..."
     fi
 
-    # create the associate input file
-    filename=../inputs/"${exp_num[i]}input"
+    if [ "${restart}" -eq 0 ]; then
+	# create the associate input file
+	filename=../inputs/"${exp_num[i]}input"
 
-    # Create the file and write the contents
-    cat <<EOL >"${filename}"
+	# Create the file and write the contents
+	cat <<EOL >"${filename}"
 1                   input namelist
 ${exp_num[i]}${generic}      namelist name
 0                   input restart
@@ -364,25 +376,27 @@ ${exp_num[i]}                  exp version
 ${cores}                  number of threads
 EOL
 
-    # Print a message indicating the file was created
-    echo "Input file ${exp_num[i]}input has been created."
+	# Print a message indicating the file was created
+	echo "Input file ${exp_num[i]}input has been created."
 
-    # create the associate input file
-    filename=../inputs/"${exp_num[i]}input_restart"
+    elif [ "${restart}" -eq 1 ]; then
+	# create the associate input file
+	filename=../inputs/"${exp_num[i]}input_restart"
 
-    # Create the file and write the contents
-    cat <<EOL >"${filename}"
+	# Create the file and write the contents
+	cat <<EOL >"${filename}"
 1                   input namelist
 ${exp_num[i]}${generic}      namelist name
 1                   input restart
-${exp_num[i]}                  restart exp
-03                  restart time
+$((${exp_num[i]} - ${total_count}))                  restart exp
+1000                restart time
 ${exp_num[i]}                  exp version
 ${cores}                  number of threads
 EOL
 
-    # Print a message indicating the file was created
-    echo "Input file ${exp_num[i]}input_restart has been created."
+	# Print a message indicating the file was created
+	echo "Input file ${exp_num[i]}input_restart has been created."
+    fi
 done
 
 # loop through the file and modify the values at the correct places
@@ -396,29 +410,29 @@ for i in "${!uw[@]}"; do
 
                         generic="namelist.nml"
                         filename="../namelist/${itnum}${generic}"
-                        if command -v nproc &>/dev/null; then
+                        if [[ "$(uname)" == "Linux" ]]; then
                             # Linux
                             # change the forcings here
-                            sed -i "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
-                            sed -i "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
-                            sed -i "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
-                            sed -i "s/^    va.*/    va = ${va[l]}/" "${filename}"
+                            LANG=C sed -i "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
+                            LANG=C sed -i "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
+                            LANG=C sed -i "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
+                            LANG=C sed -i "s/^    va.*/    va = ${va[l]}/" "${filename}"
 
                             # change the plate normal and shear forces here
-                            sed -i "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
-                            sed -i "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
+                            LANG=C sed -i "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
+                            LANG=C sed -i "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
 
                         elif [[ "$(uname)" == "Darwin" ]]; then
                             # macOS
                             # change the forcings here
-                            sed -i "" "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
-                            sed -i "" "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
-                            sed -i "" "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
-                            sed -i "" "s/^    va.*/    va = ${va[l]}/" "${filename}"
+                            LANG=C sed -i "" "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
+                            LANG=C sed -i "" "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
+                            LANG=C sed -i "" "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
+                            LANG=C sed -i "" "s/^    va.*/    va = ${va[l]}/" "${filename}"
 
                             # change the plate normal and shear forces here
-                            sed -i "" "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
-                            sed -i "" "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
+                            LANG=C sed -i "" "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
+                            LANG=C sed -i "" "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
 
                         else
                             echo "I don't know that to do..."
@@ -433,7 +447,8 @@ for i in "${!uw[@]}"; do
 done
 
 # creation of the slurm sbatch script
-cat <<EOL >"../jobs/init_plate.sh"
+if [ "${restart}" -eq 0 ]; then
+    cat <<EOL >"../jobs/${first}${last}init_plate.sh"
 #!/bin/bash
 
 #SBATCH --array=${first}-${last}%$((${last} - ${first} + 1))
@@ -451,3 +466,25 @@ cd ..
 srun --cpus-per-task=\$SLURM_CPUS_PER_TASK ./godar < inputs/\${SLURM_ARRAY_TASK_ID}input
 
 EOL
+
+elif [ "${restart}" -eq 1 ]; then
+    cat <<EOL >"../jobs/${first}${last}init_plate.sh"
+#!/bin/bash
+
+#SBATCH --array=${first}-${last}%$((${last} - ${first} + 1))
+#SBATCH --time=3-0:0
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=${cores}
+#SBATCH --mem=4G
+#SBATCH --output=../output/out.%a
+
+export OMP_NUM_THREADS=\$SLURM_CPUS_PER_TASK
+
+cd ..
+
+srun --cpus-per-task=\$SLURM_CPUS_PER_TASK ./godar < inputs/\${SLURM_ARRAY_TASK_ID}input_restart
+
+EOL
+    
+fi
