@@ -220,6 +220,11 @@ def file_creation(
     f = functions[dist]
     radius, thick = f(param1_r, param2_r, param1_t, param2_t, disks_num, offset, cutoff)
 
+    print(
+        "You should use {} as a search radius in your namelist".format(
+            int(np.ceil(np.max(radius)))
+        )
+    )
     lines = radius.astype(str).tolist()
     with open("../files/r" + adn + ".dat", "w") as f:
         for line in lines:
