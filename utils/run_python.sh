@@ -1,25 +1,37 @@
 #!/bin/bash
 
-# Define the Python script
-python_script="plots/video.py"
+# Function to search for a file
+search_file() {
+    local filename=$1
+    local search_dir=${PWD}"/.."
+    local location
 
-# Define the input file containing argument pairs
-input_file="utils/pyargs.dat"
+    location=$(find "${search_dir}" -name "${filename}" 2>/dev/null)
 
-# Check if the input file exists
-if [ ! -f "$input_file" ]; then
-    echo "Error: Input file $input_file not found."
+    if [ -e "${location}" ]; then
+        echo "${location}"
+    fi
+}
+
+# Check if an argument was provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <input_file>"
     exit 1
 fi
 
+echo search_file "$1"
+
+# Define the Python script
+python_script="plots/video.py"
+
 # Read the arguments from the input file and launch the Python script
-cat "$input_file" | while IFS=' ' read -r arg1 arg2; do
+while IFS=' ' read -r arg1 arg2; do
     echo "Launching $python_script with arguments $arg1 and $arg2"
 
     # Run the Python script with the arguments
     python "$python_script" "$arg1" "$arg2" &
 
-done
+done < <(cat <"$1")
 
 # Wait for all background jobs to finish
 wait
