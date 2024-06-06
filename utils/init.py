@@ -83,7 +83,7 @@ def reading_input():
         print("No argument provided by sys.")
         adn = int(input("unique identifier: "))
 
-    return n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist
+    return n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist, adn
 
 
 def init(n):
@@ -250,7 +250,7 @@ def file_creation(
 # -----------------------------------------
 
 try:
-    print("Reading the init file.")
+    print("Reading the input_init.dat file.")
     with open("input_init.dat", "r") as f:
         lines = f.read().split()
         n = np.asarray(lines[0::9]).astype(int)
@@ -267,7 +267,9 @@ try:
 except:
     print("The input file for initiation of particles does not exist.")
     print("Or maybe you are not running this script from /GODAR/utils")
-    n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist = reading_input()
+    n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist, adn = (
+        reading_input()
+    )
 
 for i in range(len(n)):
     sf, disks_num_x, disks_num_y, disks_num = init(n[i])
