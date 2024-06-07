@@ -15,25 +15,35 @@ search_file() {
 
 # Check if an argument was provided
 if [ -z "$1" ]; then
-    echo "Usage: $0 <input_file>"
+    echo "Usage: sh $0 <input_file>"
     exit 1
 fi
 
-echo search_file "$1"
+path_to_file=$(search_file "$1")
+if [ -e "$path_to_file" ]; then
+    echo "File $1 found at:"
+    echo "${path_to_file}"
+    break
+else
+    echo "File $1 not found."
+fi
 
 # Define the Python script
-python_script="plots/video.py"
+python_script="../plots/video.py"
 
 # Read the arguments from the input file and launch the Python script
-while IFS=' ' read -r arg1 arg2; do
+cat <$1 | {
+    while IFS=' ' read -r arg1 arg2; do
     echo "Launching $python_script with arguments $arg1 and $arg2"
 
     # Run the Python script with the arguments
     python "$python_script" "$arg1" "$arg2" &
 
-done < <(cat <"$1")
+    done
 
-# Wait for all background jobs to finish
-wait
+    # Wait for all background jobs to finish
+    wait
+}
+    
 
 echo "All instances of the script have been executed."

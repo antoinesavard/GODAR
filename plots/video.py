@@ -14,7 +14,7 @@ compression = 1  # data compression
 
 # ----------------------------------------------------------------------
 
-output_dir = "output/"
+output_dir = "../output/"
 try:
     expno = str(sys.argv[1])
     print("expno = {}".format(expno))
@@ -68,7 +68,7 @@ for i in range(b.shape[-1] - 1):
         lb[:, i, j] = ff.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
         angleb[:, i, j] = ff.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
 
-os.chdir("plots/")
+os.chdir("../plots/")
 
 fig = plt.figure(dpi=300, figsize=(4*xaxis_limits/yaxis_limits, 4))
 ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
