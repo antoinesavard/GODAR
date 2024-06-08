@@ -355,7 +355,7 @@ for i in "${!exp_num[@]}"; do
         # macOS
         sed -i "" "s/^    Xfile.*/    Xfile = \"files\/x${exp_num[i]}.dat\"/" "${filename}"
         sed -i "" "s/^    Yfile.*/    Yfile = \"files\/y${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "" "s/^    Rfile.*/    Rfile = \"fiels\/r${exp_num[i]}.dat\"/" "${filename}"
+        sed -i "" "s/^    Rfile.*/    Rfile = \"files\/r${exp_num[i]}.dat\"/" "${filename}"
         sed -i "" "s/^    Hfile.*/    Hfile = \"files\/h${exp_num[i]}.dat\"/" "${filename}"
         sed -i "" "s/^    Tfile.*/    Tfile = \"files\/theta${exp_num[i]}.dat\"/" "${filename}"
         sed -i "" "s/^    Ofile.*/    Ofile = \"files\/omega${exp_num[i]}.dat\"/" "${filename}"
