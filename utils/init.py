@@ -107,6 +107,12 @@ def log_log(mean_r, sigma_r, mean_t, sigma_t, disks_num, offset, cutoff):
     return radius, thick
 
 
+def log_const(mean_r, sigma_r, value, void, disks_num, offset, cutoff):
+    radius = np.random.lognormal(mean_r, sigma_r, disks_num)
+    thick = np.ones(disks_num) * value
+    return radius, thick
+
+
 def log_gauss(mean_r, sigma_r, mean_t, sigma_t, disks_num, offset, cutoff):
     radius = np.random.lognormal(mean_r, sigma_r, disks_num)
     thick = np.random.normal(mean_t, sigma_t, disks_num)
@@ -125,6 +131,13 @@ def gauss_log(mean_r, sigma_r, mean_t, sigma_t, disks_num, offset, cutoff):
     thick = np.random.lognormal(mean_t, sigma_t, disks_num) - offset
     radius = np.where(radius <= 50, 50, radius)
     thick = np.where(thick <= cutoff, cutoff, thick)
+    return radius, thick
+
+
+def gauss_const(mean_r, sigma_r, value, void, disks_num, offset, cutoff):
+    radius = np.random.normal(mean_r, sigma_r, disks_num)
+    thick = np.ones(disks_num) * value
+    radius = np.where(radius <= offset, offset, radius)
     return radius, thick
 
 
@@ -150,6 +163,12 @@ def uni_log(low_r, high_r, mean_t, sigma_t, disks_num, offset, cutoff):
     return radius, thick
 
 
+def uni_const(low_r, high_r, value, void, disks_num, offset, cutoff):
+    radius = np.random.uniform(low_r, high_r, disks_num)
+    thick = np.ones(disks_num) * value
+    return radius, thick
+
+
 def uni_gauss(low_r, high_r, mean_t, sigma_t, disks_num, offset, cutoff):
     radius = np.random.uniform(low_r, high_r, disks_num)
     thick = np.random.normal(mean_t, sigma_t, disks_num)
@@ -166,12 +185,15 @@ def uni_uni(low_r, high_r, low_t, high_t, disks_num, offset, cutoff):
 # dictionnary of functions to choose from
 functions = dict(
     log_log=log_log,
+    log_const=log_const,
     log_gauss=log_gauss,
     log_uni=log_uni,
     gauss_log=gauss_log,
+    gauss_const=gauss_const,
     gauss_gauss=gauss_gauss,
     gauss_uni=gauss_uni,
     uni_log=uni_log,
+    uni_const=uni_const,
     uni_gauss=uni_gauss,
     uni_uni=uni_uni,
 )
@@ -195,9 +217,12 @@ def file_creation(
     dist,
     adn,
 ):
+    wall = sf * np.arange(0.5, 2 * disks_num_y, 1)
+    walls = np.concatenate((wall, wall))
+    walls = walls.astype(str).tolist()
     lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
-    lines = lines.astype(str)
-    lines = lines.tolist()
+    total_num = len(lines)
+    lines = lines.astype(str).tolist()
     with open("../files/y" + adn + ".dat", "w") as f:
         for line in lines:
             i = 0
@@ -205,8 +230,15 @@ def file_creation(
                 f.write(line)
                 f.write("\n")
                 i += 1
+        for line in walls:
+            f.write(line)
+            f.write("\n")
 
-    lines = sf * np.arange(1, 2 * disks_num_x + 1, 2)
+    wallf = sf * np.ones(2 * disks_num_y) / 2
+    wallb = wallf * (disks_num_x + 3 / 2) * 2 + sf
+    walls = np.concatenate((wallf, wallb))
+    walls = walls.astype(str).tolist()
+    lines = sf * np.arange(2, 2 * disks_num_x + 1, 2)
     lines = lines.astype(str)
     lines = lines.tolist()
     with open("../files/x" + adn + ".dat", "w") as f:
@@ -216,6 +248,9 @@ def file_creation(
                 f.write(line)
                 f.write("\n")
             i += 1
+        for line in walls:
+            f.write(line)
+            f.write("\n")
 
     f = functions[dist]
     radius, thick = f(param1_r, param2_r, param1_t, param2_t, disks_num, offset, cutoff)
@@ -225,19 +260,31 @@ def file_creation(
             int(np.ceil(np.max(radius)))
         )
     )
+    wall = 500 * np.ones(2 * disks_num_y)
+    walls = np.concatenate((wall, wall))
+    walls = walls.astype(str).tolist()
     lines = radius.astype(str).tolist()
     with open("../files/r" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
+        for line in walls:
+            f.write(line)
+            f.write("\n")
 
+    wall = np.ones(2 * disks_num_y)
+    walls = np.concatenate((wall, wall))
+    walls = walls.astype(str).tolist()
     lines = thick.astype(str).tolist()
     with open("../files/h" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
+        for line in walls:
+            f.write(line)
+            f.write("\n")
 
-    other = np.zeros_like(radius)
+    other = np.zeros_like(np.concatenate((radius, wall, wall)))
     lines = other.astype(str).tolist()
     with open("../files/theta" + adn + ".dat", "w") as f:
         for line in lines:
@@ -248,6 +295,8 @@ def file_creation(
         for line in lines:
             f.write(line)
             f.write("\n")
+
+    return total_num
 
 
 # -----------------------------------------
@@ -278,7 +327,7 @@ except:
 
 for i in range(len(n)):
     sf, disks_num_x, disks_num_y, disks_num = init(n[i])
-    file_creation(
+    total_num = file_creation(
         sf,
         disks_num_x,
         disks_num_y,
@@ -296,6 +345,6 @@ for i in range(len(n)):
 print(
     "You will need {} namelists when running the duplication.sh program".format(len(n))
 )
-print("Compile godar with {} particles".format(disks_num))
-print("Compile godar with {} km in x".format(disks_num_x * 2))
+print("Compile godar with {} particles".format(total_num))
+print("Compile godar with {} km in x".format((disks_num_x + 1) * 2))
 print("Compile godar with {} km in y".format(disks_num_y * 2))
