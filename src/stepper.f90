@@ -155,12 +155,6 @@ subroutine stepper (tstep)
         m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i)
     end do
 
-    ! forces on right side plate
-    call normal_forces("right")
-
-    ! forces on left side plate
-    call normal_forces("left")
-
     ! set speed of plate by inputing a constant force
 !    do i = 950, n
 !        call plate_force(i)
@@ -169,6 +163,12 @@ subroutine stepper (tstep)
     ! broadcast forces to all so that the nodes can each update their x and u
     call broadcast_total_forces
 
+    ! forces on right side plate
+    call normal_forces("right")
+
+    ! forces on left side plate
+    call normal_forces("left")
+    
     ! integration in time
     call velocity
     call position
