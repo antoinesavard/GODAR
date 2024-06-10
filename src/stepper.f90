@@ -96,7 +96,7 @@ subroutine stepper (tstep)
 			if ( bond (j, i) .eq. 1 ) then
 
 				call bond_forces (j, i)
-				call bond_breaking (j, i)
+!				call bond_breaking (j, i)
 
                 if ( bond (j, i) .eq. 1 ) then
                     ! update force on particle i by j due to bond
@@ -135,7 +135,7 @@ subroutine stepper (tstep)
 
         ! compute the total forcing from winds, currents and coriolis on particule i
         call forcing (i)
-        call coriolis(i)
+!        call coriolis(i)
 
     end do
     !$omp end parallel do
@@ -155,10 +155,11 @@ subroutine stepper (tstep)
         m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i)
     end do
 
-    ! normal forces on side of the plate
-!    do i = 1, n
-!        call normal_forces(i)
-!    end do
+    ! forces on right side plate
+    call normal_forces("right")
+
+    ! forces on left side plate
+    call normal_forces("left")
 
     ! set speed of plate by inputing a constant force
 !    do i = 950, n
@@ -175,29 +176,33 @@ subroutine stepper (tstep)
 end subroutine stepper
 
 
-subroutine normal_forces (i)
+subroutine normal_forces (side)
 
     implicit none
 
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
-	include "CB_bond.h"
+    include "CB_bond.h"
     include "CB_forcings.h"
 
-    integer, intent(in) :: i
-
-    if ( x(i) >= 22d3 ) then
-
-        tfx(i) = tfx(i) - pfn
-
+    character (*), intent(in) :: side
+    double precision :: ftmp
+    integer :: i
+    
+    if ( side == "right" ) then
+        ftmp = maxval(tfx(n-29:n))
+        do i = n, n - 29 , -1
+            tfx(i) = ftmp + pfn
+            tfy(i) = 0d0 + pfs 
+        end do
     end if  
 
-    if ( x(i) <= 2d3 ) then
-
-        tfy(i) = 0d0
-        tfx(i) = 0d0
-
+    if ( side == "left" ) then
+        do i = n - 30, n - 59 , -1
+            tfy(i) = 0d0
+            tfx(i) = 0d0
+        end do
     end if
 
 

@@ -221,7 +221,6 @@ def file_creation(
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
-    total_num = len(lines)
     lines = lines.astype(str).tolist()
     with open("../files/y" + adn + ".dat", "w") as f:
         for line in lines:
@@ -235,7 +234,7 @@ def file_creation(
             f.write("\n")
 
     wallf = sf * np.ones(2 * disks_num_y) / 2
-    wallb = wallf * (disks_num_x + 3 / 2) * 2 + sf
+    wallb = sf * (np.ones_like(wallf) * 2 * disks_num_x + 3 / 2)
     walls = np.concatenate((wallf, wallb))
     walls = walls.astype(str).tolist()
     lines = sf * np.arange(2, 2 * disks_num_x + 1, 2)
@@ -296,7 +295,7 @@ def file_creation(
             f.write(line)
             f.write("\n")
 
-    return total_num
+    return len(other)
 
 
 # -----------------------------------------
