@@ -1,5 +1,7 @@
 #!/bin/bash
 
+##########################################################
+##########################################################
 #---------------------------------------------------------
 # Program duplication.sh
 #
@@ -38,8 +40,12 @@
 
 # Written by Antoine Savard, 2024
 #---------------------------------------------------------
+##########################################################
+##########################################################
 
+#---------------------------------------------------------
 # Function to search for a file
+#---------------------------------------------------------
 search_file() {
     local filename=$1
     local search_dir=${PWD}"/.."
@@ -52,6 +58,9 @@ search_file() {
     fi
 }
 
+#---------------------------------------------------------
+# function to get the number of cores on your machine
+#---------------------------------------------------------
 get_cores() {
     if command -v nproc &>/dev/null; then
         # Linux
@@ -69,7 +78,9 @@ get_cores() {
     echo "Total number of CPU cores: $num_cores"
 }
 
+#---------------------------------------------------------
 # function to prompt the user for arguments
+#---------------------------------------------------------
 prompt_for_inputs() {
     # template of namelist to copy
     while true; do
@@ -97,6 +108,29 @@ prompt_for_inputs() {
             break
         fi
     done
+
+    # if restart is true, ask for which range of exp to restart from
+    if [ "${restart}" -eq 1 ]; then
+	while true; do
+	    read -rp "Enter the experiment to restart from: " exp_res_start
+	    echo "You want to restart from experiment ${exp_res_start}."
+	    if [ "${exp_res_start}" -gt 99 ]; then
+		echo "This number is above max value (99)."
+            else
+		break
+            fi
+	done
+
+	while true; do
+	    read -rp "Enter the experiment to stop at: " exp_res_end
+	    echo "Until experiment ${exp_res_end}."
+	    if [ "${exp_res_end}" -gt 99 ]; then
+		echo "This number is above max value (99)."
+            else
+		break
+            fi
+	done
+    fi
     
     # first="USER INPUT"
     while true; do
@@ -138,6 +172,9 @@ prompt_for_inputs() {
     echo ""
 }
 
+#---------------------------------------------------------
+# functions to get the forcings from a file
+#---------------------------------------------------------
 forcings() {
     local list
     local input
@@ -151,6 +188,7 @@ forcings() {
         fend="${list[2]}"
         fstep="${list[3]}"
 
+	# conditional that check is forcing is valid
         if [ -z "${var}" ]; then
             break
         elif [ "${var}" = "/" ]; then
@@ -162,10 +200,14 @@ forcings() {
             echo ""
             continue
         fi
+
+	# loop over the values
         while true; do
             echo "You provided ${var} as variable to modify."
             echo "The inputs are:" "${fstart}" "${fend}" "${fstep}"
-            if [ -z "${fstart}" ] || [ -z "${fend}" ]; then
+
+	    # check which forcing it is 
+	    if [ -z "${fstart}" ] || [ -z "${fend}" ]; then
                 echo "You need to provide start point, end point and step size."
                 echo "Or value and number of copies"
                 break
@@ -243,6 +285,9 @@ forcings() {
     done
 }
 
+#---------------------------------------------------------
+# function to count the elements in an array
+#---------------------------------------------------------
 count() {
     local count
     local array
@@ -265,10 +310,13 @@ count() {
         # Print the count for the current array
         echo "The array ${array} has ${count} elements."
     done
-    echo "The total number of namelists needed is" "${total_count}"
+    echo "The total number of namelists needed per experiment is" "${total_count}"
     echo ""
 }
 
+#---------------------------------------------------------
+# function that initializes the default forcings
+#---------------------------------------------------------
 check_forcing() {
     if [ -z "${uw}" ]; then
         uw=0
@@ -290,10 +338,12 @@ check_forcing() {
     fi
 }
 
+##########################################################
 #---------------------------------------------------------
 # From here we just check the inputs and stuff nothing
 # else happens of interest
 #---------------------------------------------------------
+##########################################################
 inputs=$#
 
 if [[ "${inputs}" -ne 0 ]]; then
@@ -309,6 +359,7 @@ else
     check_forcing
 fi
 
+##########################################################
 #---------------------------------------------------------
 # From here we are actually creating the files, and
 # for each file we are changing the values with the
@@ -319,6 +370,7 @@ fi
 #  -plate forces
 #  -initial input files
 #---------------------------------------------------------
+##########################################################
 
 # create an array of all experiment numbers
 exp_num=($(seq "${first}" 1 "${last}"))
@@ -335,13 +387,35 @@ if [ "${#exp_num[@]}" -ne "${total_count}" ]; then
     echo ""
 fi
 
+# create array for experiment number to restart from
+if [ "${restart}" -eq 1 ]; then
+    exp_num_res=($(seq "${exp_res_start}" 1 "${exp_res_end}"))
+    total_tmp=$((total_count))
+    total_count=$((total_count * (exp_res_end - exp_res_start + 1)))
+    echo "Number of experiments due to different forcings is ${total_tmp}"
+    echo "Number of experiments due to restart files is $((exp_res_end - exp_res_start + 1))"
+    echo "So the final total amount of experiments you need to do is ${total_count}"
+    echo ""
+    if [ "${#exp_num_res[@]}" -ne "${total_count}" ]; then
+	echo "You have to increase the number of restart experiment to ${total_count}"
+	exit 1
+    fi
+fi
+
+# temporary variable to limit lenght of code
+if [ "${restart}" -eq 0 ]; then
+    exp_tmp=$((exp_num))
+elif [ "${restart}" -eq 1 ]; then
+    exp_tmp=$((exp_num_res))
+fi
+
 # loop through the exp_num and create namelist files for each one
-for i in "${!exp_num[@]}"; do
+for i in "${!exp_tmp[@]}"; do
     # create the file
     generic="namelist.nml"
-    filename=../namelist/"${exp_num[i]}${generic}"
+    filename=../namelist/"${exp_tmp[i]}${generic}"
     cp "${path_to_file}" "${filename}"
-    echo "Creating namelist file with name ${exp_num[i]}${generic}"
+    echo "Creating namelist file with name ${exp_tmp[i]}${generic}"
 
     if [[ "$(uname)" == "Linux" ]]; then
         # Linux
@@ -388,7 +462,7 @@ EOL
 1                   input namelist
 ${exp_num[i]}${generic}      namelist name
 1                   input restart
-$((${exp_num[i]} - ${total_count}))                  restart exp
+${exp_num_res[i]}                  restart exp
 1000                restart time
 ${exp_num[i]}                  exp version
 ${cores}                  number of threads
