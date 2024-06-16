@@ -25,12 +25,12 @@ Next, to compile, this program uses `scons`. You will have to install it prior t
 
 ##### Install scons
 
-Then you install scons `python -m pip install scons`.
+Then you install scons via pip or conda if that's what you use: `python -m pip install scons`
 
 - To compile the code on n cores `scons -j n`
 - To clear the build: `scons -c`
 - Debug the code: `scons debug=1`
-- Run the executable in the background: `sh start.sh`
+- Run the executable in the background from GODAR/jobs/: `sh start.sh`
 
 #### Intalling coretran
 
@@ -66,6 +66,20 @@ On mac, there is an extra step to be taken as well.
 install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib godar
 ```
 
+If you are managing your `mpifort` with brew, there might be an issue in compatibilities where you get an error message saying that the linker `ld` is not able to find the flag `-ld_classic`. If that is the case, then you have to move to the folder where your `homebrew` is and change the following file:
+
+```bash
+/opt/homebrew/share/openmpi/mpifort-wrapper-data.txt
+```
+
+In this file, there is a line `compiler_flags=` and you have to remove everything except the first part, so that it looks something like:
+
+```bash
+compiler_flags=-I${includedir}
+```
+
+This line is essentially just telling which flags to use when compiling the code with mpifort. The thing is that with xcode 15+, these flags are now obsolete, and are not compatible anymore with brew, well, as least by my findings. Removing these flags fixed things for me. 
+    
 After these steps, you should be good to go.
 
 #### How to run godar
