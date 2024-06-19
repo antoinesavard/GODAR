@@ -221,13 +221,12 @@ def file_creation(
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
-    lines = lines + np.random.uniform(-1, 1, lines.size)
-    lines = lines.astype(str).tolist()
     with open("../files/y" + adn + ".dat", "w") as f:
-        for line in lines:
+        for clean_line in lines:
             i = 0
             while i < disks_num_x:
-                f.write(line)
+                line = clean_line + np.random.uniform(-1,1)
+                f.write(str(line))
                 f.write("\n")
                 i += 1
         for line in walls:

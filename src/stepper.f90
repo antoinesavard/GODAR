@@ -191,7 +191,7 @@ subroutine normal_forces (side)
     integer :: i
     
     if ( side == "right" ) then
-        ftmp = maxval(tfx(n-29:n))
+        ftmp = minval(tfx(n-29:n))
         do i = n, n - 29 , -1
             tfx(i) = ftmp + pfn
             tfy(i) = 0d0 + pfs 

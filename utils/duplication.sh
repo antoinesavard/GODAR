@@ -130,6 +130,16 @@ prompt_for_inputs() {
 		break
             fi
 	done
+
+	while true; do
+	    read -rp "Enter the restart time: " time
+	    echo "I will read the restart time at line ${time}"
+	    if [ "${time}" -lt 1 ]; then
+		echo "It needs to be a positive integer."
+	    else
+		break
+	    fi
+	done
     fi
     
     # first="USER INPUT"
@@ -373,43 +383,51 @@ fi
 ##########################################################
 
 # create an array of all experiment numbers
-exp_num=($(seq "${first}" 1 "${last}"))
+# temporary variable to limit lenght of code
+if [ "${restart}" -eq 0 ]; then
+    exp_tmp=($(seq "${first}" 1 "${last}"))
+    exp_base=_ # this is filler
+elif [ "${restart}" -eq 1 ]; then
+    exp_tmp=($(seq "${first}" 1 "${last}"))
+    exp_base=($(seq "${exp_res_start}" 1 "${exp_res_end}"))
+fi
 
 # create an array of all arrays for forcings
 force=("uw" "vw" "ua" "va" "pfn" "pfs")
 count "${force[@]}"
 
-if [ "${#exp_num[@]}" -ne "${total_count}" ]; then
+# make sure that the amount of experiments matches the number you actually need in the case of no restart
+if [ "${#exp_tmp[@]}" -ne "${total_count}" ] && [ "${restart}" -eq 0 ]; then
     echo "The number of experiment provided was not accurate."
     last=$((total_count + first - 1))
-    exp_num=($(seq "${first}" 1 "${last}"))
-    echo "It now has been adjusted to ${#exp_num[@]}"
+    exp_tmp=($(seq "${first}" 1 "${last}"))
+    echo "It now has been adjusted to ${#exp_tmp[@]}"
     echo ""
 fi
 
 # create array for experiment number to restart from
 if [ "${restart}" -eq 1 ]; then
-    exp_num_res=($(seq "${exp_res_start}" 1 "${exp_res_end}"))
     total_tmp=$((total_count))
     total_count=$((total_count * (exp_res_end - exp_res_start + 1)))
+
+    # here we create an array of restart that matches the ones of
+    # exp_tmp in size
+    exp_base_boost=("${exp_base[@]}")
+    for ((i = 0; i < total_tmp; i++)); do
+	exp_base_boost+=("${exp_base[@]}")
+    done
+    
     echo "Number of experiments due to different forcings is ${total_tmp}"
     echo "Number of experiments due to restart files is $((exp_res_end - exp_res_start + 1))"
     echo "So the final total amount of experiments you need to do is ${total_count}"
     echo ""
-    if [ "${#exp_num_res[@]}" -ne "${total_count}" ]; then
+    if [ "${#exp_tmp[@]}" -ne "${total_count}" ]; then
 	echo "You have to increase the number of restart experiment to ${total_count}"
 	exit 1
     fi
 fi
 
-# temporary variable to limit lenght of code
-if [ "${restart}" -eq 0 ]; then
-    exp_tmp=$((exp_num))
-elif [ "${restart}" -eq 1 ]; then
-    exp_tmp=$((exp_num_res))
-fi
-
-# loop through the exp_num and create namelist files for each one
+# loop through the exp_tmp and create namelist files for each one
 for i in "${!exp_tmp[@]}"; do
     # create the file
     generic="namelist.nml"
@@ -417,59 +435,60 @@ for i in "${!exp_tmp[@]}"; do
     cp "${path_to_file}" "${filename}"
     echo "Creating namelist file with name ${exp_tmp[i]}${generic}"
 
-    if [[ "$(uname)" == "Linux" ]]; then
-        # Linux
-        sed -i "s/^    Xfile.*/    Xfile = \"files\/x${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "s/^    Yfile.*/    Yfile = \"files\/y${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "s/^    Rfile.*/    Rfile = \"files\/r${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "s/^    Hfile.*/    Hfile = \"files\/h${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "s/^    Tfile.*/    Tfile = \"files\/theta${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "s/^    Ofile.*/    Ofile = \"files\/omega${exp_num[i]}.dat\"/" "${filename}"
-    elif [[ "$(uname)" == "Darwin" ]]; then
-        # macOS
-        sed -i "" "s/^    Xfile.*/    Xfile = \"files\/x${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "" "s/^    Yfile.*/    Yfile = \"files\/y${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "" "s/^    Rfile.*/    Rfile = \"files\/r${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "" "s/^    Hfile.*/    Hfile = \"files\/h${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "" "s/^    Tfile.*/    Tfile = \"files\/theta${exp_num[i]}.dat\"/" "${filename}"
-        sed -i "" "s/^    Ofile.*/    Ofile = \"files\/omega${exp_num[i]}.dat\"/" "${filename}"
-    else
-        echo "I don't know what to do with this..."
-    fi
-
     if [ "${restart}" -eq 0 ]; then
+    
+	if [[ "$(uname)" == "Linux" ]]; then
+            # Linux
+            sed -i "s/^    Xfile.*/    Xfile = \"files\/x${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "s/^    Yfile.*/    Yfile = \"files\/y${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "s/^    Rfile.*/    Rfile = \"files\/r${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "s/^    Hfile.*/    Hfile = \"files\/h${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "s/^    Tfile.*/    Tfile = \"files\/theta${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "s/^    Ofile.*/    Ofile = \"files\/omega${exp_tmp[i]}.dat\"/" "${filename}"
+	elif [[ "$(uname)" == "Darwin" ]]; then
+            # macOS
+            sed -i "" "s/^    Xfile.*/    Xfile = \"files\/x${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "" "s/^    Yfile.*/    Yfile = \"files\/y${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "" "s/^    Rfile.*/    Rfile = \"files\/r${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "" "s/^    Hfile.*/    Hfile = \"files\/h${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "" "s/^    Tfile.*/    Tfile = \"files\/theta${exp_tmp[i]}.dat\"/" "${filename}"
+            sed -i "" "s/^    Ofile.*/    Ofile = \"files\/omega${exp_tmp[i]}.dat\"/" "${filename}"
+	else
+            echo "I don't know what to do with this..."
+	fi
+
 	# create the associate input file
-	filename=../inputs/"${exp_num[i]}input"
+	filename=../inputs/"${exp_tmp[i]}input"
 
 	# Create the file and write the contents
 	cat <<EOL >"${filename}"
 1                   input namelist
-${exp_num[i]}${generic}      namelist name
+${exp_tmp[i]}${generic}      namelist name
 0                   input restart
-${exp_num[i]}                  exp version
+${exp_tmp[i]}                  exp version
 ${cores}                  number of threads
 EOL
 
 	# Print a message indicating the file was created
-	echo "Input file ${exp_num[i]}input has been created."
+	echo "Input file ${exp_tmp[i]}input has been created."
 
     elif [ "${restart}" -eq 1 ]; then
 	# create the associate input file
-	filename=../inputs/"${exp_num[i]}input_restart"
+	filename=../inputs/"${exp_tmp[i]}input_restart"
 
 	# Create the file and write the contents
 	cat <<EOL >"${filename}"
 1                   input namelist
-${exp_num[i]}${generic}      namelist name
+${exp_tmp[i]}${generic}      namelist name
 1                   input restart
-${exp_num_res[i]}                  restart exp
-1000                restart time
-${exp_num[i]}                  exp version
+${exp_base_boost[i]}                  restart exp
+${time}                restart time
+${exp_tmp[i]}                  exp version
 ${cores}                  number of threads
 EOL
 
 	# Print a message indicating the file was created
-	echo "Input file ${exp_num[i]}input_restart has been created."
+	echo "Input file ${exp_tmp[i]}input_restart has been created."
     fi
 done
 
@@ -481,38 +500,40 @@ for i in "${!uw[@]}"; do
             for l in "${!va[@]}"; do
                 for m in "${!pfn[@]}"; do
                     for o in "${!pfs[@]}"; do
+			for p in "${!exp_base[@]}"; do
 
-                        generic="namelist.nml"
-                        filename="../namelist/${itnum}${generic}"
-                        if [[ "$(uname)" == "Linux" ]]; then
-                            # Linux
-                            # change the forcings here
-                            LANG=C sed -i "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
-                            LANG=C sed -i "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
-                            LANG=C sed -i "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
-                            LANG=C sed -i "s/^    va.*/    va = ${va[l]}/" "${filename}"
+                            generic="namelist.nml"
+                            filename="../namelist/${itnum}${generic}"
+                            if [[ "$(uname)" == "Linux" ]]; then
+				# Linux
+				# change the forcings here
+				LANG=C sed -i "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
+				LANG=C sed -i "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
+				LANG=C sed -i "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
+				LANG=C sed -i "s/^    va.*/    va = ${va[l]}/" "${filename}"
 
-                            # change the plate normal and shear forces here
-                            LANG=C sed -i "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
-                            LANG=C sed -i "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
+				# change the plate normal and shear forces here
+				LANG=C sed -i "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
+				LANG=C sed -i "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
 
-                        elif [[ "$(uname)" == "Darwin" ]]; then
-                            # macOS
-                            # change the forcings here
-                            LANG=C sed -i "" "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
-                            LANG=C sed -i "" "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
-                            LANG=C sed -i "" "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
-                            LANG=C sed -i "" "s/^    va.*/    va = ${va[l]}/" "${filename}"
+                            elif [[ "$(uname)" == "Darwin" ]]; then
+				# macOS
+				# change the forcings here
+				LANG=C sed -i "" "s/^    uw.*/    uw = ${uw[i]}/" "${filename}"
+				LANG=C sed -i "" "s/^    vw.*/    vw = ${vw[j]}/" "${filename}"
+				LANG=C sed -i "" "s/^    ua.*/    ua = ${ua[k]}/" "${filename}"
+				LANG=C sed -i "" "s/^    va.*/    va = ${va[l]}/" "${filename}"
 
-                            # change the plate normal and shear forces here
-                            LANG=C sed -i "" "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
-                            LANG=C sed -i "" "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
+				# change the plate normal and shear forces here
+				LANG=C sed -i "" "s/^    pfn.*/    pfn = ${pfn[m]}/" "${filename}"
+				LANG=C sed -i "" "s/^    pfs.*/    pfs = ${pfs[o]}/" "${filename}"
 
-                        else
-                            echo "I don't know that to do..."
-                        fi
+                            else
+				echo "I don't know that to do..."
+                            fi
 
-                        itnum=$((itnum + 1))
+                            itnum=$((itnum + 1))
+			done
                     done
                 done
             done
@@ -562,3 +583,6 @@ srun --cpus-per-task=\$SLURM_CPUS_PER_TASK ./godar < inputs/\${SLURM_ARRAY_TASK_
 EOL
     
 fi
+
+echo ""
+echo "Done"
