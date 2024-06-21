@@ -42,73 +42,73 @@ adn_new = adn + len(adn)
 
 for j in range(len(adn)):
     # x
-    with open("../output/x." + str(adn[j]), "r") as f:
+    with open("../../output/x." + str(adn[j]), "r") as f:
         xlines1 = f.read().split()
         xlines1 = np.asarray(xlines1).astype(float).reshape(1000, n[j])
         xlines2 = xlines1[-1] + gap
         xlines = np.concatenate((xlines1[-1], xlines2))
 
-    with open("../files/x" + str(adn_new[j]) + ".dat", "w") as f:
+    with open("../../files/x" + str(adn_new[j]) + ".dat", "w") as f:
         for i, xline in enumerate(xlines):
             f.write(str(xline))
             f.write("\n")
 
     # y
-    with open("../output/y." + str(adn[j]), "r") as f:
+    with open("../../output/y." + str(adn[j]), "r") as f:
         ylines1 = f.read().split()
         ylines1 = np.asarray(ylines1).astype(float).reshape(1000, n[j])
         ylines2 = ylines1[-1]
         ylines = np.concatenate((ylines1[-1], ylines2))
 
-    with open("../files/y" + str(adn_new[j]) + ".dat", "w") as f:
+    with open("../../files/y" + str(adn_new[j]) + ".dat", "w") as f:
         for i, yline in enumerate(ylines):
             f.write(str(yline))
             f.write("\n")
 
     # r
-    with open("../output/r." + str(adn[j]), "r") as f:
+    with open("../../output/r." + str(adn[j]), "r") as f:
         rlines1 = f.read().split()
         rlines1 = np.asarray(rlines1).astype(float).reshape(1000, n[j])
         rlines2 = rlines1[-1]
         rlines = np.concatenate((rlines1[-1], rlines2))
 
-    with open("../files/r" + str(adn_new[j]) + ".dat", "w") as f:
+    with open("../../files/r" + str(adn_new[j]) + ".dat", "w") as f:
         for i, rline in enumerate(rlines):
             f.write(str(rline))
             f.write("\n")
 
     # h
-    with open("../output/h." + str(adn[j]), "r") as f:
+    with open("../../output/h." + str(adn[j]), "r") as f:
         hlines1 = f.read().split()
         hlines1 = np.asarray(hlines1).astype(float).reshape(1000, n[j])
         hlines2 = hlines1[-1]
         hlines = np.concatenate((hlines1[-1], hlines2))
 
-    with open("../files/h" + str(adn_new[j]) + ".dat", "w") as f:
+    with open("../../files/h" + str(adn_new[j]) + ".dat", "w") as f:
         for i, hline in enumerate(hlines):
             f.write(str(hline))
             f.write("\n")
 
     # theta
-    with open("../output/theta." + str(adn[j]), "r") as f:
+    with open("../../output/theta." + str(adn[j]), "r") as f:
         tlines1 = f.read().split()
         tlines1 = np.asarray(tlines1).astype(float).reshape(1000, n[j])
         tlines2 = tlines1[-1]
         tlines = np.concatenate((tlines1[-1], tlines2))
 
-    with open("../files/theta" + str(adn_new[j]) + ".dat", "w") as f:
+    with open("../../files/theta" + str(adn_new[j]) + ".dat", "w") as f:
         for i, tline in enumerate(tlines):
             f.write(str(tline))
             f.write("\n")
 
     # omega
-    with open("../output/omega." + str(adn[j]), "r") as f:
+    with open("../../output/omega." + str(adn[j]), "r") as f:
         olines1 = f.read().split()
         olines1 = np.asarray(olines1).astype(float).reshape(1000, n[j])
         olines2 = olines1[-1]
         olines = np.concatenate((olines1[-1], olines2))
 
-    with open("../files/omega" + str(adn_new[j]) + ".dat", "w") as f:
+    with open("../../files/omega" + str(adn_new[j]) + ".dat", "w") as f:
         for i, oline in enumerate(olines):
             f.write(str(oline))
             f.write("\n")

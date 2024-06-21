@@ -29,7 +29,7 @@ else
 fi
 
 # Define the Python script
-python_script="../plots/video.py"
+python_script="../tools/plotter/video.py"
 
 # Read the arguments from the input file and launch the Python script
 cat <$1 | {

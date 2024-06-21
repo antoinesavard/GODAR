@@ -221,7 +221,7 @@ def file_creation(
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
-    with open("../files/y" + adn + ".dat", "w") as f:
+    with open("../../files/y" + adn + ".dat", "w") as f:
         for clean_line in lines:
             i = 0
             while i < disks_num_x:
@@ -239,7 +239,7 @@ def file_creation(
     walls = walls.astype(str).tolist()
     lines = sf * np.arange(2, 2 * disks_num_x + 1, 2)
     lines = lines.astype(str).tolist()
-    with open("../files/x" + adn + ".dat", "w") as f:
+    with open("../../files/x" + adn + ".dat", "w") as f:
         i = 0
         while i < disks_num_y:
             for line in lines:
@@ -262,7 +262,7 @@ def file_creation(
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = radius.astype(str).tolist()
-    with open("../files/r" + adn + ".dat", "w") as f:
+    with open("../../files/r" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
@@ -274,7 +274,7 @@ def file_creation(
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = thick.astype(str).tolist()
-    with open("../files/h" + adn + ".dat", "w") as f:
+    with open("../../files/h" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
@@ -284,12 +284,12 @@ def file_creation(
 
     other = np.zeros_like(np.concatenate((radius, wall, wall)))
     lines = other.astype(str).tolist()
-    with open("../files/theta" + adn + ".dat", "w") as f:
+    with open("../../files/theta" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
 
-    with open("../files/omega" + adn + ".dat", "w") as f:
+    with open("../../files/omega" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
@@ -318,7 +318,7 @@ try:
 
 except:
     print("The input file for initiation of particles does not exist.")
-    print("Or maybe you are not running this script from /GODAR/utils")
+    print("Or maybe you are not running this script from /GODAR/tools/init")
     n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist, adn = (
         reading_input()
     )
