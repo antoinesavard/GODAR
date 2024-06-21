@@ -31,18 +31,17 @@ fi
 python_script="../tools/plotter/video.py"
 
 # Read the arguments from the input file and launch the Python script
-cat <$1 | {
+cat $1 | {
     while IFS=' ' read -r arg1 arg2; do
-    echo "Launching $python_script with arguments $arg1 and $arg2"
+        echo "Launching $python_script with arguments $arg1 and $arg2"
 
-    # Run the Python script with the arguments
-    python "$python_script" "$arg1" "$arg2" &
+        # Run the Python script with the arguments
+        python "$python_script" "$arg1" "$arg2" &
 
     done
 
     # Wait for all background jobs to finish
     wait
 }
-    
 
 echo "All instances of the script have been executed."

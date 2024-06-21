@@ -6,7 +6,8 @@
 /inputs/*
 /namelist/*
 /utils/*.dat
-/plots/*.dat
+/plots/anim/*
+/plots/plot/*
 /jobs/*
 experiences
 SConstruct
