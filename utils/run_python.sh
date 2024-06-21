@@ -23,7 +23,6 @@ path_to_file=$(search_file "$1")
 if [ -e "$path_to_file" ]; then
     echo "File $1 found at:"
     echo "${path_to_file}"
-    break
 else
     echo "File $1 not found."
 fi
