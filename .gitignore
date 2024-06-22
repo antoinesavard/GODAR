@@ -6,8 +6,6 @@
 /inputs/*
 /namelist/*
 /utils/*.dat
-/plots/anim/*
-/plots/plot/*
 /jobs/*
 experiences
 SConstruct
@@ -53,8 +51,8 @@ SConstruct
 config.log
 .sconf_temp
 
-*.mp4
-*.png
-*.pdf
-*/__pycache__/*
-*~
+**.mp4
+**.png
+**.pdf
+**/__pycache__/*
+**~

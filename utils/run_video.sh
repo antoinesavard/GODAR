@@ -30,13 +30,19 @@ fi
 # Define the Python script
 python_script="../tools/plotter/video.py"
 
+# Get the absolute path to the parent directory of 'tools'
+PROJECT_DIR="$(
+    cd "$(dirname "${BASH_SOURCE[0]}")/../"
+    pwd
+)"
+
 # Read the arguments from the input file and launch the Python script
-cat $1 | {
+cat <$1 | {
     while IFS=' ' read -r arg1 arg2; do
         echo "Launching $python_script with arguments $arg1 and $arg2"
 
         # Run the Python script with the arguments
-        python "$python_script" "$arg1" "$arg2" &
+        PYTHONPATH="$PROJECT_DIR" python "$python_script" "$arg1" "$arg2" &
 
     done
 
