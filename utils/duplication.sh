@@ -422,7 +422,7 @@ if [ "${restart}" -eq 1 ]; then
     echo "So the final total amount of experiments you need to do is ${total_count}"
     echo ""
     if [ "${#exp_tmp[@]}" -ne "${total_count}" ]; then
-	echo "You have to increase the number of restart experiment to ${total_count}"
+	echo "The number of experiements ${#exp_tmp[@]} does not match the amount you need ${total_count}"
 	exit 1
     fi
 fi

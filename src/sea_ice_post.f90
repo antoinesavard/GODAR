@@ -8,7 +8,7 @@ implicit none
 	include "CB_bond.h"
 
     integer :: i, j
-	character(len=4), intent(in) :: expno_str
+    character(len=4), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
                          filet, fileo, fileb
 
@@ -98,7 +98,7 @@ implicit none
 end subroutine clear_posts
 
 
-subroutine info (expno_str)
+subroutine info (expno_str, restart)
 
     implicit none
 
@@ -109,6 +109,7 @@ subroutine info (expno_str)
     include "CB_options.h"
 
     character(len=4), intent(in) :: expno_str
+    integer, intent(in) :: restart
     character(len=30) :: fileinfo, ffmt, lfmt, ifmt
 
     ffmt = "(es25.3e1)"
@@ -119,6 +120,7 @@ subroutine info (expno_str)
 
     open (10, file = fileinfo, status = 'unknown')
 
+    ! options of the model
     write(10,*) ('OPTIONS')
     write(10,*) ('')
     write(10,*) ('dynamics =')
@@ -130,6 +132,7 @@ subroutine info (expno_str)
     write(10,*) ('ridging =') 
     write(10,lfmt) (ridging)
 
+    ! numerical parameters
     write(10,*) ('')
     write(10,*) ('NUMERICAL PARAMETERS')
     write(10,*) ('')
@@ -141,13 +144,14 @@ subroutine info (expno_str)
     write(10,ffmt) (nt)
     write(10,*) ('comp =') 
     write(10,ffmt) (comp)
-    write(10,*) ('n = ')
+    write(10,*) ('n =')
     write(10,ifmt) (n)
-    write(10,*) ('nx = ')
+    write(10,*) ('nx =')
     write(10,ffmt) (nx)
-    write(10,*) ('ny = ')
+    write(10,*) ('ny =')
     write(10,ffmt) (ny)
 
+    ! physical parameters
     write(10,*) ('')
     write(10,*) ('PHYSICAL PARAMETERS')
     write(10,*) ('')
@@ -155,7 +159,7 @@ subroutine info (expno_str)
     write(10,ffmt) (Cdair)
     write(10,*) ('Csair =')
     write(10,ffmt) (Csair)
-    write(10,*) ('Cdwater = ')
+    write(10,*) ('Cdwater =')
     write(10,ffmt) (Cdwater)
     write(10,*) ('Cswater =')
     write(10,ffmt) (Cswater)
@@ -165,11 +169,12 @@ subroutine info (expno_str)
     write(10,ffmt) (lat)
     write(10,*) ('rhoair =')
     write(10,ffmt) (rhoair)
-    write(10,*) ('rhoice')
+    write(10,*) ('rhoice =')
     write(10,ffmt) (rhoice)
-    write(10,*) ('rhowater')
+    write(10,*) ('rhowater =')
     write(10,ffmt) (rhowater)
-    
+
+    ! disk parameters
     write(10,*) ('')
     write(10,*) ('DISK PARAMETERS')
     write(10,*) ('')
@@ -183,7 +188,8 @@ subroutine info (expno_str)
     write(10,ffmt) (rest_coeff)
     write(10,*) ('sigmanc_crit =')
     write(10,ffmt) (sigmanc_crit)
-    
+
+    ! bond parameters
     write(10,*) ('')
     write(10,*) ('BOND PARAMETERS')
     write(10,*) ('')
@@ -197,10 +203,38 @@ subroutine info (expno_str)
     write(10,ffmt) (sigmatb_crit)
     write(10,*) ('sigmacb_crit =')
     write(10,ffmt) (sigmacb_crit)
-    write(10,*) ('tau_crit')
+    write(10,*) ('tau_crit =')
     write(10,ffmt) (tau_crit)
-    write(10,*) ('gamma_d')
+    write(10,*) ('gamma_d =')
     write(10,ffmt) (gamma_d)
+
+    ! forcings
+    write(10,*) ('')
+    write(10,*) ('FORCINGS')
+    write(10,*) ('')
+    write(10,*) ('uw = ')
+    write(10,ffmt) (uw)
+    write(10,*) ('vw =')
+    write(10,ffmt) (vw)
+    write(10,*) ('ua =')
+    write(10,ffmt) (ua)
+    write(10,*) ('va =')
+    write(10,ffmt) (va)
+
+    ! plate forcigns
+    write(10,*) ('')
+    write(10,*) ('PLATES')
+    write(10,*) ('pfn =')
+    write(10,ffmt) (pfn)
+    write(10,*) ('pfs =')
+    write(10,ffmt) (pfs)
+
+    ! input files
+    write(10,*) ('')
+    write(10,*) ('INPUT FILES')
+    write(10,*) ('')
+    write(10,*) ('restart =')
+    write(10,ifmt) (restart)
 
 end subroutine info
 

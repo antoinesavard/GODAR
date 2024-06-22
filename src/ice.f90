@@ -95,7 +95,7 @@ program ice
 
         call clear_posts (expno_str)
         
-        call info (expno_str)
+        call info (expno_str, restart)
 
         !number of processor/threads
         print '(a)', &
