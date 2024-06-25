@@ -28,26 +28,68 @@ else
 fi
 
 # Define the Python script
-python_script="../tools/plotter/video.py"
+python_video="../tools/plotter/video.py"
+python_void="../tools/analysis/void_ratio.py"
 
 # Get the absolute path to the parent directory of 'tools'
 PROJECT_DIR="$(
-    cd "$(dirname "${BASH_SOURCE[0]}")/../"
+    cd "$(dirname "${BASH_SOURCE[0]}")/../" || exit
     pwd
 )"
 
+# read the first 2 lines of the input file
+# Initialize variables
+video=
+analysis=
+
+# Read each line of the file
+while IFS=' ' read -r number rest_of_line; do
+    # Check if 'number' is not empty (to skip any empty lines)
+    if [[ -n $number ]]; then
+        if [[ -z $video ]]; then
+            video="$number"
+        else
+            analysis="$number"
+            break
+        fi
+    fi
+done <$1
+
+# Print the results (optional)
+echo "video.py will be run? $video"
+echo "void_ratio.py will be run? $analysis"
+
 # Read the arguments from the input file and launch the Python script
-cat <$1 | {
-    while IFS=' ' read -r arg1 arg2; do
-        echo "Launching $python_script with arguments $arg1 and $arg2"
+while IFS=' ' read -r arg1 arg2; do
+    echo "Launching $python_video with arguments $arg1 and $arg2"
 
-        # Run the Python script with the arguments
-        PYTHONPATH="$PROJECT_DIR" python "$python_script" "$arg1" "$arg2" &
+    # store the arguments
+    args_list+=("$arg1 $arg2")
 
+    # Run the Python script with the arguments
+    if [ "$video" -eq 1 ]; then
+        PYTHONPATH="$PROJECT_DIR" python "$python_video" "$arg1" "$arg2" &
+    fi
+done < <(tail -n +3 $1)
+
+# Wait for all background jobs to finish
+wait
+
+# run the second script if prompted to do it
+if [ "$analysis" -eq 1 ]; then
+    echo "Performing void ratio computation"
+
+    for args in "${args_list[@]}"; do
+        # split the arguments back into individual variables
+        set -- $args
+
+        arg1=$1
+        arg2=$2
+        arg3="collision${arg1}.mp4"
+
+        # Add your additional analysis script here
+        PYTHONPATH="$PROJECT_DIR" python "$python_void" "$arg1" "$arg2" "$arg3"
     done
-
-    # Wait for all background jobs to finish
-    wait
-}
+fi
 
 echo "All instances of the script have been executed."
