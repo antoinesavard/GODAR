@@ -159,8 +159,8 @@ prompt_for_inputs() {
         echo "You provided ${last} as an end point."
         if [ "${last}" -gt 99 ]; then
             echo "This number is above max value (99)."
-        elif [ "${last}" -le "${first}" ]; then
-            echo "The last number needs to be bigger than the first number."
+        elif [ "${last}" -lt "${first}" ]; then
+            echo "The last number needs to be bigger or equal to the first number."
         else
             break
         fi

@@ -131,6 +131,8 @@ subroutine info (expno_str, restart)
     write(10,lfmt) (cohesion)
     write(10,*) ('ridging =') 
     write(10,lfmt) (ridging)
+    write(10,*) ('shelter =')
+    write(10,lfmt) (shelter)
 
     ! numerical parameters
     write(10,*) ('')
@@ -224,6 +226,7 @@ subroutine info (expno_str, restart)
     ! plate forcigns
     write(10,*) ('')
     write(10,*) ('PLATES')
+    write(10,*) ('')
     write(10,*) ('pfn =')
     write(10,ffmt) (pfn)
     write(10,*) ('pfs =')
