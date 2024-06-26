@@ -96,7 +96,7 @@ subroutine stepper (tstep)
 			if ( bond (j, i) .eq. 1 ) then
 
 				call bond_forces (j, i)
-!				call bond_breaking (j, i)
+				call bond_breaking (j, i)
 
                 if ( bond (j, i) .eq. 1 ) then
                     ! update force on particle i by j due to bond
