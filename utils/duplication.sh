@@ -94,6 +94,7 @@ prompt_for_inputs() {
             break
         else
             echo "File ${template} not found."
+	    exit 1
         fi
     done
     echo ""
@@ -104,6 +105,7 @@ prompt_for_inputs() {
 	echo "You said ${restart} restart"
         if [ "${restart}" -ne 1 ] && [ "${restart}" -ne 0 ]; then
             echo "This should be 0 or 1"
+	    exit 1
         else
             break
         fi
@@ -116,6 +118,7 @@ prompt_for_inputs() {
 	    echo "You want to restart from experiment ${exp_res_start}."
 	    if [ "${exp_res_start}" -gt 99 ]; then
 		echo "This number is above max value (99)."
+		exit 1
             else
 		break
             fi
@@ -136,6 +139,7 @@ prompt_for_inputs() {
 	    echo "I will read the restart time at line ${time}"
 	    if [ "${time}" -lt 1 ]; then
 		echo "It needs to be a positive integer."
+		exit 1
 	    else
 		break
 	    fi
@@ -148,6 +152,7 @@ prompt_for_inputs() {
 	echo "You provided ${first} as a starting point."
         if [ "${first}" -gt 99 ]; then
 	    echo "This number is above max value (99)."
+	    exit 1
         else
             break
         fi
@@ -159,8 +164,10 @@ prompt_for_inputs() {
         echo "You provided ${last} as an end point."
         if [ "${last}" -gt 99 ]; then
             echo "This number is above max value (99)."
+	    exit 1
         elif [ "${last}" -lt "${first}" ]; then
             echo "The last number needs to be bigger or equal to the first number."
+	    exit 1
         else
             break
         fi
