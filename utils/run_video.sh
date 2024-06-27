@@ -61,13 +61,13 @@ echo "void_ratio.py will be run? $analysis"
 
 # Read the arguments from the input file and launch the Python script
 while IFS=' ' read -r arg1 arg2; do
-    echo "Launching $python_video with arguments $arg1 and $arg2"
-
     # store the arguments
     args_list+=("$arg1 $arg2")
 
     # Run the Python script with the arguments
     if [ "$video" -eq 1 ]; then
+        echo "Launching $python_video with arguments $arg1 and $arg2"
+
         PYTHONPATH="$PROJECT_DIR" python "$python_video" "$arg1" "$arg2" &
     fi
 done < <(tail -n +3 $1)
@@ -85,10 +85,20 @@ if [ "$analysis" -eq 1 ]; then
 
         arg1=$1
         arg2=$2
-        arg3="collision${arg1}.mp4"
+        arg3="strip-collision${arg1}.mp4"
 
+        # making sure the video file exists
+        path_to_file=$(search_file "$arg3")
+        if [ -e "$path_to_file" ]; then
+            echo "File $arg3 found at:"
+            echo "${path_to_file}"
+        else
+            echo "File $arg3 not found."
+            exit 1
+        fi
+        
         # Add your additional analysis script here
-        PYTHONPATH="$PROJECT_DIR" python "$python_void" "$arg1" "$arg2" "$arg3"
+        PYTHONPATH="$PROJECT_DIR" python "$python_void" "$arg1" "$arg2" "$path_to_file"
     done
 fi
 
