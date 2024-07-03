@@ -76,10 +76,10 @@ if not cap.isOpened():
     print("Error: Could not open video.")
     exit()
 
-void_ratios = tam.process_video(cap, num_samples)
+void_ratios_means, void_ratios_stds = tam.process_video(cap, num_samples)
 
 #-----------------------------------------------------
 # plot the void ratios
 #-----------------------------------------------------
 
-tpf.void_ratio_plot(void_ratios, expno)
+tpf.void_ratio_plot(void_ratios_means, void_ratios_stds, expno)
