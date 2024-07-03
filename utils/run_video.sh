@@ -29,7 +29,7 @@ fi
 
 # Define the Python script
 python_video="../tools/plotter/video.py"
-python_void="../tools/analysis/void_ratio.py"
+python_void="../tools/plotter/void_ratio.py"
 
 # Get the absolute path to the parent directory of 'tools'
 PROJECT_DIR="$(
@@ -41,6 +41,7 @@ PROJECT_DIR="$(
 # Initialize variables
 video=
 analysis=
+num_lines=3
 
 # Read each line of the file
 while IFS=' ' read -r number rest_of_line; do
@@ -59,6 +60,15 @@ done <$1
 echo "video.py will be run? $video"
 echo "void_ratio.py will be run? $analysis"
 
+if [ "$analysis" -eq 1 ]; then
+    while IFS=' ' read -r num_threads num_samples; do
+        echo "Running the Monte Carlo simulation with $num_threads threads."
+        echo "Running the Monte Carlo simulation with $num_samples samples."
+        break
+    done < <(tail -n +"$num_lines" $1)
+    num_lines+=1
+fi
+
 # Read the arguments from the input file and launch the Python script
 while IFS=' ' read -r arg1 arg2; do
     # store the arguments
@@ -70,7 +80,7 @@ while IFS=' ' read -r arg1 arg2; do
 
         PYTHONPATH="$PROJECT_DIR" python "$python_video" "$arg1" "$arg2" &
     fi
-done < <(tail -n +3 $1)
+done < <(tail -n +"$num_lines" $1)
 
 # Wait for all background jobs to finish
 wait
@@ -79,9 +89,9 @@ wait
 if [ "$analysis" -eq 1 ]; then
     echo "Performing void ratio computation"
 
-    for args in "${args_list[@]}"; do
+    for arg in "${args_list[@]}"; do
         # split the arguments back into individual variables
-        set -- $args
+        set -- $arg
 
         arg1=$1
         arg2=$2
@@ -98,7 +108,8 @@ if [ "$analysis" -eq 1 ]; then
         fi
         
         # Add your additional analysis script here
-        PYTHONPATH="$PROJECT_DIR" python "$python_void" "$arg1" "$arg2" "$path_to_file"
+        echo "Launching $python_void with arguments $arg1 $arg2 $path_to_file $num_threads $num_samples"
+        PYTHONPATH="$PROJECT_DIR" python "$python_void" "$arg1" "$arg2" "$path_to_file" "$num_threads" "$num_samples"
     done
 fi
 

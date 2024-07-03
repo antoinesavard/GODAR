@@ -41,6 +41,9 @@ out*
 *.out
 *.app
 
+# macos
+*.DS_store
+
 ### SCons ###
 build/
 # for projects that use SCons for building: http://http://www.scons.org/
