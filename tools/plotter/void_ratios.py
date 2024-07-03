@@ -78,6 +78,12 @@ if not cap.isOpened():
 
 void_ratios_means, void_ratios_stds = tam.process_video(cap, num_samples)
 
+# save the data
+vr_means = np.asarray(void_ratios_means)
+vr_stds = np.asarray(void_ratios_stds)
+np.save("../plots/plot/{}vr_means.npy".format(expno), vr_means)
+np.save("../plots/plot/{}vr_stds.npy".format(expno), vr_stds)
+
 #-----------------------------------------------------
 # plot the void ratios
 #-----------------------------------------------------

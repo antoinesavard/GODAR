@@ -19,7 +19,12 @@ def void_ratio_plot(vr_means_list: list, vr_stds_list: list, expno: str):
     rect_scatter = [left, bottom, width, height]
 
     ax = fig.add_axes(rect_scatter)
+
+    # plot of the mean
     ax.plot(vr_means_list)
+
+    # Adding shaded region for standard deviation
+    plt.fill_between(vr_means_list - vr_stds_list, vr_means_list + vr_stds_list, color='blue', alpha=0.2)
 
     # axis labels
     ax.set_xlabel("Time step number")
