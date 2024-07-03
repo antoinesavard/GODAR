@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import cv2
 import tools.analysis.monte_carlo as tam
+import tools.plotter.figures as tpf
 import tools.utils.files as tuf
 from numba import set_num_threads, get_num_threads
 
@@ -31,13 +32,13 @@ except:
     print("No argument provided by sys.")
     video_path = str(input("video_path = "))
 try:
-    num_threads = int(sys.arg[4])
+    num_threads = int(sys.argv[4])
     print("Number of threads to use: {}".format(num_threads))
 except:
     print("No argument provided by sys.")
     num_threads = int(input("num_thread = "))
 try:
-    num_samples = int(sys.arg[5])
+    num_samples = int(sys.argv[5])
     print("Number of Monte Carlo samples: {}".format(num_samples))
 except:
     print("No argument provided by sys.")
@@ -81,6 +82,4 @@ void_ratios = tam.process_video(cap, num_samples)
 # plot the void ratios
 #-----------------------------------------------------
 
-plt.plot(void_ratios)
-plt.xlabel("Frame number")
-plt.ylabel("Void_ratio")
+tpf.void_ratio_plot(void_ratios, expno)

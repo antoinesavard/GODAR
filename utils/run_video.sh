@@ -29,7 +29,7 @@ fi
 
 # Define the Python script
 python_video="../tools/plotter/video.py"
-python_void="../tools/plotter/void_ratio.py"
+python_void="../tools/plotter/void_ratios.py"
 
 # Get the absolute path to the parent directory of 'tools'
 PROJECT_DIR="$(
@@ -58,7 +58,7 @@ done <$1
 
 # Print the results (optional)
 echo "video.py will be run? $video"
-echo "void_ratio.py will be run? $analysis"
+echo "void_ratios.py will be run? $analysis"
 
 if [ "$analysis" -eq 1 ]; then
     while IFS=' ' read -r num_threads num_samples; do
@@ -66,7 +66,7 @@ if [ "$analysis" -eq 1 ]; then
         echo "Running the Monte Carlo simulation with $num_samples samples."
         break
     done < <(tail -n +"$num_lines" $1)
-    num_lines+=1
+    num_lines=4
 fi
 
 # Read the arguments from the input file and launch the Python script

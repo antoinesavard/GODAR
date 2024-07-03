@@ -1,15 +1,20 @@
-# --------------------------------------
+# ------------------------------------------------
 # import modules
-# --------------------------------------
+# ------------------------------------------------
 
 import numpy as np
 import cv2
 from numba import njit, prange
 
 # ------------------------------------------------
-# define the functions
+# define some global variables
 # ------------------------------------------------
 
+num_iteration = 100
+
+# ------------------------------------------------
+# define the functions
+# ------------------------------------------------
 
 # Function to check if a point is in a disk
 @njit
@@ -42,6 +47,19 @@ def monte_carlo(num_samples, frame_rgb, frame_width, frame_height, frame_max):
     return points_in_disks
 
 
+def outer_loop(num_samples, frame_rgb, frame_width, frame_height, frame_max):
+    # function that loops over each frame in order to get significant statistics
+    void_ratio_arr=np.zeros(num_iteration)
+    
+    for i in range(num_iteration):
+        points_in_disks = monte_carlo(num_samples, frame_rgb, frame_width, frame_height, frame_max)
+        void_ratio_arr[i] = (num_samples - points_in_disks) / num_samples
+        if i%10 == 0:
+            print("Iteration {} / {}".format(i, num_iteration))
+        
+    return void_ratio_arr
+        
+
 def compute_void_ratio(frame, frame_width, frame_height, num_samples):
     # Convert the frame to RGB
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -50,17 +68,21 @@ def compute_void_ratio(frame, frame_width, frame_height, num_samples):
     frame_max = find_first_uniform_column(frame_rgb)
     if frame_max == -1:
         print("It is not picking up the proper column")
-        exit()
+        print("WARNING: the code is probably not doing the correct thing.")
 
     # Monte Carlo simulation to estimate the ratio of disk to total area
-    points_in_disks = monte_carlo(num_samples, frame_rgb, frame_width, frame_height, frame_max)
-    void_ratio = (num_samples - points_in_disks) / num_samples
-    return void_ratio
+    void_ratio_arr = outer_loop(num_samples, frame_rgb, frame_width, frame_height, frame_max)
+    void_ratio_mean = np.mean(void_ratio_arr)
+    void_ratio_std = np.std(void_ratio_arr)
+    
+    return void_ratio_mean, void_ratio_std
+
 
 def process_video(cap, num_samples):
     # Process each frame
     frame_idx = 0
-    void_ratios = []
+    vr_means = []
+    vr_stds = []
 
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -70,13 +92,11 @@ def process_video(cap, num_samples):
         if not ret:
             break
 
-        void_ratio = compute_void_ratio(frame, frame_width, frame_height, num_samples)
-        void_ratios.append(void_ratio)
-
-        if frame_idx % 50 == 0:
-            print(f"Frame {frame_idx}: Estimated ratio = {void_ratio:.4f}")
+        vr_mean, vr_std = compute_void_ratio(frame, frame_width, frame_height, num_samples)
+        vr_means.append(vr_mean)
+        vr_stds.append(vr_std)
 
         frame_idx += 1
 
     cap.release()
-    return void_ratios
+    return vr_means, vr_stds
