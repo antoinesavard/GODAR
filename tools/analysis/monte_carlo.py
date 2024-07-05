@@ -23,8 +23,13 @@ def in_disk(x, y, image):
     x, y = int(x), int(y)
     color = image[y, x]
     lower_blue = np.array([0, 0, 0])
-    upper_blue = np.array([255, 255, 255])
-    return np.all(lower_blue <= color) and np.all(color < upper_blue)
+    upper_blue = np.array([200, 200, 255])
+    white = np.array([245, 245, 245])
+    return (
+        np.all(lower_blue <= color)
+        and np.all(color <= upper_blue)
+        and not np.all(color > white)
+    )
 
 
 def find_first_uniform_column(matrix):
@@ -39,12 +44,27 @@ def find_first_uniform_column(matrix):
 
 @njit(parallel=True)
 def monte_carlo(num_samples, frame_rgb, frame_width, frame_height, frame_max):
+    """
+    Function that generates points randomly in the domain and check whether they are inside disks or not.
+
+    Args:
+        num_samples (_type_): _description_
+        frame_rgb (_type_): _description_
+        frame_width (_type_): _description_
+        frame_height (_type_): _description_
+        frame_max (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
     points_in_disks = 0
     for _ in prange(num_samples):
         x = np.random.uniform(0, frame_width - (frame_width - frame_max))
         y = np.random.uniform(0, frame_height)
         if in_disk(x, y, frame_rgb):
             points_in_disks += 1
+
     return points_in_disks
 
 
@@ -53,9 +73,31 @@ def outer_loop(num_samples, frame_rgb, frame_width, frame_height, frame_max):
     void_ratio_arr = np.zeros(num_iteration)
 
     for i in range(num_iteration):
+
+        # # here
+        # fig = plt.figure(dpi=100, figsize=(8, 8))
+        # # definitions for the axes
+        # left, width = 0, 1
+        # bottom, height = 0, 1
+        # rect_scatter = [left, bottom, width, height]
+        # ax = fig.add_axes(rect_scatter)
+        # ax.imshow(frame_rgb)
+        # ax.axis("off")
+        # #
+
         points_in_disks = monte_carlo(
             num_samples, frame_rgb, frame_width, frame_height, frame_max
         )
+
+        # # here
+        # for _ in range(10000):
+        #     x = np.random.uniform(0, frame_width - (frame_width - frame_max))
+        #     y = np.random.uniform(0, frame_height)
+        #     color = "k" if in_disk(x, y, frame_rgb) else "r"
+        #     ax.scatter(x, y, c=color, s=1)
+        # plt.show()
+        # #
+
         void_ratio_arr[i] = (num_samples - points_in_disks) / num_samples
         if i % 10 == 0:
             print("Iteration {} / {}".format(i, num_iteration))

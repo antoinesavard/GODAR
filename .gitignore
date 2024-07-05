@@ -57,5 +57,6 @@ config.log
 **.mp4
 **.png
 **.pdf
+**.npy
 **/__pycache__/*
 **~

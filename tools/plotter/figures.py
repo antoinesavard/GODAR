@@ -21,11 +21,11 @@ def void_ratio_plot(vr_means_list: list, vr_stds_list: list, expno: str):
     ax = fig.add_axes(rect_scatter)
 
     # plot of the mean
-    ax.plot(vr_means_list)
+    ax.plot(vr_means_list[1:])
 
     # Adding shaded region for standard deviation
-    plt.fill_between(vr_means_list - vr_stds_list, vr_means_list + vr_stds_list, color='blue', alpha=0.2)
-
+    ax.fill_between(np.arange(vr_means_list[1:].shape[0]), vr_means_list[1:] - 3 * vr_stds_list[1:], vr_means_list[1:] + 3 * vr_stds_list[1:], color='blue', alpha=0.2)
+    
     # axis labels
     ax.set_xlabel("Time step number")
     ax.set_ylabel("Void ratio")

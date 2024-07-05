@@ -44,7 +44,7 @@ except:
     print("No argument provided by sys.")
     num_samples = int(input("num_samples = "))
 
-    
+
 # Set the number of threads
 set_num_threads(num_threads)
 print(f"Using {get_num_threads()} threads for parallel execution\n")
@@ -84,8 +84,11 @@ vr_stds = np.asarray(void_ratios_stds)
 np.save("../plots/plot/{}vr_means.npy".format(expno), vr_means)
 np.save("../plots/plot/{}vr_stds.npy".format(expno), vr_stds)
 
-#-----------------------------------------------------
+# -----------------------------------------------------
 # plot the void ratios
-#-----------------------------------------------------
+# -----------------------------------------------------
 
-tpf.void_ratio_plot(void_ratios_means, void_ratios_stds, expno)
+vr_means = np.load("../plots/plot/{}vr_means.npy".format(expno))
+vr_stds = np.load("../plots/plot/{}vr_stds.npy".format(expno))
+
+tpf.void_ratio_plot(vr_means, vr_stds, expno)
