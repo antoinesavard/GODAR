@@ -74,14 +74,14 @@ for i in range(b.shape[-1] - 1):
 
 os.chdir("../plots/anim/")
 
-#fig = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
-#ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
-#ax.set_ylabel("Position [km]", rotation=90)
-#ax.set_xlabel("Position [km]")
+fig = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
+ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
+ax.set_ylabel("Position [km]", rotation=90)
+ax.set_xlabel("Position [km]")
 
 # limits of the plot in kilometers
-#ax.set_xlim(0, xaxis_limits)
-#ax.set_ylim(0, yaxis_limits)
+ax.set_xlim(0, xaxis_limits)
+ax.set_ylim(0, yaxis_limits)
 
 # second figure
 fig_strip = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
@@ -92,7 +92,7 @@ ax_strip.set_xlim(0, xaxis_limits)
 ax_strip.set_ylim(0, yaxis_limits)
 
 # keep track of time in the figure
-#time = ax.text(0.8, 1.02, "", transform=ax.transAxes)
+time = ax.text(0.8, 1.02, "", transform=ax.transAxes)
 time_strip = ax_strip.text(2, 2, "", transform=ax_strip.transAxes)
 
 disks = []
@@ -179,18 +179,18 @@ def animate_wrapper(k):
 def animate_wrapper_strip(k):
     return animate(k, time_strip)
 
-#anim = FuncAnimation(
-#    fig,
-#    animate_wrapper,
-#    frames=x.shape[0],
-#    init_func=init_wrapper,
-#    interval=10,
-#    repeat=False,
-#    blit=False,
-#)
+anim = FuncAnimation(
+    fig,
+    animate_wrapper,
+    frames=x.shape[0],
+    init_func=init_wrapper,
+    interval=10,
+    repeat=False,
+    blit=False,
+)
 
 print("Animating the disks for your eyes.")
-#ff.save_or_show_animation(anim, 1, "../../plots/anim/collision{}.mp4".format(expno))
+ff.save_or_show_animation(anim, 1, "../../plots/anim/collision{}.mp4".format(expno))
 
 anim_strip = FuncAnimation(
     fig_strip,
