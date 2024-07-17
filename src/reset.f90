@@ -31,6 +31,22 @@ subroutine reset_bond (j, i)
 end subroutine reset_bond
 
 
+subroutine reset_boundary (i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: i
+
+    theta_bc(i) = 0d0
+
+end subroutine reset_boundary
+
+
+
 subroutine reset_forces
 
     implicit none
@@ -68,6 +84,13 @@ subroutine reset_forces
         m_r(i)   = 0d0
 		tfx_r(i) = 0d0
         tfy_r(i) = 0d0
+        ! boundary forces
+        mc_bc(i) = 0d0
+        m_bc(i)  = 0d0
+        fn_bc(i) = 0d0
+        ft_bc(i) = 0d0
+        fx_bc(i) = 0d0
+        fy_bc(i) = 0d0
     end do
 
 end subroutine reset_forces

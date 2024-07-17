@@ -31,6 +31,12 @@ subroutine bond_forces (j, i)
     krb    =  knc * deltat(j,i) ** 2 / 12
 
     ! forces are computed from linear elastic material law
+    ! F = -kx but x>0 is elongation so the force is supposed
+    ! to bring back the particles towards equilibrium, so that
+    ! the force must be positive too (F>0) for particle i (which)
+    ! is the one on which we are centered. And the reverse for
+    ! particle j (F<0). But we had a sign in stepper so that
+    ! the signs are all gucci (F=kx).
     fbn(j, i) = -knb(j, i) * sb(j, i) * deltanb(j, i)
     fbt(j, i) = -ktb(j, i) * sb(j, i) * deltatb(j, i)
 

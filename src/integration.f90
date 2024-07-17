@@ -32,8 +32,6 @@ subroutine position
         y(i) = y(i) + v(i) * dt
         theta(i) = theta(i) + omega(i) * dt
 
-        call bc_verify (i)
-
     end do
 
 end subroutine position

@@ -38,6 +38,15 @@
 				omegarel    (n,n),  &
                 thetarelc   (n,n),  &
                 dist        (n,n)
+
+    double precision ::             & ! boundary condition forces
+                fn_bc       (n),    & ! normal force
+                ft_bc       (n),    & ! tangential force
+                fx_bc       (n),    & ! force in x direction
+                fy_bc       (n),    & ! force in y direction
+                mc_bc       (n),    & ! moment of rolling on boundary
+                m_bc        (n),    & ! total moment from boundary
+                theta_bc    (n)       ! angle for rolling on bd
         
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
@@ -75,5 +84,14 @@
                 deltan  ,  	 & ! normal distance between borders     [m]
                 deltat  ,    & ! tangent overlap                     [m]
 				omegarel,	 & ! relative angular velocity       [rad/s]
-                thetarelc,    & ! relative angular position        [rad]
+                thetarelc,   & ! relative angular position         [rad]
                 dist           ! distance between 2 particles        [m]
+
+    common/variables/        & ! boundary condition forces
+                fn_bc   ,    & ! normal force                        [N]
+                ft_bc   ,    & ! tangential force                    [N]
+                fx_bc   ,    & ! force in x direction                [N]
+                fy_bc   ,    & ! force in y direction                [N]
+                mc_bc   ,    & ! moment of rolling on boundary     [N*m]
+                m_bc    ,    & ! total moment from boundary        [N*m]
+                theta_bc       ! angle for rolling on boundary     [rad]

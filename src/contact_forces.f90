@@ -82,6 +82,85 @@ subroutine contact_forces (j, i)
 end subroutine contact_forces
 
 
+subroutine contact_bc (i, dir1, dir2)
+
+    ! This subroutine computes the contact forces between 
+    ! the particles and the walls. It uses the same law
+    ! as the one used for floe--floe interations. 
+    ! 
+    ! Arguments: 
+    !   i    (int): particle id
+    !   dir1 (int): vertical (0) or horizontal (1)
+    !   dir2 (int): bottom-left (0) or top-right (1)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_options.h"
+
+    integer, intent(in) :: i
+    integer, intent(in) :: dir1, dir2
+
+    double precision :: fit
+    double precision :: knc, ktc, gamn, gamt
+    double precision :: krc, mrolling
+    double precision :: deltat_bc, deltan_bc
+    double precision :: mrolling_bc
+
+    deltan_bc = ( (1 - dir2) * (r(i) - x(i)) +                     &
+                        dir2 * (r(i) + x(i) - nx) ) * dir1 +       &
+                ( (1 - dir2) * (r(i) - y(i)) +                     &
+                        dir2 * (r(i) + y(i) - ny) ) * (1 - dir1)
+
+    deltat_bc = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
+
+    theta_bc(i) = omega(i) * dt + theta_bc(i)
+
+    knc    = pi * ec * h(i)  *                  &
+                fit( deltan_bc * r(i) /         &
+                ( 2 * h(i) ** 2 ) )
+
+    ktc    = 6d0 * gc / ec * knc
+
+    krc    = knc * deltat_bc ** 2 / 12
+
+    gamn   = -beta * sqrt( 5d0 * knc * m(i) )
+
+    gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * m(i) )
+
+    ! compute the normal/tangent force
+    ! is using dir as a way to pick the proper velocity for 
+    ! normal or tangent force.
+    fn_bc(i) = knc * deltan_bc &
+                - gamn * ( dir1 * u(i) + (1 - dir1) * v(i) )
+
+    ft_bc(i) = ktc * deltat_bc &
+                - gamt * ( (1 - dir1) * u(i) + dir1 * v(i) )
+
+	! make sure that disks are slipping if not enough normal force
+    call coulomb_bc (i, dir1)
+
+    ! moments due to rolling
+    mrolling_bc = -krc * theta_bc(i) 
+
+    ! ensures no rolling if moment is too big
+    if ( abs( theta_bc(i) ) > 2 * abs(fn_bc(i)) / knc / &
+        deltat_bc ) then
+            
+        mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
+                    sign(1d0, omega(i))
+    
+    end if
+
+    ! total moment due to rolling
+    mc_bc(i) = mrolling_bc 
+
+end subroutine contact_bc
+
+
 double precision function fit (xi)
 
     implicit none

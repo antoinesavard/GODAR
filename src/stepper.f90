@@ -100,10 +100,8 @@ subroutine stepper (tstep)
 
                 if ( bond (j, i) .eq. 1 ) then
                     ! update force on particle i by j due to bond
-                    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i) +    &
-                                        fbt(j,i) * sina(j,i)
-                    fby(i) = fby(i) - fbn(j,i) * sina(j,i) -    &
-                                        fbt(j,i) * cosa(j,i)
+                    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i)
+                    fby(i) = fby(i) - fbn(j,i) * sina(j,i)
 
                     ! update moment on particule i by j to to bond
                     mb(i) = mb(i) - r(i) * fbt(j,i) - mbb(j, i)
@@ -137,6 +135,9 @@ subroutine stepper (tstep)
         call forcing (i)
 !        call coriolis(i)
 
+         ! verify the bondary conditions for each particle
+        call verify_bc (i)
+
     end do
     !$omp end parallel do
 
@@ -148,11 +149,13 @@ subroutine stepper (tstep)
 
     ! sum all forces together on particule i
     do i = last_iter, first_iter, -1
-        tfx_r(i) = fcx_r(i) + fbx_r(i) + fax(i) + fwx(i) + fcorx(i)
-        tfy_r(i) = fcy_r(i) + fby_r(i) + fay(i) + fwy(i) + fcory(i)
+        tfx_r(i) = fcx_r(i) + fbx_r(i) + fax(i) + fwx(i) + fcorx(i) &
+                    + fx_bc(i)
+        tfy_r(i) = fcy_r(i) + fby_r(i) + fay(i) + fwy(i) + fcory(i) &
+                    + fy_bc(i)
 
         ! sum all moments on particule i together
-        m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i)
+        m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i) + m_bc(i)
     end do
 
     ! set speed of plate by inputing a constant force
@@ -164,11 +167,11 @@ subroutine stepper (tstep)
     call broadcast_total_forces
 
     ! forces on right side plate
-    call normal_forces("right")
+    !call normal_forces("right")
 
     ! forces on left side plate
-    call normal_forces("left")
-    
+    !call normal_forces("left")
+
     ! integration in time
     call velocity
     call position
@@ -194,7 +197,7 @@ subroutine normal_forces (side)
         ftmp = maxval(tfx(n-29:n))
         do i = n, n - 29 , -1
             tfx(i) = ftmp + pfn
-            tfy(i) = 0d0 + pfs 
+            tfy(i) = pfs 
         end do
     end if  
 

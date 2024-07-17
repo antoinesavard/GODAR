@@ -18,6 +18,28 @@ subroutine coulomb (j, i)
 end subroutine coulomb
 
 
+subroutine coulomb_bc (i, dir)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: i
+    integer, intent(in) :: dir
+
+	! ensures slipping if force_t is too big
+    if ( abs( ft_bc(i) ) > friction_coeff * abs( fn_bc(i) ) ) then
+
+        ft_bc(i) = - friction_coeff * fn_bc(i) * &
+                    sign(1d0, (1 - dir) * u(i) + dir * v(i) )
+
+    end if
+    
+end subroutine coulomb_bc
+
+
 subroutine rel_pos_vel (j, i)
 
     implicit none

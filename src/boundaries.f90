@@ -1,4 +1,4 @@
-subroutine bc_verify (i)
+subroutine verify_bc (i)
 
     implicit none
 
@@ -10,31 +10,43 @@ subroutine bc_verify (i)
     
     if ( y(i) - r(i) <= 0 ) then
 
-        v(i) = - v(i)
-        y(i) = r(i)
+        call contact_bc (i, 0, 0)
+
+        ! update the forces applied by the boundaries on each particle
+        fx_bc(i) = ft_bc(i) 
+        fy_bc(i) = fn_bc(i) 
+
+    else if ( y(i) + r(i) >= ny ) then
+
+        call contact_bc (i, 0, 1)
+
+        ! update the forces applied by the boundaries on each particle
+        fx_bc(i) = ft_bc(i) 
+        fy_bc(i) = fn_bc(i) 
+
+    else if ( x(i) - r(i) <= 0 ) then
+
+        call contact_bc (i, 1, 0)
+
+        ! update the forces applied by the boundaries on each particle
+        fx_bc(i) = fn_bc(i) 
+        fy_bc(i) = ft_bc(i) 
+
+    else if ( x(i) + r(i) >= nx ) then
+
+        call contact_bc (i, 1, 1)
+
+        ! update the forces applied by the boundaries on each particle
+        fx_bc(i) = fn_bc(i) 
+        fy_bc(i) = ft_bc(i) 
+
+    else
+
+        call reset_boundary (i)
 
     end if
 
-    if ( y(i) + r(i) >= ny ) then
+    ! update the moment applied by the boundaries on each particle
+    m_bc(i)  = - r(i) * ft_bc(i) - mc_bc(i)
 
-        v(i) = - v(i)
-        y(i) = ny - r(i)
-
-    end if
-
-    if ( x(i) - r(i) <= 0 ) then
-
-        u(i) = - u(i)
-        x(i) = r(i)
-
-    end if
-
-    if ( x(i) + r(i) >= nx ) then
-
-        u(i) = - u(i)
-        x(i) = nx - r(i)
-
-    end if
-
-
-end subroutine bc_verify
+end subroutine verify_bc
