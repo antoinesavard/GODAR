@@ -106,7 +106,7 @@ subroutine contact_bc (i, dir1, dir2)
 
     double precision :: fit
     double precision :: knc, ktc, gamn, gamt
-    double precision :: krc, mrolling
+    double precision :: krc
     double precision :: deltat_bc, deltan_bc
     double precision :: mrolling_bc
 
