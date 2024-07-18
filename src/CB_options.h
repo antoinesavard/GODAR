@@ -15,4 +15,4 @@
                 thermodyn       ,   & ! melt/growth
                 cohesion        ,   & ! bond/no bond
 		ridging         ,   & ! plastic behavior at contact
-		shelter               ! sheltering between particles from forcings
+		shelter               ! sheltering from other particles
