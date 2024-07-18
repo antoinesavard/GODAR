@@ -66,8 +66,9 @@ if [ "$analysis" -eq 1 ]; then
         echo "Running the Monte Carlo simulation with $num_samples samples."
         break
     done < <(tail -n +"$num_lines" $1)
-    num_lines=4
 fi
+
+num_lines=4
 
 # Read the arguments from the input file and launch the Python script
 while IFS=' ' read -r arg1 arg2; do
@@ -106,7 +107,7 @@ if [ "$analysis" -eq 1 ]; then
             echo "File $arg3 not found."
             exit 1
         fi
-        
+
         # Add your additional analysis script here
         echo "Launching $python_void with arguments $arg1 $arg2 $path_to_file $num_threads $num_samples"
         PYTHONPATH="$PROJECT_DIR" python "$python_void" "$arg1" "$arg2" "$path_to_file" "$num_threads" "$num_samples"
