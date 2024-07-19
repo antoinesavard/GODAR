@@ -100,16 +100,21 @@ subroutine stepper (tstep)
 
                 if ( bond (j, i) .eq. 1 ) then
                     ! update force on particle i by j due to bond
-                    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i)
-                    fby(i) = fby(i) - fbn(j,i) * sina(j,i)
+                    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i) +    &
+                                        fbt(j,i) * sina(j,i)
+                    fby(i) = fby(i) - fbn(j,i) * sina(j,i) -    &
+                                        fbt(j,i) * cosa(j,i)
 
                     ! update moment on particule i by j to to bond
                     mb(i) = mb(i) - r(i) * fbt(j,i) - mbb(j, i)
 
                     ! Newton's third law
                     ! update force on particle j by i due to bond
-                    fbx(j) = fbx(j) + fbn(j,i) * cosa(j,i)
-                    fby(j) = fby(j) + fbn(j,i) * sina(j,i)
+                    fbx(j) = fbx(j) + fbn(j,i) * cosa(j,i) -    &
+                                        fbt(j,i) * sina(j,i)
+                    fby(j) = fby(j) + fbn(j,i) * sina(j,i) +    &
+                                        fbt(j,i) * cosa(j,i)
+
     
                     ! update moment on particule j by i due to bond
                     mb(j) = mb(j) - r(j) * fbt(j,i) + mbb(j, i)
