@@ -18,9 +18,7 @@ def list_files(directory: str, datatype: str, expno: str) -> list:
     from os import path, listdir
 
     files = (
-        f
-        for f in listdir(directory)
-        if f.startswith(datatype) and f.endswith(expno)
+        f for f in listdir(directory) if f.startswith(datatype) and f.endswith(expno)
     )
 
     return [f for f in files]
@@ -45,6 +43,14 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
                 data = np.loadtxt(fic).reshape(-1, n, n)
 
         return data[0] if data.shape[0] == 1 else data
+
+
+def check_dim(arr, bond=0):
+    if arr.ndim == 1:
+        arr = arr[:, np.newaxis]
+        if bond == 1:
+            arr = arr[:, np.newaxis, np.newaxis]
+    return arr
 
 
 def draw(ax, r, radius, angle, edge):

@@ -51,7 +51,7 @@ x, y, r, h, t, o, b = (
     ff.multiload(output_dir, filesb, 1, n),
 )
 
-# compressing the files 
+# compressing the files
 x = x[::compression] / sf
 y = y[::compression] / sf
 r = r[::compression] / sf
@@ -59,6 +59,15 @@ h = h[::compression] / sf
 t = t[::compression]
 o = np.sign(o[::compression])
 b = b[::compression]
+
+# check dimensions of the data
+x = ff.check_dim(x)
+y = ff.check_dim(y)
+r = ff.check_dim(r)
+h = ff.check_dim(h)
+t = ff.check_dim(t)
+o = ff.check_dim(o)
+b = ff.check_dim(b, 1)
 
 # massaging
 t = np.degrees(t)
@@ -85,7 +94,7 @@ ax.set_ylim(0, yaxis_limits)
 
 # second figure
 fig_strip = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
-ax_strip = fig_strip.add_axes([0, 0, 1, 1]) 
+ax_strip = fig_strip.add_axes([0, 0, 1, 1])
 
 # limits of the plot in kilometers
 ax_strip.set_xlim(0, xaxis_limits)
@@ -166,18 +175,23 @@ def animate(k, time):
 
     return disks, radii, bonds
 
+
 # define some wrappers
 def init_wrapper():
     return init(ax, time)
 
+
 def init_wrapper_strip():
     return init(ax_strip, time_strip)
+
 
 def animate_wrapper(k):
     return animate(k, time)
 
+
 def animate_wrapper_strip(k):
     return animate(k, time_strip)
+
 
 anim = FuncAnimation(
     fig,
@@ -203,4 +217,6 @@ anim_strip = FuncAnimation(
 )
 
 print("Animating the disks for the computer's eyes.")
-ff.save_or_show_animation(anim_strip, 1, "../../plots/anim/strip-collision{}.mp4".format(expno))
+ff.save_or_show_animation(
+    anim_strip, 1, "../../plots/anim/strip-collision{}.mp4".format(expno)
+)
