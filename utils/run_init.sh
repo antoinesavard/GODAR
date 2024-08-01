@@ -28,17 +28,17 @@ else
 fi
 
 # Define the Python script
-python_script="../tools/plotter/video.py"
+python_script="../tools/init/gridded_placement.py"
 
 # Read the arguments from the input file and launch the Python script
 cat $1 | {
-    while IFS=' ' read -r arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9; do
-        echo "Launching $python_script with arguments $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8, $arg9"
+    while IFS=' ' read -r arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10; do
+        echo "Launching $python_script with arguments $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8, $arg9, $arg10"
 
         # Run the Python script with the arguments
-        python "$python_script" "$arg1" "$arg2" "$arg3" "$arg4" "$arg5" "$arg6" "$arg7" "$arg8" "$arg9" &
+        python "$python_script" "$arg1" "$arg2" "$arg3" "$arg4" "$arg5" "$arg6" "$arg7" "$arg8" "$arg9" "$arg10" &
 
-    done
+    done < <(tail -n +2 $1)
 
     # Wait for all background jobs to finish
     wait

@@ -2,6 +2,7 @@
 
 import numpy as np
 import sys
+import os
 
 # --------------------------------------------
 # all inputs for the run
@@ -17,16 +18,24 @@ def reading_input():
         print("No argument provided by sys.")
         n = int(input("number of particles = "))
 
+    # number of particles required in y with the appropriate spacing
+    try:
+        disks_num_y = int(sys.argv[2])
+        print("number of particles in y = {}".format(disks_num_y))
+    except:
+        print("No argument provided by sys.")
+        disks_num_y = int(input("number of particles = "))
+
     # parameters for the radius
     try:
-        param1_r = int(sys.argv[2])
+        param1_r = int(sys.argv[3])
         print("mean radius = {}".format(param1_r))
     except:
         print("No argument provided by sys.")
         param1_r = int(input("mean radius = "))
 
     try:
-        param2_r = int(sys.argv[3])
+        param2_r = int(sys.argv[4])
         print("sigma of radius = {}".format(param2_r))
     except:
         print("No argument provided by sys.")
@@ -34,28 +43,28 @@ def reading_input():
 
     # parameters for the thickness
     try:
-        param1_t = int(sys.argv[4])
+        param1_t = int(sys.argv[5])
         print("mean thickness = {}".format(param1_t))
     except:
         print("No argument provided by sys.")
         param1_t = int(input("mean tickness = "))
 
     try:
-        param2_t = int(sys.argv[5])
+        param2_t = int(sys.argv[6])
         print("sigma of thickness = {}".format(param2_t))
     except:
         print("No argument provided by sys.")
         param2_t = int(input("sigma of thickness = "))
 
     try:
-        offset = int(sys.argv[6])
+        offset = int(sys.argv[7])
         print("offset of thickness = {}".format(offset))
     except:
         print("No argument provided by sys.")
         offset = int(input("offset of thickness = "))
 
     try:
-        cutoff = int(sys.argv[7])
+        cutoff = int(sys.argv[8])
         print("cutoff of thickness = {}".format(cutoff))
     except:
         print("No argument provided by sys.")
@@ -63,7 +72,7 @@ def reading_input():
 
     # choice of distribution (radius_thickness)
     try:
-        dist = int(sys.argv[8])
+        dist = int(sys.argv[9])
         print(
             "distribution to use (radius_thickness) in [log, gauss, uni]: {}".format(
                 dist
@@ -77,7 +86,7 @@ def reading_input():
 
     # unique identifier
     try:
-        adn = int(sys.argv[9])
+        adn = int(sys.argv[10])
         print("unique identifier: {}".format(adn))
     except:
         print("No argument provided by sys.")
@@ -86,13 +95,12 @@ def reading_input():
     return n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist, adn
 
 
-def init(n):
+def init(n, disks_num_y):
     # size factor
     sf = 1e3
-    disks_num_y = 15
     disks_num_x = (n / disks_num_y).astype(int)
     disks_num = disks_num_y * disks_num_x
-    return sf, disks_num_x, disks_num_y, disks_num
+    return sf, disks_num_x, disks_num
 
 
 # --------------------------------------------
@@ -223,12 +231,13 @@ def file_creation(
     cutoff,
     dist,
     adn,
+    work_dir,
 ):
     wall = sf * np.arange(0.5, 2 * disks_num_y, 1)
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = sf * np.arange(1, 2 * disks_num_y + 1, 2)
-    with open("../../files/y" + adn + ".dat", "w") as f:
+    with open(work_dir + "/../files/y" + adn + ".dat", "w") as f:
         for clean_line in lines:
             i = 0
             while i < disks_num_x:
@@ -246,7 +255,7 @@ def file_creation(
     walls = walls.astype(str).tolist()
     lines = sf * np.arange(2, 2 * disks_num_x + 1, 2)
     lines = lines.astype(str).tolist()
-    with open("../../files/x" + adn + ".dat", "w") as f:
+    with open(work_dir + "/../files/x" + adn + ".dat", "w") as f:
         i = 0
         while i < disks_num_y:
             for line in lines:
@@ -269,7 +278,7 @@ def file_creation(
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = radius.astype(str).tolist()
-    with open("../../files/r" + adn + ".dat", "w") as f:
+    with open(work_dir + "/../files/r" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
@@ -281,7 +290,7 @@ def file_creation(
     walls = np.concatenate((wall, wall))
     walls = walls.astype(str).tolist()
     lines = thick.astype(str).tolist()
-    with open("../../files/h" + adn + ".dat", "w") as f:
+    with open(work_dir + "/../files/h" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
@@ -291,12 +300,12 @@ def file_creation(
 
     other = np.zeros_like(np.concatenate((radius, wall, wall)))
     lines = other.astype(str).tolist()
-    with open("../../files/theta" + adn + ".dat", "w") as f:
+    with open(work_dir + "/../files/theta" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
 
-    with open("../../files/omega" + adn + ".dat", "w") as f:
+    with open(work_dir + "/../files/omega" + adn + ".dat", "w") as f:
         for line in lines:
             f.write(line)
             f.write("\n")
@@ -309,33 +318,51 @@ def file_creation(
 # -----------------------------------------
 
 try:
-    print("Reading the input_init.dat file.")
-    with open("input_init.dat", "r") as f:
+    print("Reading the input file.")
+    with open("init_args.dat", "r") as f:
         lines = f.read().split()
-        n = np.asarray(lines[0::9]).astype(int)
-        param1_r = np.asarray(lines[1::9]).astype(float)
-        param2_r = np.asarray(lines[2::9]).astype(float)
-        param1_t = np.asarray(lines[3::9]).astype(float)
-        param2_t = np.asarray(lines[4::9]).astype(float)
-        offset = np.asarray(lines[5::9]).astype(float)
-        cutoff = np.asarray(lines[6::9]).astype(float)
-        dist = np.asarray(lines[7::9]).astype(str)
-        adn = np.asarray(lines[8::9]).astype(str)
-    print("Data written.")
+        first_line_skip = 10
+        n = np.asarray(lines[0 + first_line_skip :: 10]).astype(int)
+        disks_num_y = np.asarray(lines[1 + first_line_skip :: 10]).astype(int)
+        param1_r = np.asarray(lines[2 + first_line_skip :: 10]).astype(float)
+        param2_r = np.asarray(lines[3 + first_line_skip :: 10]).astype(float)
+        param1_t = np.asarray(lines[4 + first_line_skip :: 10]).astype(float)
+        param2_t = np.asarray(lines[5 + first_line_skip :: 10]).astype(float)
+        offset = np.asarray(lines[6 + first_line_skip :: 10]).astype(float)
+        cutoff = np.asarray(lines[7 + first_line_skip :: 10]).astype(float)
+        dist = np.asarray(lines[8 + first_line_skip :: 10]).astype(str)
+        adn = np.asarray(lines[9 + first_line_skip :: 10]).astype(str)
+    work_dir = os.getcwd()
 
 except:
-    print("The input file for initiation of particles does not exist.")
-    print("Or maybe you are not running this script from /GODAR/tools/init")
-    n, param1_r, param2_r, param1_t, param2_t, offset, cutoff, dist, adn = (
-        reading_input()
-    )
+    print("The input file for initiation of particles was not provided.")
+    print("Or maybe you are running this script from /GODAR/tools/init/")
+    print("In that case, I will read inputs that you provide me with.")
+
+    # we probably are in /GODAR/tools/init/
+    path = os.getcwd()
+    os.chdir(path + "/..")
+    work_dir = os.getcwd()
+
+    (
+        n,
+        disks_num_y,
+        param1_r,
+        param2_r,
+        param1_t,
+        param2_t,
+        offset,
+        cutoff,
+        dist,
+        adn,
+    ) = reading_input()
 
 for i in range(len(n)):
-    sf, disks_num_x, disks_num_y, disks_num = init(n[i])
+    sf, disks_num_x, disks_num = init(n[i], disks_num_y[i])
     total_num = file_creation(
         sf,
         disks_num_x,
-        disks_num_y,
+        disks_num_y[i],
         disks_num,
         param1_r[i],
         param2_r[i],
@@ -345,6 +372,7 @@ for i in range(len(n)):
         cutoff[i],
         dist[i],
         adn[i],
+        work_dir,
     )
 
 print(
