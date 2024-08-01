@@ -182,6 +182,12 @@ def uni_uni(low_r, high_r, low_t, high_t, disks_num, offset, cutoff):
     return radius, thick
 
 
+def const_const(value_r, sigma_r, value_h, void, disks_num, offset, cutoff):
+    radius = np.ones(disks_num) * value_r
+    thick = np.ones(disks_num) * value_h
+    return radius, thick
+
+
 # dictionnary of functions to choose from
 functions = dict(
     log_log=log_log,
@@ -225,7 +231,7 @@ def file_creation(
         for clean_line in lines:
             i = 0
             while i < disks_num_x:
-                line = clean_line + np.random.uniform(-1,1)
+                line = clean_line + np.random.uniform(-1, 1)
                 f.write(str(line))
                 f.write("\n")
                 i += 1
