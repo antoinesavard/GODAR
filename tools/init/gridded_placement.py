@@ -202,6 +202,7 @@ functions = dict(
     uni_const=uni_const,
     uni_gauss=uni_gauss,
     uni_uni=uni_uni,
+    const_const=const_const,
 )
 
 # --------------------------------------------
