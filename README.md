@@ -48,7 +48,7 @@ install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib
 
 You will also have to install a few things using brew. First, install brew as said on their website <https://brew.sh>.
 
-Then you will need to install `gcc`, `open-mpi`, and `libomp`.
+Then you will need to install `gcc`, `open-mpi`, `ffmpeg`, and `libomp`.
 
 When using `mpifort` with brew, there might be an issue in compatibilities where you get an error message saying that the linker `ld` is not able to find the flag `-ld_classic`. If that is the case, then you have to move to the folder where your `homebrew` is and change the following file:
 
