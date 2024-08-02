@@ -46,7 +46,8 @@
                 fy_bc       (n),    & ! force in y direction
                 mc_bc       (n),    & ! moment of rolling on boundary
                 m_bc        (n),    & ! total moment from boundary
-                theta_bc    (n)       ! angle for rolling on bd
+                theta_bc1   (n),    & ! angle for rolling on bd 1
+                theta_bc2   (n)       ! angle for rolling on bd 2
         
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
@@ -94,4 +95,5 @@
                 fy_bc   ,    & ! force in y direction                [N]
                 mc_bc   ,    & ! moment of rolling on boundary     [N*m]
                 m_bc    ,    & ! total moment from boundary        [N*m]
-                theta_bc       ! angle for rolling on boundary     [rad]
+                theta_bc1,   & ! angle for rolling on boundary 1   [rad]
+                theta_bc2      ! angle for rolling on boundary 2   [rad]

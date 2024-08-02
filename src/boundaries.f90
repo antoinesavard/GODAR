@@ -8,117 +8,114 @@ subroutine verify_bc (i)
 
     integer, intent(in) :: i
     
-    double precision :: ft_bc_tmp
+    integer :: tracker1, tracker2
+    double precision :: ft_bc_tmp, mc_bc_tmp
+
+    tracker1 = 0
+    tracker2 = 0
+
+!-----------------------------------------
+!   ooo
+!   xxx
+!-----------------------------------------         
 
     if ( y(i) - r(i) < 0 ) then
 
-        call contact_bc (i, 0, 0)
+        tracker1 = 1
+
+        call contact_bc (i, 0, 0, 1)
 
         ! update the forces applied by the boundaries on each particle
-        fx_bc(i) = ft_bc(i) 
         fy_bc(i) = fn_bc(i)
 
-        ! we need nested ifs because we have to check what happens for
-        ! particles in corners where both conditions could be true
-        ! at the same time.
-        if ( x(i) - r(i) < 0 ) then
+        ! update the moment applied by the boundaries on each particle
+        m_bc(i) = m_bc(i) + mc_bc(i) + r(i) * ft_bc(i)
 
-            ! we have to save the previous tangent forces
-            ft_bc_tmp = ft_bc(i)
+    end if
 
-            call contact_bc (i, 1, 0)
+!------------------------------------------
+!   xxx
+!   ooo
+!------------------------------------------
 
-            ! update the forces applied by the boundaries on each particle
-            fx_bc(i) = fx_bc(i) + fn_bc(i) 
-            fy_bc(i) = fy_bc(i) + ft_bc(i) 
+    if ( y(i) + r(i) > ny ) then
 
-            ! sum the tangent forces from both walls
-            ft_bc(i) = ft_bc(i) + ft_bc_tmp
+        tracker1 = 1
 
-        else if ( x(i) + r(i) > nx ) then
-
-            ! we have to save the previous tangent forces
-            ft_bc_tmp = ft_bc(i)
-
-            call contact_bc (i, 1, 1)
-
-            ! update the forces applied by the boundaries on each particle
-            fx_bc(i) = fx_bc(i) + fn_bc(i) 
-            fy_bc(i) = fy_bc(i) + ft_bc(i)
-
-            ! sum the tangent forces from both walls
-            ft_bc(i) = ft_bc(i) + ft_bc_tmp
-
-        end if
-
-    else if ( y(i) + r(i) > ny ) then
-
-        call contact_bc (i, 0, 1)
+        call contact_bc (i, 0, 1, 1)
 
         ! update the forces applied by the boundaries on each particle
-        fx_bc(i) = ft_bc(i) 
-        fy_bc(i) = fn_bc(i)
+        fy_bc(i) = -fn_bc(i)
 
-        ! we need nested ifs because we have to check what happens for
-        ! particles in corners where both conditions could be true
-        ! at the same time.
-        if ( x(i) - r(i) < 0 ) then
+        ! update the moment applied by the boundaries on each particle
+        m_bc(i) = m_bc(i) + mc_bc(i) - r(i) * ft_bc(i)
 
-            ! we have to save the previous tangent forces
-            ft_bc_tmp = ft_bc(i)
+    end if
 
-            call contact_bc (i, 1, 0)
-
-            ! update the forces applied by the boundaries on each particle
-            fx_bc(i) = fx_bc(i) + fn_bc(i) 
-            fy_bc(i) = fy_bc(i) + ft_bc(i)
-
-            ! sum the tangent forces from both walls
-            ft_bc(i) = ft_bc(i) + ft_bc_tmp 
-
-        else if ( x(i) + r(i) > nx ) then
-
-            ! we have to save the previous tangent forces
-            ft_bc_tmp = ft_bc(i)
-
-            call contact_bc (i, 1, 1)
-
-            ! update the forces applied by the boundaries on each particle
-            fx_bc(i) = fx_bc(i) + fn_bc(i) 
-            fy_bc(i) = fy_bc(i) + ft_bc(i)
-
-            ! sum the tangent forces from both walls
-            ft_bc(i) = ft_bc(i) + ft_bc_tmp
-
-        end if 
+!------------------------------------------
+!   xoo
+!   xoo
+!   xoo
+!------------------------------------------
 
     ! but we also need the regular version for the cases where 
     ! particles are just left-right boundaries, but not in corners
     ! note that we do not need the nested ifs here, because it has
     ! been dealed with above.
-    else if ( x(i) - r(i) < 0 ) then
+    if ( x(i) - r(i) < 0 ) then
 
-        call contact_bc (i, 1, 0)
+        tracker2 = 1
 
-        ! update the forces applied by the boundaries on each particle
-        fx_bc(i) = fn_bc(i) 
-        fy_bc(i) = ft_bc(i) 
-
-    else if ( x(i) + r(i) > nx ) then
-
-        call contact_bc (i, 1, 1)
+        call contact_bc (i, 1, 0, 2)
 
         ! update the forces applied by the boundaries on each particle
-        fx_bc(i) = fn_bc(i) 
-        fy_bc(i) = ft_bc(i) 
+        fx_bc(i) = fn_bc(i)
 
-    else
-
-        call reset_boundary (i)
+        ! update the moment applied by the boundaries on each particle
+        m_bc(i) = m_bc(i) + mc_bc(i) - r(i) * ft_bc(i) 
 
     end if
 
-    ! update the moment applied by the boundaries on each particle
-    m_bc(i)  = - r(i) * ft_bc(i) - mc_bc(i)
+!------------------------------------------
+!   oox
+!   oox
+!   oox
+!------------------------------------------
+
+    if ( x(i) + r(i) > nx ) then
+
+        tracker2 = 1
+
+        call contact_bc (i, 1, 1, 2)
+
+        ! update the forces applied by the boundaries on each particle
+        fx_bc(i) = -fn_bc(i)
+
+        ! update the moment applied by the boundaries on each particle
+        m_bc(i) = m_bc(i) + mc_bc(i) + r(i) * ft_bc(i)
+
+    end if
+
+!------------------------------------------
+!   resets
+!------------------------------------------
+
+    if (tracker1 + tracker2 .eq. 0) then
+
+        call reset_boundary (i, 0)
+
+    end if
+
+    if (tracker2 .eq. 0) then
+
+        call reset_boundary (i, 2)
+
+    end if
+
+    if (tracker1 .eq. 0) then
+
+        call reset_boundary (i, 1)
+
+    end if
 
 end subroutine verify_bc
