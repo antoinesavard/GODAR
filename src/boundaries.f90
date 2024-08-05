@@ -9,7 +9,6 @@ subroutine verify_bc (i)
     integer, intent(in) :: i
     
     integer :: tracker1, tracker2
-    double precision :: ft_bc_tmp, mc_bc_tmp
 
     tracker1 = 0
     tracker2 = 0

@@ -183,6 +183,10 @@ subroutine contact_bc (i, dir1, dir2, bd)
         
         end if
 
+    else 
+
+        mrolling_bc = 0d0
+
     end if
 
     ! total moment due to rolling
