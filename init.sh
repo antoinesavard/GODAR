@@ -48,7 +48,7 @@ if [[ "$(uname)" == "Linux" ]]; then
             echo "Found coretran installation directories:"
             echo "$core_lib"
             echo "$core_inc"
-
+            break
         else
             echo "No coretran installation found."
             echo "Please try again"
