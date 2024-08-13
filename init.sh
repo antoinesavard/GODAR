@@ -34,20 +34,26 @@ if [[ "$(uname)" == "Linux" ]]; then
     # checks possible places where coretran could be installed
     echo "Looking for coretran installation"
 
-    core_lib=$(find / \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/lib" \) \) -print 2>/dev/null)
+    while true; do
+        # Prompt the user for the directory name
+        read -rp "Enter the directory name to search from: " dir_name
 
-    core_inc=$(find / \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/include" \) \) -print 2>/dev/null)
+        # Search for the directory
+        core_lib=$(find "$dir_name" \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/lib" \) \) -print 2>/dev/null)
 
-    # Check if any directories were found
-    if [[ -n "$core_lib" && -n "$core_inc" ]]; then
-        echo "Found coretran installation directories:"
-        echo "$core_lib"
-        echo "$core_inc"
+        core_inc=$(find "$dir_name" \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/include" \) \) -print 2>/dev/null)
 
-    else
-        echo "No coretran installation found."
-        exit 1
-    fi
+        # Check if any directories were found
+        if [[ -n "$core_lib" && -n "$core_inc" ]]; then
+            echo "Found coretran installation directories:"
+            echo "$core_lib"
+            echo "$core_inc"
+
+        else
+            echo "No coretran installation found."
+            echo "Please try again"
+        fi
+    done
 
     echo "Modifying SConstruct to match coretran install path"
 
