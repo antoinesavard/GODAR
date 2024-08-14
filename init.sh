@@ -41,7 +41,7 @@ if [[ "$(uname)" == "Linux" ]]; then
         # Search for the directory
         core_lib=$(find "$dir_name" \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/lib" \) \) -print 2>/dev/null)
 
-        core_inc=$(find "$dir_name" \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/include" \) \) -print 2>/dev/null)
+        core_inc=$(find "$dir_name" \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/include/coretran" \) \) -print 2>/dev/null)
 
         # Check if any directories were found
         if [[ -n "$core_lib" && -n "$core_inc" ]]; then
