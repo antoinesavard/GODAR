@@ -10,9 +10,12 @@ implicit none
     integer :: i, j
     character(len=4), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
-                         filet, fileo, fileb
+                         filet, fileo, fileb, filetfx, filetfy, &
+                         filefcx,filefcy, filefbx, filefby, filem, &
+                         filemc, filemb
 
-	filex = "output/x." // trim(adjustl(expno_str))
+	! position and state files
+    filex = "output/x." // trim(adjustl(expno_str))
 	filey = "output/y." // trim(adjustl(expno_str))
     fileu = "output/u." // trim(adjustl(expno_str))
 	filev = "output/v." // trim(adjustl(expno_str))
@@ -22,6 +25,18 @@ implicit none
 	fileo = "output/omega." // trim(adjustl(expno_str))
 	fileb = "output/bond." // trim(adjustl(expno_str))
 
+    ! force files
+    filetfx = "output/tfx." // trim(adjustl(expno_str))
+	filetfy = "output/tfy." // trim(adjustl(expno_str))
+    filefcx = "output/fcx." // trim(adjustl(expno_str))
+	filefcy = "output/fcy." // trim(adjustl(expno_str))
+	filefbx = "output/fbx." // trim(adjustl(expno_str))
+	filefby = "output/fby." // trim(adjustl(expno_str))
+	filem   = "output/m." // trim(adjustl(expno_str))
+	filemc  = "output/mc." // trim(adjustl(expno_str))
+	filemb  = "output/mb." // trim(adjustl(expno_str))
+
+    ! opening the files
 	open (10, file = filex, access = 'append', status = 'unknown')
 	open (11, file = filey, access = 'append', status = 'unknown')
     open (12, file = fileu, access = 'append', status = 'unknown')
@@ -31,6 +46,15 @@ implicit none
 	open (16, file = filet, access = 'append', status = 'unknown')
 	open (17, file = fileo, access = 'append', status = 'unknown')
 	open (18, file = fileb, access = 'append', status = 'unknown')
+    open (19, file = filetfx, access = 'append', status = 'unknown')
+	open (20, file = filetfy, access = 'append', status = 'unknown')
+    open (21, file = filefcx, access = 'append', status = 'unknown')
+	open (22, file = filefcy, access = 'append', status = 'unknown')
+	open (23, file = filefbx, access = 'append', status = 'unknown')
+	open (24, file = filefby, access = 'append', status = 'unknown')
+	open (25, file = filem, access = 'append', status = 'unknown')
+	open (26, file = filemc, access = 'append', status = 'unknown')
+	open (27, file = filemb, access = 'append', status = 'unknown')
 
 	write(10,*) ( x(i),   	i=1, n )
 	write(11,*) ( y(i),    	i=1, n )
@@ -44,8 +68,17 @@ implicit none
 		write(18,*) ( bond(j,i), j=1, n )
 	end do
 	write(18,*)
+    write(19,*) ( tfx(i),   i=1, n )
+	write(20,*) ( tfy(i),   i=1, n )
+    write(21,*) ( fcx(i),  	i=1, n )
+	write(22,*) ( fcy(i),  	i=1, n )
+	write(23,*) ( fbx(i),   i=1, n )
+	write(24,*) ( fby(i),  	i=1, n )
+	write(25,*) ( m(i),	    i=1, n )
+	write(26,*) ( mc(i),	i=1, n )
+    write(27,*) ( mb(i),	i=1, n )
 
-    do i = 10, 18
+    do i = 10, 27
         close(i)
     end do
 
@@ -65,6 +98,7 @@ implicit none
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
                          filet, fileo, fileb, fileinfo
 
+    ! position and state files
 	filex = "output/x." // trim(adjustl(expno_str))
 	filey = "output/y." // trim(adjustl(expno_str))
     fileu = "output/u." // trim(adjustl(expno_str))
@@ -74,6 +108,19 @@ implicit none
 	filet = "output/theta." // trim(adjustl(expno_str))
 	fileo = "output/omega." // trim(adjustl(expno_str))
 	fileb = "output/bond." // trim(adjustl(expno_str))
+    
+    ! force files
+    filetfx = "output/tfx." // trim(adjustl(expno_str))
+	filetfy = "output/tfy." // trim(adjustl(expno_str))
+    filefcx = "output/fcx." // trim(adjustl(expno_str))
+	filefcy = "output/fcy." // trim(adjustl(expno_str))
+	filefbx = "output/fbx." // trim(adjustl(expno_str))
+	filefby = "output/fby." // trim(adjustl(expno_str))
+	filem   = "output/m." // trim(adjustl(expno_str))
+	filemc  = "output/mc." // trim(adjustl(expno_str))
+	filemb  = "output/mb." // trim(adjustl(expno_str))
+
+    ! info file
     fileinfo = "output/info." // trim(adjustl(expno_str))
 
 	open (10, file = filex, iostat = stat(1), status = 'old')
@@ -85,9 +132,18 @@ implicit none
 	open (16, file = filet, iostat = stat(7), status = 'old')
 	open (17, file = fileo, iostat = stat(8), status = 'old')
 	open (18, file = fileb, iostat = stat(9), status = 'old')
-    open (19, file = fileinfo, iostat = stat(10), status = 'old')
+    open (19, file = filetfx, iostat = stat(10), status = 'old')
+	open (20, file = filetfy, iostat = stat(11), status = 'old')
+    open (21, file = filefcx, iostat = stat(12), status = 'old')
+	open (22, file = filefcy, iostat = stat(13), status = 'old')
+	open (23, file = filefbx, iostat = stat(14), status = 'old')
+	open (24, file = filefby, iostat = stat(15), status = 'old')
+	open (25, file = filem, iostat = stat(16), status = 'old')
+	open (26, file = filemc, iostat = stat(17), status = 'old')
+	open (27, file = filemb, iostat = stat(18), status = 'old')
+    open (28, file = fileinfo, iostat = stat(19), status = 'old')
 
-    do i = 10, 19
+    do i = 10, 28
         if (stat(i-9) .eq. 0) then
 			close(i, status = 'delete') 
 		else 
