@@ -9,7 +9,7 @@
 				sigmatb_crit , 	&
 				sigmacb_crit ,	&
 				tau_crit	 ,	&
-				gamma_d
+				gamma_d			  ! prevents spurious oscillations
 
 	double precision ::			& ! individual physical properties
 				knb 	(n,n), 	& ! bond normal stiffness

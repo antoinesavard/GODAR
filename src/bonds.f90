@@ -37,8 +37,10 @@ subroutine bond_forces (j, i)
     ! is the one on which we are centered. And the reverse for
     ! particle j (F<0). But we had a sign in stepper so that
     ! the signs are all gucci (F=kx).
-    fbn(j, i) = -knb(j, i) * sb(j, i) * deltanb(j, i)
-    fbt(j, i) = -ktb(j, i) * sb(j, i) * deltatb(j, i)
+    fbn(j, i) = - knb(j, i) * sb(j, i) * deltanb(j, i) &
+                + gamma_d * veln(j,i)
+    fbt(j, i) = - ktb(j, i) * sb(j, i) * deltatb(j, i) &
+                + gamma_d * velt(j,i)
 
 	! moments for bending and twisting motion
     mbending = -ktb(j, i) * ib(j, i) * thetarelb(j,i)
