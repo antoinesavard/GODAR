@@ -161,19 +161,14 @@ subroutine stepper (tstep)
         m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i) + m_bc(i)
     end do
 
-    ! set speed of plate by inputing a constant force
-!    do i = 950, n
-!        call plate_force(i)
-!    end do
-
     ! broadcast forces to all so that the nodes can each update their x and u
     call broadcast_total_forces
 
     ! forces on right side plate
-    !call normal_forces("right")
+    !call normal_forces("right", tstep)
 
     ! forces on left side plate
-    !call normal_forces("left")
+    !call normal_forces("left", tstep)
 
     ! integration in time
     call velocity
@@ -182,7 +177,7 @@ subroutine stepper (tstep)
 end subroutine stepper
 
 
-subroutine normal_forces (side)
+subroutine normal_forces (side, tstep)
 
     implicit none
 
@@ -193,17 +188,22 @@ subroutine normal_forces (side)
     include "CB_forcings.h"
 
     character (*), intent(in) :: side
-    double precision :: ftmp
+    double precision :: ftmp, tau
     integer :: i
     
+    ! ~12 seconds is required to resolve the elastic wave travelling 30km
+    tau = 12 / dt
+
+    ! forces on the right of the assembly
     if ( side == "right" ) then
         ftmp = maxval(tfx(n-29:n))
         do i = n, n - 29 , -1
-            tfx(i) = ftmp + pfn
-            tfy(i) = pfs 
+            tfx(i) = ftmp + pfn * tanh( tstep / tau)
+            tfy(i) = pfs * tanh( tstep / tau )
         end do
     end if  
 
+    ! no forces on the left of assembly (fixed)
     if ( side == "left" ) then
         do i = n - 30, n - 59 , -1
             tfy(i) = 0d0
@@ -213,20 +213,3 @@ subroutine normal_forces (side)
 
 
 end subroutine normal_forces
-
-subroutine plate_force (i)
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-	include "CB_bond.h"
-    include "CB_forcings.h"
-
-    integer, intent(in) :: i
-        
-    tfy(i) = tfy(i) - pfs
-
-
-end subroutine plate_force
