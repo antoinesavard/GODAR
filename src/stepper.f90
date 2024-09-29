@@ -188,6 +188,8 @@ subroutine normal_forces (side, tstep)
     include "CB_forcings.h"
 
     character (*), intent(in) :: side
+    integer, intent(in) :: tstep
+
     double precision :: ftmp, tau
     integer :: i
     
@@ -198,7 +200,7 @@ subroutine normal_forces (side, tstep)
     if ( side == "right" ) then
         ftmp = maxval(tfx(n-29:n))
         do i = n, n - 29 , -1
-            tfx(i) = ftmp + pfn * tanh( tstep / tau)
+            tfx(i) = ftmp + pfn * tanh( tstep / tau )
             tfy(i) = pfs * tanh( tstep / tau )
         end do
     end if  
