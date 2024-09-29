@@ -93,10 +93,12 @@ implicit none
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, stat (10)
+    integer :: i, stat (19)
 	character(len=2), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
-                         filet, fileo, fileb, fileinfo
+                         filet, fileo, fileb, filetfx, filetfy, &
+                         filefcx,filefcy, filefbx, filefby, filem, &
+                         filemc, filemb, fileinfo
 
     ! position and state files
 	filex = "output/x." // trim(adjustl(expno_str))
