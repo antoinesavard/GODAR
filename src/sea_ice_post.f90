@@ -10,9 +10,10 @@ implicit none
     integer :: i, j
     character(len=4), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
-                         filet, fileo, fileb, filetfx, filetfy, &
-                         filefcx,filefcy, filefbx, filefby, filem, &
-                         filemc, filemb
+                         filet, fileo, fileb 
+    character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
+                         filefby, filem, filemc, filemb
+    character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
 
 	! position and state files
     filex = "output/x." // trim(adjustl(expno_str))
@@ -23,7 +24,7 @@ implicit none
 	fileh = "output/h." // trim(adjustl(expno_str))
 	filet = "output/theta." // trim(adjustl(expno_str))
 	fileo = "output/omega." // trim(adjustl(expno_str))
-	fileb = "output/bond." // trim(adjustl(expno_str))
+    fileb = "output/bond." // trim(adjustl(expno_str))
 
     ! force files
     filetfx = "output/tfx." // trim(adjustl(expno_str))
@@ -35,6 +36,12 @@ implicit none
 	filem   = "output/m." // trim(adjustl(expno_str))
 	filemc  = "output/mc." // trim(adjustl(expno_str))
 	filemb  = "output/mb." // trim(adjustl(expno_str))
+
+    ! stress files
+    filetsigxx = "output/tsigxx." // trim(adjustl(expno_str))
+    filetsigyy = "output/tsigyy." // trim(adjustl(expno_str))
+    filetsigxy = "output/tsigxy." // trim(adjustl(expno_str))
+    filetsigyx = "output/tsigyx." // trim(adjustl(expno_str))
 
     ! opening the files
 	open (10, file = filex, access = 'append', status = 'unknown')
@@ -55,6 +62,10 @@ implicit none
 	open (25, file = filem, access = 'append', status = 'unknown')
 	open (26, file = filemc, access = 'append', status = 'unknown')
 	open (27, file = filemb, access = 'append', status = 'unknown')
+    open (28, file = filetsigxx, access = 'append', status = 'unknown')
+    open (29, file = filetsigyy, access = 'append', status = 'unknown')
+    open (30, file = filetsigxy, access = 'append', status = 'unknown')
+    open (31, file = filetsigyx, access = 'append', status = 'unknown')
 
 	write(10,*) ( x(i),   	i=1, n )
 	write(11,*) ( y(i),    	i=1, n )
@@ -77,8 +88,12 @@ implicit none
 	write(25,*) ( m(i),	    i=1, n )
 	write(26,*) ( mc(i),	i=1, n )
     write(27,*) ( mb(i),	i=1, n )
+    write(28,*) ( tsigxx(i),	i=1, n )
+    write(29,*) ( tsigyy(i),	i=1, n )
+    write(30,*) ( tsigxy(i),	i=1, n )
+    write(31,*) ( tsigyx(i),	i=1, n )
 
-    do i = 10, 27
+    do i = 10, 31
         close(i)
     end do
 
@@ -93,12 +108,14 @@ implicit none
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, stat (19)
+    integer :: i, stat (23)
 	character(len=2), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
-                         filet, fileo, fileb, filetfx, filetfy, &
-                         filefcx,filefcy, filefbx, filefby, filem, &
-                         filemc, filemb, fileinfo
+                         filet, fileo, fileb 
+    character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
+                         filefby, filem, filemc, filemb
+    character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
+    character(len=20) :: fileinfo
 
     ! position and state files
 	filex = "output/x." // trim(adjustl(expno_str))
@@ -122,6 +139,12 @@ implicit none
 	filemc  = "output/mc." // trim(adjustl(expno_str))
 	filemb  = "output/mb." // trim(adjustl(expno_str))
 
+    ! stress files
+    filetsigxx = "output/tsigxx." // trim(adjustl(expno_str))
+    filetsigyy = "output/tsigyy." // trim(adjustl(expno_str))
+    filetsigxy = "output/tsigxy." // trim(adjustl(expno_str))
+    filetsigyx = "output/tsigyx." // trim(adjustl(expno_str))
+
     ! info file
     fileinfo = "output/info." // trim(adjustl(expno_str))
 
@@ -143,9 +166,13 @@ implicit none
 	open (25, file = filem, iostat = stat(16), status = 'old')
 	open (26, file = filemc, iostat = stat(17), status = 'old')
 	open (27, file = filemb, iostat = stat(18), status = 'old')
-    open (28, file = fileinfo, iostat = stat(19), status = 'old')
+    open (28, file = filetsigxx, iostat = stat(19), status = 'old')
+    open (29, file = filetsigyy, iostat = stat(20), status = 'old')
+    open (30, file = filetsigxy, iostat = stat(21), status = 'old')
+    open (31, file = filetsigyx, iostat = stat(22), status = 'old')
+    open (32, file = fileinfo, iostat = stat(23), status = 'old')
 
-    do i = 10, 28
+    do i = 10, 32
         if (stat(i-9) .eq. 0) then
 			close(i, status = 'delete') 
 		else 

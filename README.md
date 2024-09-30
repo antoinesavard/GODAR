@@ -1,6 +1,6 @@
 # GODAR
 
-## Granular Discrete Arctic Rheology: DEM for sea ice modeling
+## Granular flOes for Discrete Arctic Rheology: DEM for sea ice modeling
 
 ### What does GODAR do?
 

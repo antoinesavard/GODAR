@@ -26,7 +26,15 @@
                 tfy         (n)  ,  & ! totale forces in y
                 m           (n)  ,  & ! total moment
                 fcorx       (n)  ,  & ! coriolis x force
-                fcory       (n)       ! coriolis y force
+                fcory       (n)  ,  & ! coriolis y force
+                sigxx       (n)  ,  & ! xx stress on each particle
+                sigyy       (n)  ,  & ! yy stress on each particle
+                sigxy       (n)  ,  & ! xy stress on each particle
+                sigyx       (n)  ,  & ! yx stress on each particle
+                tsigxx      (n)  ,  & ! xx stress on each particle
+                tsigyy      (n)  ,  & ! yy stress on each particle
+                tsigxy      (n)  ,  & ! xy stress on each particle
+                tsigyx      (n)       ! yx stress on each particle
 
     double precision ::             & ! decomposition variables
                 cosa        (n,n),  &
@@ -47,7 +55,12 @@
                 mc_bc       (n),    & ! moment of rolling on boundary
                 m_bc        (n),    & ! total moment from boundary
                 theta_bc1   (n),    & ! angle for rolling on bd 1
-                theta_bc2   (n)       ! angle for rolling on bd 2
+                theta_bc2   (n),    & ! angle for rolling on bd 2
+                sigxx_bc    (n),    & ! xx stress on each particle
+                sigyy_bc    (n),    & ! yy stress on each particle
+                sigxy_bc    (n),    & ! xy stress on each particle
+                sigyx_bc    (n)       ! yx stress on each particle
+
         
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
@@ -74,7 +87,15 @@
                 tfy     ,    & ! total force in y                    [N]
                 m       ,	 & ! moment                            [N*m]
                 fcorx   ,    & ! coriolis x force                    [N]
-                fcory          ! coriolis y force                    [N]
+                fcory   ,    & ! coriolis y force                    [N]
+                sigxx   ,    & ! xx stress on each particle      [N/m^2]
+                sigyy   ,    & ! yy stress on each particle      [N/m^2]
+                sigxy   ,    & ! xy stress on each particle      [N/m^2]
+                sigyx   ,    & ! yx stress on each particle      [N/m^2]
+                tsigxx  ,    & ! xx stress on each particle      [N/m^2]
+                tsigyy  ,    & ! yy stress on each particle      [N/m^2]
+                tsigxy  ,    & ! xy stress on each particle      [N/m^2]
+                tsigyx         ! yx stress on each particle      [N/m^2]
                 
 
     common/variables/      	 & ! decomposition variables
@@ -96,4 +117,8 @@
                 mc_bc   ,    & ! moment of rolling on boundary     [N*m]
                 m_bc    ,    & ! total moment from boundary        [N*m]
                 theta_bc1,   & ! angle for rolling on boundary 1   [rad]
-                theta_bc2      ! angle for rolling on boundary 2   [rad]
+                theta_bc2,   & ! angle for rolling on boundary 2   [rad]
+                sigxx_bc,    & ! xx stress on each particle      [N/m^2]
+                sigyy_bc,    & ! yy stress on each particle      [N/m^2]
+                sigxy_bc,    & ! xy stress on each particle      [N/m^2]
+                sigyx_bc       ! yx stress on each particle      [N/m^2]

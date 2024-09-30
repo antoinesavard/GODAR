@@ -139,6 +139,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         mc(i)     =  0d0
         mb(i)     =  0d0
 
+        ! initial stresses
+        sigxx(i)  = 0d0
+        sigyy(i)  = 0d0
+        sigxy(i)  = 0d0
+        sigyx(i)  = 0d0
+
         ! initial forces and moments in the contact plane
         do j = 1, n
             fcn(j,i)  =  0d0

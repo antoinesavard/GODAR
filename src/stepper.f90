@@ -38,7 +38,7 @@ subroutine stepper (tstep)
 
     !$omp parallel do schedule(dynamic, 1) &
     !$omp private(i,j,da) &
-    !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb)
+    !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb,sigxx,sigyy,sigxy,sigyx)
     do i = last_iter, first_iter, -1
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), yQuery = y(i), &
@@ -132,6 +132,48 @@ subroutine stepper (tstep)
                 call sheltering(j, i)
             end if
 
+            ! compute the stress using cauchy stress formula (this needs to be averaged over the size of the particle)
+            !-------------------------------------------------------
+            !
+            !    \sigma_{ij} = 1/A \sum_{c} r_j * Fcn_i
+            !
+            !-------------------------------------------------------
+
+            sigxx(i) = sigxx(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * cosa(j,i)
+            sigyy(i) = sigyy(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * sina(j,i)
+            sigxy(i) = sigxy(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * cosa(j,i)
+            sigyx(i) = sigyx(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * sina(j,i)
+
+            ! Newton's third law equivalent for stress
+            sigxx(j) = sigxx(j) + (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * cosa(j,i)
+            sigyy(j) = sigyy(j) + (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * sina(j,i)
+            sigxy(j) = sigxy(j) + (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * cosa(j,i)
+            sigyx(j) = sigyx(j) + (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * sina(j,i)
+
         end do
 
         ! compute the total forcing from winds, currents and coriolis on particule i
@@ -159,6 +201,12 @@ subroutine stepper (tstep)
 
         ! sum all moments on particule i together
         m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i) + m_bc(i)
+
+        ! same for stresses
+        tsigxx_r(i) = sigxx_r(i) + sigxx_bc(i)
+        tsigyy_r(i) = sigyy_r(i) + sigyy_bc(i)
+        tsigxy_r(i) = sigxy_r(i) + sigxy_bc(i)
+        tsigyx_r(i) = sigyx_r(i) + sigyx_bc(i)
     end do
 
     ! broadcast forces to all so that the nodes can each update their x and u

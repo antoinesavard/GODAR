@@ -90,6 +90,10 @@ subroutine reset_forces
         fcy_r(i) = 0d0
         fbx_r(i) = 0d0
         fby_r(i) = 0d0
+        sigxx_r(i) = 0d0
+        sigyy_r(i) = 0d0
+        sigxy_r(i) = 0d0
+        sigyx_r(i) = 0d0
         ! and total force arrays
         m(i)     = 0d0
 		tfx(i)   = 0d0
@@ -98,6 +102,10 @@ subroutine reset_forces
         m_r(i)   = 0d0
 		tfx_r(i) = 0d0
         tfy_r(i) = 0d0
+        tsigxx_r(i) = 0d0
+        tsigyy_r(i) = 0d0
+        tsigxy_r(i) = 0d0
+        tsigyx_r(i) = 0d0
         ! boundary forces
         mc_bc(i) = 0d0
         m_bc(i)  = 0d0
@@ -105,6 +113,15 @@ subroutine reset_forces
         ft_bc(i) = 0d0
         fx_bc(i) = 0d0
         fy_bc(i) = 0d0
+        sigxx_bc(i) = 0d0
+        sigyy_bc(i) = 0d0
+        sigxy_bc(i) = 0d0
+        sigyx_bc(i) = 0d0
+        ! stresses
+        sigxx(i) = 0d0
+        sigyy(i) = 0d0
+        sigxy(i) = 0d0
+        sigyx(i) = 0d0
     end do
 
 end subroutine reset_forces

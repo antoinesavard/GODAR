@@ -30,6 +30,9 @@ subroutine verify_bc (i)
         ! update the moment applied by the boundaries on each particle
         m_bc(i) = m_bc(i) + mc_bc(i) + r(i) * ft_bc(i)
 
+        ! compute the stress using cauchy stress formula due to the boundaries
+        sigyy_bc(i) = sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i)
+
     end if
 
 !------------------------------------------
@@ -48,6 +51,9 @@ subroutine verify_bc (i)
 
         ! update the moment applied by the boundaries on each particle
         m_bc(i) = m_bc(i) + mc_bc(i) - r(i) * ft_bc(i)
+
+        ! compute the stress using cauchy stress formula due to the boundaries
+        sigyy_bc(i) = sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i)
 
     end if
 
@@ -71,7 +77,10 @@ subroutine verify_bc (i)
         fx_bc(i) = fn_bc(i)
 
         ! update the moment applied by the boundaries on each particle
-        m_bc(i) = m_bc(i) + mc_bc(i) - r(i) * ft_bc(i) 
+        m_bc(i) = m_bc(i) + mc_bc(i) - r(i) * ft_bc(i)
+
+        ! compute the stress using cauchy stress formula due to the boundaries
+        sigxx_bc(i) = sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) 
 
     end if
 
@@ -92,6 +101,9 @@ subroutine verify_bc (i)
 
         ! update the moment applied by the boundaries on each particle
         m_bc(i) = m_bc(i) + mc_bc(i) + r(i) * ft_bc(i)
+
+        ! compute the stress using cauchy stress formula due to the boundaries
+        sigxx_bc(i) = sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i)
 
     end if
 
