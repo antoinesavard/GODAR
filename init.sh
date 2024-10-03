@@ -38,7 +38,7 @@ if [[ "$(uname)" == "Linux" ]]; then
         # Prompt the user for the directory name
         read -rp "Enter the directory name to search from: " dir_name
 
-        # Search for the directory
+        # Search for the directory coretran
         core_lib=$(find "$dir_name" \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/lib" \) \) -print 2>/dev/null)
 
         core_inc=$(find "$dir_name" \( -path /dev -o -path /home -o -path /sys -o -path /etc -o -path /mnt -o -path /root -o -path /tmp -o -path /var \) -prune -o \( -type d \( -path "*/coretran/include/coretran" \) \) -print 2>/dev/null)

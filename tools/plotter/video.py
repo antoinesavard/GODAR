@@ -42,13 +42,13 @@ filesb = ff.list_files(output_dir, "bond", expno)
 
 # loading the files in memory
 x, y, r, h, t, o, b = (
-    ff.multiload(output_dir, filesx),
-    ff.multiload(output_dir, filesy),
-    ff.multiload(output_dir, filesr),
-    ff.multiload(output_dir, filesh),
-    ff.multiload(output_dir, filest),
-    ff.multiload(output_dir, fileso),
-    ff.multiload(output_dir, filesb, 1, n),
+    ff.nc_multiload(output_dir, filesx, 0, n),
+    ff.nc_multiload(output_dir, filesy, 0, n),
+    ff.nc_multiload(output_dir, filesr, 0, n),
+    ff.nc_multiload(output_dir, filesh, 0, n),
+    ff.nc_multiload(output_dir, filest, 0, n),
+    ff.nc_multiload(output_dir, fileso, 0, n),
+    ff.nc_multiload(output_dir, filesb, 1, n),
 )
 
 # compressing the files
@@ -77,7 +77,7 @@ angleb = np.zeros_like(b)
 
 print("Compute the length and orientation of the bonds...")
 for i in range(b.shape[-1] - 1):
-    for j in range(i + 1, b.shape[-1]):
+    for j in range(i + 1, b.shape[-2]):
         lb[:, i, j] = ff.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
         angleb[:, i, j] = ff.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
 

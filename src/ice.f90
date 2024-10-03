@@ -176,7 +176,7 @@ program ice
         if ( rank .eq. master ) then
             if (MODULO(tstep, int(comp)) .eq. 0) then
 
-                call sea_ice_post (expno_str)
+                call sea_ice_post (tstep, expno_str)
                 if (MODULO(tstep, int(comp*10)) .eq. 0) then
                     print *, "Time step: ", tstep, "/", int(nt)
                 end if

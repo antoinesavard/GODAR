@@ -1,4 +1,5 @@
 import numpy as np
+import netCDF4 as nc
 from matplotlib.patches import Circle, Rectangle
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -22,6 +23,29 @@ def list_files(directory: str, datatype: str, expno: str) -> list:
     )
 
     return [f for f in files]
+
+
+def nc_multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
+    if not bond:
+        data = []
+        for file in files:
+            fic = nc.Dataset(output_dir + file)
+            data.append(fic[file[:-3]][:].T.reshape(-1, n))
+            fic.close()
+
+        data = np.stack(data, axis=0)
+
+        return data[0] if data.shape[0] == 1 else data
+
+    elif bond:
+        print("Reading bonds...")
+        for file in files:
+            fic = nc.Dataset(output_dir + file)
+            data = fic[file[:-3]][:].transpose(2, 0, 1).reshape(-1, n, n)
+            fic.close()
+
+        # make sure the bonds are floats and not integer otherwise it won't work because I think we are multiplying by b on line 171 and 173 of video.py, which is rounding the value down for some reason. I don't know, it just needs to be a float lol
+        return data.astype(np.float64)
 
 
 def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
