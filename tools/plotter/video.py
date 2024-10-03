@@ -42,13 +42,13 @@ filesb = ff.list_files(output_dir, "bond", expno)
 
 # loading the files in memory
 x, y, r, h, t, o, b = (
-    ff.nc_multiload(output_dir, filesx, 0, n),
-    ff.nc_multiload(output_dir, filesy, 0, n),
-    ff.nc_multiload(output_dir, filesr, 0, n),
-    ff.nc_multiload(output_dir, filesh, 0, n),
-    ff.nc_multiload(output_dir, filest, 0, n),
-    ff.nc_multiload(output_dir, fileso, 0, n),
-    ff.nc_multiload(output_dir, filesb, 1, n),
+    ff.multiload(output_dir, filesx, 0, n),
+    ff.multiload(output_dir, filesy, 0, n),
+    ff.multiload(output_dir, filesr, 0, n),
+    ff.multiload(output_dir, filesh, 0, n),
+    ff.multiload(output_dir, filest, 0, n),
+    ff.multiload(output_dir, fileso, 0, n),
+    ff.multiload(output_dir, filesb, 1, n),
 )
 
 # compressing the files

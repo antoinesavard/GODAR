@@ -35,7 +35,7 @@ def nc_multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
 
         data = np.stack(data, axis=0)
 
-        return data[0] if data.shape[0] == 1 else data
+        return np.array(data[0]) if data.shape[0] == 1 else np.array(data)
 
     elif bond:
         print("Reading bonds...")
