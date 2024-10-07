@@ -84,7 +84,7 @@ subroutine stepper (tstep)
                 fcy(j) = fcy(j) + fcn(j,i) * sina(j,i)
 
                 ! update moment on particule j by particule i due to tangent contact 
-                mc(j) = mc(j) - r(j) * fct(j,i) + mcc(j,i)
+                mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)
 
             else
             
@@ -117,7 +117,7 @@ subroutine stepper (tstep)
 
     
                     ! update moment on particule j by i due to bond
-                    mb(j) = mb(j) - r(j) * fbt(j,i) + mbb(j, i)
+                    mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
                 end if
 
             else

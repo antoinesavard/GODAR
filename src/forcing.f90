@@ -17,64 +17,76 @@ subroutine forcing (i)
 
     ! unitless minimum sheltering coefficient
     shelter_coeff_a = minval(hsfa, dim=1)
-    shelter_coeff_w = minval(hsfw, dim=1) 
+    shelter_coeff_w = minval(hsfw, dim=1)
     
-    ! wind drag forcing
-    fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *      &
-                L2norm(ua - u(i), va - v(i)) * log_profile(hfa(i), &
-                max(z0w, shelter_coeff_a(i) * hfa(i))) *           &
-                shelter_coeff_a(i) * pi / 2d0
+    !###############################################################
+    if ( L2norm(ua - u(i), va - v(i)) .eq. 0d0 ) then
+        fdax = 0d0
+        fday = 0d0
+        fsax = 0d0
+        fsay = 0d0
+    else
+        ! wind drag forcing
+        fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *      &
+                    L2norm(ua - u(i), va - v(i)) * log_profile(hfa(i), &
+                    z0w) * shelter_coeff_a(i) * pi / 2d0
 
-    fday     = rhoair * Cdair * hfa(i) * r(i) * (va - v(i)) *      &
-                L2norm(ua - u(i), va - v(i)) * log_profile(hfa(i), &
-                max(z0w, shelter_coeff_a(i) * hfa(i))) *           &
-                shelter_coeff_a(i) * pi / 2d0
+        fday     = rhoair * Cdair * hfa(i) * r(i) * (va - v(i)) *      &
+                    L2norm(ua - u(i), va - v(i)) * log_profile(hfa(i), &
+                    z0w) * shelter_coeff_a(i) * pi / 2d0
 
-    ! wind skin forcing
-    fsax     = rhoair * pi * r(i) ** 2 * Csair *               &
-                (ua - u(i)) / L2norm(ua - u(i), va - v(i)) * ( &
-                L2norm(ua - u(i), va - v(i)) ** 2 + r(i) ** 2  &
-                * ABS(omega(i)) ** 2 / 4d0)
+        ! wind skin forcing
+        fsax     = rhoair * pi * r(i) ** 2 * Csair *               &
+                    (ua - u(i)) / L2norm(ua - u(i), va - v(i)) * ( &
+                    L2norm(ua - u(i), va - v(i)) ** 2 + r(i) ** 2  &
+                    * ABS(omega(i)) ** 2 / 4d0)
 
-    fsay     = rhoair * pi * r(i) ** 2 * Csair *               &
-                (va - v(i)) / L2norm(ua - u(i), va - v(i)) * ( &
-                L2norm(ua - u(i), va - v(i)) ** 2 + r(i) ** 2  &
-                * ABS(omega(i)) ** 2 / 4d0)
+        fsay     = rhoair * pi * r(i) ** 2 * Csair *               &
+                    (va - v(i)) / L2norm(ua - u(i), va - v(i)) * ( &
+                    L2norm(ua - u(i), va - v(i)) ** 2 + r(i) ** 2  &
+                    * ABS(omega(i)) ** 2 / 4d0)
+    end if
 
-    ! water drag forcing
-    fdwx     = rhowater * Cdwater * hfw(i) * r(i) * (uw -            &
+    !###############################################################
+    if ( L2norm(uw - u(i), vw - v(i)) .eq. 0d0 ) then
+        fdwx = 0d0
+        fdwy = 0d0
+        fswx = 0d0
+        fswy = 0d0
+    else
+        ! water drag forcing
+        fdwx = rhowater * Cdwater * hfw(i) * r(i) * (uw -            &
                 u(i)) * L2norm(uw - u(i), vw - v(i)) *               &
-                log_profile(hfw(i), max(z0w, shelter_coeff_w(i) *    &
-                hfw(i))) * shelter_coeff_w(i) * pi / 2d0
+                log_profile(hfw(i), z0w) * shelter_coeff_w(i) * pi / 2d0
 
-    fdwy     = rhowater * Cdwater * hfw(i) * r(i) * (vw -            &
+        fdwy = rhowater * Cdwater * hfw(i) * r(i) * (vw -            &
                 v(i)) * L2norm(uw - u(i), vw - v(i)) *               &
-                log_profile(hfw(i), max(z0w, shelter_coeff_w(i) *    &
-                hfw(i))) * shelter_coeff_w(i) * pi / 2d0
+                log_profile(hfw(i), z0w) * shelter_coeff_w(i) * pi / 2d0
 
-    ! water skin forcing
-    fswx     = rhowater * pi * r(i) ** 2 * Cswater *               &
+        ! water skin forcing
+        fswx = rhowater * pi * r(i) ** 2 * Cswater *               &
                 (uw - u(i)) / L2norm(uw - u(i), vw - v(i)) * (     &
                 L2norm(uw - u(i), vw - v(i)) ** 2 + r(i) ** 2      &
                 * ABS(omega(i)) ** 2 / 4d0)
 
-    fswy     = rhowater * pi * r(i) ** 2 * Cswater * &
+        fswy = rhowater * pi * r(i) ** 2 * Cswater * &
                 (vw - v(i)) / L2norm(uw - u(i), vw - v(i)) * (     &
                 L2norm(uw - u(i), vw - v(i)) ** 2 + r(i) ** 2      &
                 * ABS(omega(i)) ** 2 / 4d0)
+    end if
 
+    !###############################################################
     ! total forcing from air and water
     fax(i) = fdax + fsax
     fay(i) = fday + fsay
 
     fwx(i) = fdwx + fswx
     fwy(i) = fdwy + fswy
+    print*, fdwx, fswx
 
     ! torque induced drag due to rotation of floes when no speed
 	! if speed, use second expression valid for |U| >> |omega*r|
-	if ( L2norm(ua - u(i), va - v(i)) .eq. 0d0 ) then
-        fax(i) = 0d0
-        fay(i) = 0d0
+	if ( L2norm(ua - u(i), va - v(i)) < 1d0 ) then
 		ma(i)  = - 2d0 * pi / 5d0 * r(i) ** 5 * rhoair * Csair * &
                 omega(i) * ABS(omega(i))
 	else
@@ -82,9 +94,7 @@ subroutine forcing (i)
 				sqrt( ua ** 2 + va ** 2) * omega(i) * r(i) ** 4
 	end if
 
-	if ( L2norm(uw - u(i), vw - v(i)) .eq. 0d0 ) then
-        fwx(i) = 0d0
-        fwy(i) = 0d0
+	if ( L2norm(uw - u(i), vw - v(i)) < 1d-2 ) then
     	mw(i) = - 2d0 * pi / 5d0 * r(i) ** 5 * rhowater * Cswater * &
 				omega(i) * ABS(omega(i))
 	else
@@ -114,9 +124,9 @@ subroutine sheltering (j, i)
                     sina(j,i), uw, vw)
 
     ! sheltering for the reverse direction
-    hsfa(j, i) = S_shelter(hfa(j), hfa(i), deltan(j,i), -cosa(j,i), &
+    hsfa(i, j) = S_shelter(hfa(j), hfa(i), deltan(j,i), -cosa(j,i), &
                     -sina(j,i), ua, va)
-    hsfw(j, i) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
+    hsfw(i, j) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
                     -sina(j,i), uw, vw)
 end subroutine
 

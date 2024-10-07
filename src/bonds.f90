@@ -31,16 +31,16 @@ subroutine bond_forces (j, i)
     krb    =  knc * deltat(j,i) ** 2 / 12
 
     ! forces are computed from linear elastic material law
-    ! F = -kx but x>0 is elongation so the force is supposed
+    ! F = -kx-cu but x>0 is elongation so the force is supposed
     ! to bring back the particles towards equilibrium, so that
     ! the force must be positive too (F>0) for particle i (which)
     ! is the one on which we are centered. And the reverse for
     ! particle j (F<0). But we had a sign in stepper so that
-    ! the signs are all gucci (F=kx).
+    ! the signs are all gucci (F=kx+cu).
     fbn(j, i) = - knb(j, i) * sb(j, i) * deltanb(j, i) &
-                + gamma_d * veln(j,i)
+                - gamma_d * veln(j,i)
     fbt(j, i) = - ktb(j, i) * sb(j, i) * deltatb(j, i) &
-                + gamma_d * velt(j,i)
+                - gamma_d * velt(j,i)
 
 	! moments for bending and twisting motion
     mbending = -ktb(j, i) * ib(j, i) * thetarelb(j,i)
@@ -52,8 +52,9 @@ subroutine bond_forces (j, i)
     if ( abs(thetarelb(j, i)) > 2 * (sqrt(3d0) * sigmacb_crit * &
          hb(j,i) + abs(fcn(j,i))) / knc * deltat(j,i) ) then
             
-        mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
-                    sign(1d0, omegarel(j,i))
+        mrolling = 0
+        !mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
+                    !sign(1d0, omegarel(j,i))
 
     end if
 

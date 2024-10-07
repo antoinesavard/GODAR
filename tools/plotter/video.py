@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-import tools.utils.files as ff
+import tools.utils.files as tuf
 import os
 import sys
 
@@ -13,6 +13,10 @@ sf = 1e3  # conversion ratio m <-> km
 compression = 1  # data compression
 
 # ----------------------------------------------------------------------
+
+# --------------------------------------
+# loading the relevant data
+# --------------------------------------
 
 # reading the arguments for the program
 output_dir = "../output/"
@@ -32,23 +36,23 @@ except:
 print("Reading the files...")
 
 # listing the files to read
-filesx = ff.list_files(output_dir, "x", expno)
-filesy = ff.list_files(output_dir, "y", expno)
-filesr = ff.list_files(output_dir, "r", expno)
-filesh = ff.list_files(output_dir, "h", expno)
-filest = ff.list_files(output_dir, "theta", expno)
-fileso = ff.list_files(output_dir, "omega", expno)
-filesb = ff.list_files(output_dir, "bond", expno)
+filesx = tuf.list_files(output_dir, "x", expno)
+filesy = tuf.list_files(output_dir, "y", expno)
+filesr = tuf.list_files(output_dir, "r", expno)
+filesh = tuf.list_files(output_dir, "h", expno)
+filest = tuf.list_files(output_dir, "theta", expno)
+fileso = tuf.list_files(output_dir, "omega", expno)
+filesb = tuf.list_files(output_dir, "bond", expno)
 
 # loading the files in memory
 x, y, r, h, t, o, b = (
-    ff.multiload(output_dir, filesx, 0, n),
-    ff.multiload(output_dir, filesy, 0, n),
-    ff.multiload(output_dir, filesr, 0, n),
-    ff.multiload(output_dir, filesh, 0, n),
-    ff.multiload(output_dir, filest, 0, n),
-    ff.multiload(output_dir, fileso, 0, n),
-    ff.multiload(output_dir, filesb, 1, n),
+    tuf.multiload(output_dir, filesx, 0, n),
+    tuf.multiload(output_dir, filesy, 0, n),
+    tuf.multiload(output_dir, filesr, 0, n),
+    tuf.multiload(output_dir, filesh, 0, n),
+    tuf.multiload(output_dir, filest, 0, n),
+    tuf.multiload(output_dir, fileso, 0, n),
+    tuf.multiload(output_dir, filesb, 1, n),
 )
 
 # compressing the files
@@ -61,13 +65,13 @@ o = np.sign(o[::compression])
 b = b[::compression]
 
 # check dimensions of the data
-x = ff.check_dim(x)
-y = ff.check_dim(y)
-r = ff.check_dim(r)
-h = ff.check_dim(h)
-t = ff.check_dim(t)
-o = ff.check_dim(o)
-b = ff.check_dim(b, 1)
+x = tuf.check_dim(x)
+y = tuf.check_dim(y)
+r = tuf.check_dim(r)
+h = tuf.check_dim(h)
+t = tuf.check_dim(t)
+o = tuf.check_dim(o)
+b = tuf.check_dim(b, 1)
 
 # massaging
 t = np.degrees(t)
@@ -75,13 +79,20 @@ edge = np.where(o >= 0, "g", "r")
 lb = np.zeros_like(b)
 angleb = np.zeros_like(b)
 
+# --------------------------------------
+# compute some things
+# --------------------------------------
 print("Compute the length and orientation of the bonds...")
 for i in range(b.shape[-1] - 1):
     for j in range(i + 1, b.shape[-2]):
-        lb[:, i, j] = ff.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
-        angleb[:, i, j] = ff.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+        lb[:, i, j] = tuf.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+        angleb[:, i, j] = tuf.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
 
 os.chdir("../plots/anim/")
+
+# --------------------------------------
+# create the figure to animate
+# --------------------------------------
 
 fig = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
 ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
@@ -109,19 +120,23 @@ radii = []
 bonds = []
 num_bonds = np.zeros(n)
 
+# --------------------------------------
+# the functions for the animation
+# --------------------------------------
+
 
 def init(ax, time):
     print("Initial drawing in process")
     for i in range(x.shape[-1]):
         p = np.array([x[0, i], y[0, i]])
-        disk, rad = ff.draw(ax, p, r[0, i], t[0, i], edge[0, i])
+        disk, rad = tuf.draw(ax, p, r[0, i], t[0, i], edge[0, i])
         if i == len(x[-1]) - 1:
             disks.append(disk)
             radii.append(rad)
             continue
         for j in range(i + 1, b.shape[-1]):
             if b[0, i, j]:
-                bond = ff.draw_bond(
+                bond = tuf.draw_bond(
                     ax,
                     p,
                     lb[0, i, j],
@@ -176,6 +191,9 @@ def animate(k, time):
     return disks, radii, bonds
 
 
+# --------------------------------------
+# the wrappers for the animation
+# --------------------------------------
 # define some wrappers
 def init_wrapper():
     return init(ax, time)
@@ -193,6 +211,10 @@ def animate_wrapper_strip(k):
     return animate(k, time_strip)
 
 
+# --------------------------------------
+# animating and saving the data
+# --------------------------------------
+
 anim = FuncAnimation(
     fig,
     animate_wrapper,
@@ -204,7 +226,7 @@ anim = FuncAnimation(
 )
 
 print("Animating the disks for your eyes.")
-ff.save_or_show_animation(anim, 1, "../../plots/anim/collision{}.mp4".format(expno))
+tuf.save_or_show_animation(anim, 1, "../../plots/anim/collision{}.mp4".format(expno))
 
 anim_strip = FuncAnimation(
     fig_strip,
@@ -217,6 +239,6 @@ anim_strip = FuncAnimation(
 )
 
 print("Animating the disks for the computer's eyes.")
-ff.save_or_show_animation(
+tuf.save_or_show_animation(
     anim_strip, 1, "../../plots/anim/strip-collision{}.mp4".format(expno)
 )

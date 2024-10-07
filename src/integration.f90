@@ -7,6 +7,7 @@ subroutine velocity
     include "CB_const.h"
 	include "CB_bond.h"
 
+    ! update the velocities
     ! u_f = u_i + F/m * dt
     u      =  u + ( tfx / mass ) * dt
     v      =  v + ( tfy / mass ) * dt

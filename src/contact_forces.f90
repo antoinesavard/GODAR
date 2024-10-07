@@ -70,8 +70,9 @@ subroutine contact_forces (j, i)
         if ( abs( thetarelc(j, i) ) > 2 * abs(fcn(j,i)) / knc / &
             deltat(j,i) ) then
                 
-            mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
-                        sign(1d0, omegarel(j,i))
+            mrolling = 0
+            !mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
+                        !sign(1d0, omegarel(j,i))
         
         end if
 
@@ -176,8 +177,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
         if ( abs( theta_bc1(i) ) > 2 * abs(fn_bc(i)) / knc / &
             deltat_bc ) then
                 
-            mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
-                        sign(1d0, omega(i))
+            mrolling_bc = 0  
+            !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
+                        !sign(1d0, omega(i))
         
         end if
 
@@ -189,13 +191,15 @@ subroutine contact_bc (i, dir1, dir2, bd)
         if ( abs( theta_bc2(i) ) > 2 * abs(fn_bc(i)) / knc / &
             deltat_bc ) then
                 
-            mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
-                        sign(1d0, omega(i))
+            mrolling_bc = 0 
+            !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
+                        !sign(1d0, omega(i))
         
         end if
 
     else 
 
+        print*, "Anormal boundary rolling scheme"
         mrolling_bc = 0d0
 
     end if
