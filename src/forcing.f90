@@ -82,7 +82,6 @@ subroutine forcing (i)
 
     fwx(i) = fdwx + fswx
     fwy(i) = fdwy + fswy
-    print*, fdwx, fswx
 
     ! torque induced drag due to rotation of floes when no speed
 	! if speed, use second expression valid for |U| >> |omega*r|
