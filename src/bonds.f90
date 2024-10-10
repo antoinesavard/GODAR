@@ -16,8 +16,8 @@ subroutine bond_forces (j, i)
 
     thetarelb(j,i) = omegarel(j,i) * dt + thetarelb(j,i)
 
-    deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
-    deltatb(j,i) = velt(j,i) * dt + deltatb(j,i)
+    deltanb(j,i) = -veln(j,i) * dt + deltanb(j,i)
+    deltatb(j,i) = -velt(j,i) * dt + deltatb(j,i)
 
     ! rolling stiffness due to bond
     r_redu =  r(i) * r(j) / ( r(i) + r(j) )
@@ -37,10 +37,10 @@ subroutine bond_forces (j, i)
     ! is the one on which we are centered. And the reverse for
     ! particle j (F<0). But we had a sign in stepper so that
     ! the signs are all gucci (F=kx+cu).
-    fbn(j, i) = - knb(j, i) * sb(j, i) * deltanb(j, i) &
-                - gamma_d * veln(j,i)
-    fbt(j, i) = - ktb(j, i) * sb(j, i) * deltatb(j, i) &
-                - gamma_d * velt(j,i)
+    fbn(j, i) = knb(j, i) * sb(j, i) * deltanb(j, i) &
+                + gamma_d * veln(j,i)
+    fbt(j, i) = ktb(j, i) * sb(j, i) * deltatb(j, i) &
+                + gamma_d * velt(j,i)
 
 	! moments for bending and twisting motion
     mbending = -ktb(j, i) * ib(j, i) * thetarelb(j,i)
@@ -139,13 +139,21 @@ subroutine bond_properties (j, i)
 
     gb = eb / 2d0 / (1 + poiss_ratio)
 
+    ! bond properties
+    ! rb is "radius" such that 2rb is the width
+    ! hb is the thickness
+    ! lb is the lenght
 	rb  (j, i) = lambda_rb * min(r(i), r(j))
 	hb  (j, i) = (h(i) + h(j)) / 2d0
 	lb  (j, i) = lambda_lb * (r(i) + r(j))
 
+    ! sb is the cross section area
+    ! ib is the inertia
     sb  (j, i) = 2d0 * rb (j, i) * hb (j, i)
 	ib  (j, i) = 2d0 / 3d0 * hb (j, i) * rb (j, i) ** 3d0
 
+    ! knb is the normal k in Hooke's
+    ! ktb is the tangent k in Hooke's
 	knb (j, i) = eb / lb (j, i)
 	ktb (j, i) = 5d0 / 6d0 * gb / lb (j, i)
 

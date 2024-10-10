@@ -39,15 +39,9 @@ subroutine contact_forces (j, i)
     gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * m_redu )
 
     ! compute the normal/tangent force
-    ! normally force is F=-kx-cu: in our case it works because x is 
-    ! measured as the spring compression (x>0) as seen from particle i 
-    ! (positive), while u_rel is measured as if i was not moving
-    ! so as if the other particles are moving towards i (negative, 
-    ! because u = (x_j-x_i) \hat{n} so we need to have F=-kx+cu, but
-    ! there is a negative sign in stepper (k > 0, c > 0).
-    fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
+    fcn(j,i) = knc * deltan(j,i) + gamn * veln(j,i)
 
-    fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
+    fct(j,i) = ktc * deltat(j,i) + gamt * velt(j,i)
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
@@ -145,13 +139,13 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! is using dir as a way to pick the proper velocity for 
     ! normal or tangent force.
     fn_bc(i) = knc * deltan_bc &
-                - gamn * ( dir1 * u(i) + (1 - dir1) * v(i) )
+                + gamn * ( dir1 * u(i) + (1 - dir1) * v(i) )
 
     ! check if there is a parallel velocity, if not,
     ! no tangential force.
     if ( (1 - dir1) * u(i) + dir1 * v(i) .ne. 0 ) then
         ft_bc(i) = ktc * deltat_bc &
-                    - gamt * ( (1 - dir1) * u(i) + dir1 * v(i) )
+                    + gamt * ( (1 - dir1) * u(i) + dir1 * v(i) )
     end if
 
     ! verify if we are in the plastic case or not
