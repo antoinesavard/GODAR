@@ -16,6 +16,7 @@ subroutine bond_forces (j, i)
 
     thetarelb(j,i) = omegarel(j,i) * dt + thetarelb(j,i)
 
+    ! compression has delta>0
     deltanb(j,i) = -veln(j,i) * dt + deltanb(j,i)
     deltatb(j,i) = -velt(j,i) * dt + deltatb(j,i)
 
@@ -38,9 +39,9 @@ subroutine bond_forces (j, i)
     ! particle j (F<0). But we had a sign in stepper so that
     ! the signs are all gucci (F=kx+cu).
     fbn(j, i) = knb(j, i) * sb(j, i) * deltanb(j, i) &
-                + gamma_d * veln(j,i)
+                - gamma_d * veln(j,i)
     fbt(j, i) = ktb(j, i) * sb(j, i) * deltatb(j, i) &
-                + gamma_d * velt(j,i)
+                - gamma_d * velt(j,i)
 
 	! moments for bending and twisting motion
     mbending = -ktb(j, i) * ib(j, i) * thetarelb(j,i)
