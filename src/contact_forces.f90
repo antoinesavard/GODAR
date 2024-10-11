@@ -131,9 +131,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
     krc    = knc * deltat_bc ** 2 / 12
 
     ! compute the dashpots constant
-    gamn   = -beta * sqrt( 5d0 * knc * m(i) )
+    gamn   = -beta * sqrt( 5d0 * knc * mass(i) )
 
-    gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * m(i) )
+    gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * mass(i) )
 
     ! compute the normal/tangent force
     ! is using dir as a way to pick the proper velocity for 
