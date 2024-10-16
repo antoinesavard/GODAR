@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: GODAR
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Antoine
+    family-names: Savard
+    email: antoine.savard@mail.mcgill.ca
+    affiliation: McGill University
+    orcid: 'https://orcid.org/0000-0002-5223-375X'
+repository-code: 'https://github.com/antoinesavard/GODAR'
+keywords:
+  - discrete element model
+  - sea ice
+  - Arctic
+license: MIT
