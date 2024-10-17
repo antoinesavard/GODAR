@@ -65,7 +65,7 @@ subroutine get_default
     ! damping ratio
     ! we cap it at 1d-20 because it is assumed that below that, we 
     ! really wanted a value of beta = -1
-    if (rest_coeff .lq. 1d-20) then
+    if (rest_coeff .le. 1d-20) then
         beta = -1d0
     else
         beta =  log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
@@ -250,7 +250,7 @@ subroutine read_namelist (namelist_name)
     t = nt * dt
     ec = e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
     gc = e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
-    if (rest_coeff .lq. 1d-20) then
+    if (rest_coeff .le. 1d-20) then
         beta = -1d0
     else
         beta =  log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
