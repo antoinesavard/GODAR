@@ -119,6 +119,11 @@ program ice
         read  *, num_threads
         print *, num_threads
 
+        if (num_threads .neq. thread_num) then
+            print*, "Your requested thread number is going to be set to max value of available thread, which is: ", thread_num
+            num_threads = thread_num
+        end if
+
         print '(a)', &
         '',&
         '|--------------------------------------------------------|',&
@@ -162,7 +167,7 @@ program ice
     !last_iter = int(n * ( 1 - &
     !            sqrt(1. * (n_ranks - rank - 1) / n_ranks) ))
 
-    print*, rank, first_iter, last_iter
+    print*, "rank:" rank, "particle id (start-stop): " first_iter, last_iter
     
     if ( rank .eq. master ) then
         tic = now()
