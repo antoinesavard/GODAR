@@ -63,7 +63,13 @@ subroutine get_default
     ! effective shear modulus
     gc    =  e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
     ! damping ratio
-    beta  =  log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
+    ! we cap it at 1d-20 because it is assumed that below that, we 
+    ! really wanted a value of beta = -1
+    if (rest_coeff .leq. 1d-20) then
+        beta = -1d0
+    else
+        beta =  log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
+    end if
 
 	!-------------------------------------------------------------------
     !           Bonds physical parameters
@@ -244,6 +250,10 @@ subroutine read_namelist (namelist_name)
     t = nt * dt
     ec = e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
     gc = e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
-    beta = log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
+    if (rest_coeff .leq. 1e-20) then
+        beta = -1d0
+    else
+        beta =  log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
+    end if
 
 end subroutine read_namelist
