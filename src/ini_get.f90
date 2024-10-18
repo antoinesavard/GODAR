@@ -172,17 +172,13 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             hsfa(j, i) = 1d0
             hsfw(j, i) = 1d0
         end do
+
+        !---------------------------------------------------------------
+        !           Disks physical properties
+        !---------------------------------------------------------------
+
+        call floe_properties(i)
+
     end do
-
-    !-------------------------------------------------------------------
-    !           Disks physical properties
-    !-------------------------------------------------------------------
-
-    ! mass of disk
-    mass  =  rhoice * pi * h * r ** 2
-    ! freeboard height
-    hfa   =  h * (rhowater - rhoice) / rhowater
-    ! drag from water height
-    hfw   =  h * rhoice / rhowater
 
 end subroutine ini_get

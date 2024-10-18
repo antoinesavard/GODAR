@@ -143,3 +143,21 @@ subroutine bond_local_to_global (j, i)
     mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
 
 end subroutine bond_local_to_global
+
+
+subroutine floe_properties(i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_const.h"
+    include "CB_variables.h"
+
+    ! mass of disk
+    mass(i)  =  rhoice * pi * h(i) * r(i) ** 2
+    ! freeboard height
+    hfa(i)   =  h(i) * (rhowater - rhoice) / rhowater
+    ! drag from water height
+    hfw(i)   =  h(i) * rhoice / rhowater
+
+end subroutine

@@ -115,11 +115,15 @@ subroutine contact_bc (i, dir1, dir2, bd)
                 ( (1 - dir2) * (r(i) - y(i)) +                     &
                         dir2 * (r(i) + y(i) - ny) ) * (1 - dir1)
 
+    deltat_bc = 0d0
+
     ! compression has delta_t > 0
     if (bd .eq. 1) then
         deltat_bc1(i) = -u(i) * dt + deltat_bc1(i)
+        deltat_bc = deltat_bc1(i)
     else if (bd .eq. 2) then
         deltat_bc2(i) = -v(i) * dt + deltat_bc2(i)
+        deltat_bc = deltat_bc2(i)
     end if
 
     ! update the relative angle that the particle makes with bd
@@ -136,7 +140,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ktc    = 6d0 * gc / ec * knc
 
-    krc    = knc * deltat_bc ** 2 / 12
+    krc = knc * deltat_bc ** 2 / 12
 
     ! compute the dashpots constant
     gamn   = -beta * sqrt( 4d0 * knc * mass(i) )
@@ -149,12 +153,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
     fn_bc(i) = knc * deltan_bc &
                 - gamn * ( dir1 * u(i) + (1 - dir1) * v(i) )
 
-    ! check if there is a parallel velocity, if not,
-    ! no tangential force.
-    if ( (1 - dir1) * u(i) + dir1 * v(i) .ne. 0 ) then
-        ft_bc(i) = ktc * deltat_bc &
-                    - gamt * ( (1 - dir1) * u(i) + dir1 * v(i) )
-    end if
+    ! tangential force
+    ft_bc(i) = ktc * deltat_bc &
+                - gamt * ( (1 - dir1) * u(i) + dir1 * v(i) )
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then

@@ -61,6 +61,8 @@ subroutine update_shape (j, i)
 
         h(i) = h(i) + dh
 
+        call floe_properties(i)
+
     else if ( hmin .eq. h(j) ) then
 
         dh = Vol / ( pi * r(j) ** 2d0 )
@@ -68,6 +70,8 @@ subroutine update_shape (j, i)
         r(j) = r(j) * sqrt(h(j) / (h(j) + dh) )
 
         h(j) = h(j) + dh
+
+        call floe_properties(j)
 
     end if
 
@@ -134,5 +138,6 @@ subroutine update_shape_bc (i, deltat_bc)
 
     h(i) = h(i) + dh
 
+    call floe_properties(i)
 
 end subroutine update_shape_bc
