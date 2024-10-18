@@ -164,7 +164,7 @@ subroutine stepper (tstep)
     call broadcast_total_forces
 
     ! forces on right side plate
-    !call normal_forces("right", tstep)
+    call normal_forces("right", tstep)
 
     ! forces on left side plate
     !call normal_forces("left", tstep)
@@ -193,16 +193,20 @@ subroutine normal_forces (side, tstep)
     integer :: i
     
     ! ~12 seconds is required to resolve the elastic wave travelling 30km
-    tau = 12 / dt
+    tau = 50 / dt
 
     ! forces on the right of the assembly
+    ! forces on the right of the assembly
     if ( side == "right" ) then
-        ftmp = maxval(tfx(n-29:n))
-        do i = n, n - 29 , -1
-            tfx(i) = ftmp + pfn * tanh( tstep / tau )
-            tfy(i) = pfs * tanh( tstep / tau )
-        end do
-    end if  
+        ftmp = 0d0!maxval(tfx(n-29:n))
+!        if (tstep*dt < 75d-2) then
+!            if (tstep*dt > 25d-2) then
+                do i = n, n - 9, -1!n, n - 29 , -1
+                    tfy(i) = tfy(i) + ftmp + pfn * tanh( tstep / tau )
+                end do
+!            end if       
+        !end if
+     end if    
 
     ! no forces on the left of assembly (fixed)
     if ( side == "left" ) then
