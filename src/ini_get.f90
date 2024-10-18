@@ -7,6 +7,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
     include "CB_const.h"
 	include "CB_bond.h"
     include "CB_forcings.h"
+    include "CB_diagnostics.h"
 
 	integer, intent(in) :: restart, nt_r
 	character(2), intent(in) :: expno_str_r
@@ -144,6 +145,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         sigyy(i)  = 0d0
         sigxy(i)  = 0d0
         sigyx(i)  = 0d0
+
+        ! initial pressure
+        tac(i)    = 0d0
+        tab(i)    = 0d0
+        
+        tp(i)     = 0d0
 
         ! initial forces and moments in the contact plane
         do j = 1, n

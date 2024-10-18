@@ -81,3 +81,65 @@ subroutine rel_pos_vel (j, i)
     deltat(j,i)  =  0d0
     
 end subroutine rel_pos_vel
+
+
+subroutine contact_local_to_global (j, i)
+
+    implicit none 
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: i, j
+
+    ! update contact force on particle i by particle j
+    fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i)
+    fcy(i) = fcy(i) - fcn(j,i) * sina(j,i)
+
+    ! update moment on particule i by particule j due to tangent contact 
+    mc(i) = mc(i) - r(i) * fct(j,i) - mcc(j,i)
+
+    ! Newton's third law
+    ! update contact force on particle j by particle i
+    fcx(j) = fcx(j) + fcn(j,i) * cosa(j,i)
+    fcy(j) = fcy(j) + fcn(j,i) * sina(j,i)
+
+    ! update moment on particule j by particule i due to tangent contact 
+    mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)
+
+end subroutine contact_local_to_global
+
+
+subroutine bond_local_to_global (j, i)
+
+    implicit none 
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_bond.h"
+    include "CB_const.h"
+
+    integer, intent(in) :: i, j
+
+    ! update force on particle i by j due to bond
+    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i) +    &
+                        fbt(j,i) * sina(j,i)
+    fby(i) = fby(i) - fbn(j,i) * sina(j,i) -    &
+                        fbt(j,i) * cosa(j,i)
+
+    ! update moment on particule i by j to to bond
+    mb(i) = mb(i) - r(i) * fbt(j,i) - mbb(j, i)
+
+    ! Newton's third law
+    ! update force on particle j by i due to bond
+    fbx(j) = fbx(j) + fbn(j,i) * cosa(j,i) -    &
+                        fbt(j,i) * sina(j,i)
+    fby(j) = fby(j) + fbn(j,i) * sina(j,i) +    &
+                        fbt(j,i) * cosa(j,i)
+
+
+    ! update moment on particule j by i due to bond
+    mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
+
+end subroutine bond_local_to_global

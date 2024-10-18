@@ -15,17 +15,19 @@ subroutine contact_forces (j, i)
     double precision :: knc, ktc, gamn, gamt
     double precision :: krc, mrolling
 
-    deltat(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
-                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 )
+    ! compression has delta_t > 0
+    deltat(j,i) = -velt(j,i) * dt + deltatb(j,i)
 
+    ! relative angle
     thetarelc(j,i) = omegarel(j,i) * dt + thetarelc(j,i)
 
+    ! reduced variables
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
-
     r_redu =  r(i) * r(j) / ( r(i) + r(j) )
 
     hmin   =  min(h(i), h(j))
 
+    ! stiffness
     knc    = pi * ec * hmin  *                  &
                 fit( deltan(j,i) * r_redu /     &
                 ( 2 * hmin ** 2 ) )
@@ -34,9 +36,10 @@ subroutine contact_forces (j, i)
 
     krc    = knc * deltat(j,i) ** 2 / 12
 
-    gamn   = -beta * sqrt( 5d0 * knc * m_redu )
+    ! damping
+    gamn   = -beta * sqrt( 4d0 * knc * m_redu )
 
-    gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * m_redu )
+    gamt   = -beta * sqrt( 4d0 * ktc * m_redu )
 
     ! compute the normal/tangent force
     fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
@@ -112,7 +115,12 @@ subroutine contact_bc (i, dir1, dir2, bd)
                 ( (1 - dir2) * (r(i) - y(i)) +                     &
                         dir2 * (r(i) + y(i) - ny) ) * (1 - dir1)
 
-    deltat_bc = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
+    ! compression has delta_t > 0
+    if (bd .eq. 1) then
+        deltat_bc1(i) = -u(i) * dt + deltat_bc1(i)
+    else if (bd .eq. 2) then
+        deltat_bc2(i) = -v(i) * dt + deltat_bc2(i)
+    end if
 
     ! update the relative angle that the particle makes with bd
     if (bd .eq. 1) then
@@ -131,9 +139,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
     krc    = knc * deltat_bc ** 2 / 12
 
     ! compute the dashpots constant
-    gamn   = -beta * sqrt( 5d0 * knc * mass(i) )
+    gamn   = -beta * sqrt( 4d0 * knc * mass(i) )
 
-    gamt   = -2d0 * beta * sqrt( 5d0 * gc / ec * knc * mass(i) )
+    gamt   = -beta * sqrt( 4d0 * ktc * mass(i) )
 
     ! compute the normal/tangent force
     ! is using dir as a way to pick the proper velocity for 

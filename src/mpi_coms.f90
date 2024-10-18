@@ -157,6 +157,7 @@ subroutine broadcast_total_forces
     include "CB_forcings.h"
     include "CB_options.h"
     include "CB_mpi.h"
+    include "CB_diagnostics.h"
 
     call mpi_allreduce( &
     tfx_r, tfx, n, mpi_double_precision, &
@@ -187,6 +188,9 @@ subroutine broadcast_total_forces
     tsigyx_r, tsigyx, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
+    ! same for pressure
+    
+
 end subroutine broadcast_total_forces
 
 
@@ -208,6 +212,7 @@ subroutine force_reduction
     include "CB_forcings.h"
     include "CB_options.h"
     include "CB_mpi.h"
+    include "CB_diagnostics.h"
 
     call mpi_allreduce( &
     fcx, fcx_r, n, mpi_double_precision, &
@@ -249,6 +254,8 @@ subroutine force_reduction
     call mpi_allreduce( &
     sigyx, sigyx_r, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
+
+    ! same for pressure
 
 
 end subroutine force_reduction

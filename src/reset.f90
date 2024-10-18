@@ -9,6 +9,7 @@ subroutine reset_contact (j, i)
     integer, intent(in) :: j, i
 
     thetarelc(j,i) = 0d0
+    deltat(j,i)    = 0d0
 
 end subroutine reset_contact
 
@@ -43,16 +44,20 @@ subroutine reset_boundary (i, j)
 
     if (j .eq. 1) then
 
-        theta_bc1(i) = 0d0
+        theta_bc1(i)  = 0d0
+        deltat_bc1(i) = 0d0
     
     else if (j .eq. 2) then
 
-        theta_bc2(i) = 0d0
+        theta_bc2(i)  = 0d0
+        deltat_bc2(i) = 0d0
 
     else    
     
-        theta_bc1(i) = 0d0
-        theta_bc2(i) = 0d0
+        theta_bc1(i)  = 0d0
+        theta_bc2(i)  = 0d0
+        deltat_bc1(i) = 0d0
+        deltat_bc2(i) = 0d0
 
     end if
      
@@ -72,6 +77,7 @@ subroutine reset_forces
     include "CB_forcings.h"
     include "CB_options.h"
     include "CB_mpi.h"
+    include "CB_diagnostics.h"
 
     integer :: i
 
@@ -122,6 +128,8 @@ subroutine reset_forces
         sigyy(i) = 0d0
         sigxy(i) = 0d0
         sigyx(i) = 0d0
+        ! pressure
+        tp(i) = 0d0
     end do
 
 end subroutine reset_forces
