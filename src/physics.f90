@@ -153,6 +153,8 @@ subroutine floe_properties(i)
     include "CB_const.h"
     include "CB_variables.h"
 
+    integer, intent(in) :: i
+
     ! mass of disk
     mass(i)  =  rhoice * pi * h(i) * r(i) ** 2
     ! freeboard height
