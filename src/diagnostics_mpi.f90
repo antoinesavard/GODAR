@@ -29,10 +29,10 @@ subroutine diag_reduction (diag)
         mpi_sum, mpi_comm_world, ierr)
     end if
 
-    ! same for pressure
-    if (trim(diag) == "pressure") then
+    ! ! same for pressure
+    ! if (trim(diag) == "pressure") then
         
-    end if
+    ! end if
 
 end subroutine diag_reduction
 
@@ -68,9 +68,9 @@ subroutine diag_broadcast (diag)
         mpi_sum, mpi_comm_world, ierr)
     end if
 
-    ! same for pressure
-    if (trim(diag) == "pressure") then
+    ! ! same for pressure
+    ! if (trim(diag) == "pressure") then
 
-    end if
+    ! end if
 
 end subroutine

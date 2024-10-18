@@ -128,8 +128,8 @@ subroutine reset_forces
         sigyy(i) = 0d0
         sigxy(i) = 0d0
         sigyx(i) = 0d0
-        ! pressure
-        tp(i) = 0d0
+        ! ! pressure
+        ! tp(i) = 0d0
     end do
 
 end subroutine reset_forces

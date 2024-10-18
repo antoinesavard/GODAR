@@ -146,11 +146,11 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         sigxy(i)  = 0d0
         sigyx(i)  = 0d0
 
-        ! initial pressure
-        tac(i)    = 0d0
-        tab(i)    = 0d0
-        
-        tp(i)     = 0d0
+        ! ! initial pressure
+        ! tac(i)    = 0d0
+        ! tab(i)    = 0d0
+
+        ! tp(i)     = 0d0
 
         ! initial forces and moments in the contact plane
         do j = 1, n
@@ -163,6 +163,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             ! relative angular position is 0 at first
             thetarelc(j,i) = 0d0
             thetarelb(j,i) = 0d0
+            ! tangential compression at contact
+            deltat(j,i) = 0d0
             ! bond elongation et deflection
             deltanb(j,i) = 0d0
             deltatb(j,i) = 0d0
