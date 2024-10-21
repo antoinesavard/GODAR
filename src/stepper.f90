@@ -196,8 +196,8 @@ subroutine stepper (tstep)
         end do
 
         ! compute the total forcing from winds, currents and coriolis on particule i
-!        call forcing (i)
-!        call coriolis(i)
+        call forcing (i)
+        call coriolis(i)
 
          ! verify the bondary conditions for each particle
         call verify_bc (i)
