@@ -35,6 +35,7 @@
                 velt        (n,n),  &
                 deltan      (n,n),	&
                 deltat      (n,n),  &
+                delt_ridge  (n,n),  &
 				omegarel    (n,n),  &
                 thetarelc   (n,n),  &
                 dist        (n,n)
@@ -86,7 +87,8 @@
                 veln    ,    & ! normal velocity                   [m/s]
                 velt    ,  	 & ! tangential velocity               [m/s]
                 deltan  ,  	 & ! normal distance between borders     [m]
-                deltat  ,    & ! tangent overlap                     [m]
+                deltat  ,    & ! accumulated tangent overlap         [m]
+                delt_ridge,  & ! tangent overlap for ridging         [m]
 				omegarel,	 & ! relative angular velocity       [rad/s]
                 thetarelc,   & ! relative angular position         [rad]
                 dist           ! distance between 2 particles        [m]

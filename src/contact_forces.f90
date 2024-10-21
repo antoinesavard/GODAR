@@ -16,7 +16,10 @@ subroutine contact_forces (j, i)
     double precision :: krc, mrolling
 
     ! compression has delta_t > 0
-    deltat(j,i) = -velt(j,i) * dt + deltatb(j,i)
+    deltat(j,i) = -velt(j,i) * dt + deltat(j,i)
+    
+    delt_ridge(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
+                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 ) 
 
     ! relative angle
     thetarelc(j,i) = omegarel(j,i) * dt + thetarelc(j,i)
@@ -34,7 +37,7 @@ subroutine contact_forces (j, i)
 
     ktc    = 6d0 * gc / ec * knc
 
-    krc    = knc * deltat(j,i) ** 2 / 12
+    krc    = knc * delt_ridge(j,i) ** 2 / 12
 
     ! damping
     gamn   = -beta * sqrt( 4d0 * knc * m_redu )
@@ -48,10 +51,10 @@ subroutine contact_forces (j, i)
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
-        if ( sigmanc_crit * hmin .le. fcn(j,i) / deltat(j,i) / hmin ) &
-        then
+        if ( sigmanc_crit * hmin .le. fcn(j,i) / delt_ridge(j,i) &
+        / hmin ) then
             
-            call plastic_contact (j, i, m_redu, hmin, krc)
+            call plastic_contact (j, i, delt_ridge, m_redu, hmin, krc)
 
         end if
     end if
@@ -65,7 +68,7 @@ subroutine contact_forces (j, i)
 
         ! ensures no rolling if moment is too big
         if ( abs( thetarelc(j, i) ) > 2 * abs(fcn(j,i)) / knc / &
-            deltat(j,i) ) then
+            delt_ridge(j,i) ) then
                 
             mrolling = 0
             !mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
@@ -89,7 +92,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! Arguments: 
     !   i    (int): particle id
     !   dir1 (int): vertical (0) or horizontal (1)
-    !   dir2 (int): bottom-left (0) or top-right (1)
+    !   dir2 (int): bottom/left (0) or top/right (1)
     !   bd   (int): one (1) or two (2) walls
 
     implicit none
@@ -106,7 +109,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
     double precision :: fit
     double precision :: knc, ktc, gamn, gamt
     double precision :: krc
-    double precision :: deltat_bc, deltan_bc
+    double precision :: deltat_bc, deltan_bc, delt_ridge_bc
     double precision :: mrolling_bc
 
     ! compute the compression of the particle
@@ -116,6 +119,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
                         dir2 * (r(i) + y(i) - ny) ) * (1 - dir1)
 
     deltat_bc = 0d0
+    delt_ridge_bc = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
 
     ! compression has delta_t > 0
     if (bd .eq. 1) then
@@ -140,7 +144,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ktc    = 6d0 * gc / ec * knc
 
-    krc = knc * deltat_bc ** 2 / 12
+    krc = knc * delt_ridge_bc ** 2 / 12
 
     ! compute the dashpots constant
     gamn   = -beta * sqrt( 4d0 * knc * mass(i) )
@@ -159,11 +163,11 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
-        if ( sigmanc_crit * h(i) .le. fn_bc(i) / deltat_bc / h(i) ) &
-        then
+        if ( sigmanc_crit * h(i) .le. fn_bc(i) / delt_ridge_bc &
+        / h(i) ) then
             
-            call plastic_contact_bc (i, deltan_bc, deltat_bc, krc, &
-                                    dir1)
+            call plastic_contact_bc (i, deltan_bc, deltat_bc, &
+                                    delt_ridge_bc, krc, dir1)
 
         end if
     end if
@@ -180,7 +184,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
         if ( abs( theta_bc1(i) ) > 2 * abs(fn_bc(i)) / knc / &
             deltat_bc ) then
                 
-            mrolling_bc = 0  
+            mrolling_bc = 0d0  
             !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
                         !sign(1d0, omega(i))
         
@@ -194,7 +198,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
         if ( abs( theta_bc2(i) ) > 2 * abs(fn_bc(i)) / knc / &
             deltat_bc ) then
                 
-            mrolling_bc = 0 
+            mrolling_bc = 0d0
             !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
                         !sign(1d0, omega(i))
         
@@ -202,7 +206,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     else 
 
-        print*, "Anormal boundary rolling scheme"
+        print*, "Abnormal boundary rolling scheme"
         mrolling_bc = 0d0
 
     end if

@@ -32,7 +32,7 @@ subroutine reset_bond (j, i)
 end subroutine reset_bond
 
 
-subroutine reset_boundary (i, j)
+subroutine reset_boundary (i, bd)
 
     implicit none
 
@@ -40,14 +40,14 @@ subroutine reset_boundary (i, j)
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer, intent(in) :: i, j
+    integer, intent(in) :: i, bd
 
-    if (j .eq. 1) then
+    if (bd .eq. 1) then
 
         theta_bc1(i)  = 0d0
         deltat_bc1(i) = 0d0
     
-    else if (j .eq. 2) then
+    else if (bd .eq. 2) then
 
         theta_bc2(i)  = 0d0
         deltat_bc2(i) = 0d0

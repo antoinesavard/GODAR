@@ -173,6 +173,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             hsfw(j, i) = 1d0
         end do
 
+        ! boundary
+        theta_bc1(i)  = 0d0
+        theta_bc2(i)  = 0d0
+        deltat_bc1(i) = 0d0
+        deltat_bc2(i) = 0d0
+
         !---------------------------------------------------------------
         !           Disks physical properties
         !---------------------------------------------------------------
