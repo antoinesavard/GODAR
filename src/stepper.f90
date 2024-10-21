@@ -39,7 +39,7 @@ subroutine stepper (tstep)
 
     !$omp parallel do schedule(dynamic, 1) &
     !$omp private(i,j,da) &
-    !!$omp reduction(+:fcx,fcy,mc,fbx,fby,mb) &
+    !$omp reduction(+:fcx,fcy,mc,fbx,fby,mb) &
     !&&#ifdef DIAG
     !$omp reduction(+:sigxx,sigyy,sigxy,sigyx) &
     !$omp reduction(+:tac,tab,pc,pb)
