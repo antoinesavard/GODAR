@@ -70,15 +70,18 @@
     common/variables/        & ! force variables
                 fcn     ,    & ! perp forces contact                 [N]
                 fct     ,    & ! tangent forces contact              [N]
-                fcx     ,    & ! contact forces in x                 [N]
-                fcy     ,    & ! contact forces in y                 [N]
-                mc      ,    & ! moment due to contact             [N*m]
                 mcc     ,    & ! moment due to rolling             [N*m]
                 tfx     ,    & ! total force in x                    [N]
                 tfy     ,    & ! total force in y                    [N]
                 m       ,	 & ! moment                            [N*m]
                 fcorx   ,    & ! coriolis x force                    [N]
                 fcory          ! coriolis y force                    [N]
+
+
+    common/contact_omp_var/  & ! contact openmp variables
+                fcx     ,    & ! contact forces in x                 [N]
+                fcy     ,    & ! contact forces in y                 [N]
+                mc             ! moment due to contact             [N*m]
                 
 
     common/variables/      	 & ! decomposition variables

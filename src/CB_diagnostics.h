@@ -32,10 +32,6 @@
 
 
     common/diag_stress_var/  & ! stress variables
-                sigxx   ,    & ! xx stress on each particle      [N/m^2]
-                sigyy   ,    & ! yy stress on each particle      [N/m^2]
-                sigxy   ,    & ! xy stress on each particle      [N/m^2]
-                sigyx   ,    & ! yx stress on each particle      [N/m^2]
                 ! totals
                 tsigxx  ,    & ! xx stress on each particle      [N/m^2]
                 tsigyy  ,    & ! yy stress on each particle      [N/m^2]
@@ -46,6 +42,13 @@
                 sigyy_bc,    & ! yy stress on each particle      [N/m^2]
                 sigxy_bc,    & ! xy stress on each particle      [N/m^2]
                 sigyx_bc       ! yx stress on each particle      [N/m^2]
+
+
+    common/diag_omp_stress/     & ! stress openmp variables
+                sigxx   ,    & ! xx stress on each particle      [N/m^2]
+                sigyy   ,    & ! yy stress on each particle      [N/m^2]
+                sigxy   ,    & ! xy stress on each particle      [N/m^2]
+                sigyx          ! yx stress on each particle      [N/m^2]
 
 
     common/diag_pressure_var/   & ! pressure variables

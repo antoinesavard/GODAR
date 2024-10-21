@@ -66,7 +66,10 @@
 	common/bond_var/			& ! forces in bonds
 				fbn			 ,	& ! force due to floes sliding
 				fbt			 ,	& ! force due to compresion/elongation
-				mbb		     ,  & ! moment du to bending
+				mbb		          ! moment du to bending
+
+
+	common/bond_omp_var/		& ! bond openmp variables
 				mb			 ,	& ! total moment due to bonds on i
 				fbx			 ,	& ! forces in x due to bonds
 				fby			      ! forces in y due to bonds

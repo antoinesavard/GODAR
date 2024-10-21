@@ -119,7 +119,7 @@ program ice
         read  *, num_threads
         print *, num_threads
 
-        if (num_threads .ne. thread_num) then
+        if (num_threads .gt. thread_num) then
             print*, "Your requested thread number is going to be set to max value of available thread, which is: ", thread_num
             num_threads = thread_num
         end if

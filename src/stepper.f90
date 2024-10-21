@@ -39,10 +39,10 @@ subroutine stepper (tstep)
 
     !$omp parallel do schedule(dynamic, 1) &
     !$omp private(i,j,da) &
-    !$omp reduction(+:fcx,fcy,fbx,fby,mc,mb,sigxx,sigyy,sigxy,sigyx)
+    !!$omp reduction(+:fcx,fcy,mc,fbx,fby,mb) &
     !&&#ifdef DIAG
-    !&&$omp reduction(+:sigxx,sigyy,sigxy,sigyx)
-    !&&$omp reduction(+:tac,tab,pc,pb)
+    !$omp reduction(+:sigxx,sigyy,sigxy,sigyx) &
+    !$omp reduction(+:tac,tab,pc,pb)
     !&&#endif
     do i = last_iter, first_iter, -1
         ! Find all the particles j near i
@@ -77,7 +77,20 @@ subroutine stepper (tstep)
 				!call bond_creation (j, i) ! to implement
                 
                 ! change coordinate system
-				call contact_local_to_global (j, i)
+				! update contact force on particle i by particle j
+                fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i)
+                fcy(i) = fcy(i) - fcn(j,i) * sina(j,i)
+
+                ! update moment on particule i by particule j due to tangent contact 
+                mc(i) = mc(i) - r(i) * fct(j,i) - mcc(j,i)
+
+                ! Newton's third law
+                ! update contact force on particle j by particle i
+                fcx(j) = fcx(j) + fcn(j,i) * cosa(j,i)
+                fcy(j) = fcy(j) + fcn(j,i) * sina(j,i)
+
+                ! update moment on particule j by particule i due to tangent contact 
+                mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)
 
             else
             
@@ -94,7 +107,25 @@ subroutine stepper (tstep)
                 if ( bond (j, i) .eq. 1 ) then
 
                     ! change coordinate system
-                    call bond_local_to_global (j, i)
+                    ! update force on particle i by j due to bond
+                    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i) +    &
+                                        fbt(j,i) * sina(j,i)
+                    fby(i) = fby(i) - fbn(j,i) * sina(j,i) -    &
+                                        fbt(j,i) * cosa(j,i)
+
+                    ! update moment on particule i by j to to bond
+                    mb(i) = mb(i) - r(i) * fbt(j,i) - mbb(j, i)
+
+                    ! Newton's third law
+                    ! update force on particle j by i due to bond
+                    fbx(j) = fbx(j) + fbn(j,i) * cosa(j,i) -    &
+                                        fbt(j,i) * sina(j,i)
+                    fby(j) = fby(j) + fbn(j,i) * sina(j,i) +    &
+                                        fbt(j,i) * cosa(j,i)
+
+
+                    ! update moment on particule j by i due to bond
+                    mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
 
                 end if
 
@@ -115,7 +146,47 @@ subroutine stepper (tstep)
             !-------------------------------------------------------
             
             ! if ( flag_diag_stress .eqv. .true. ) then
-            call diag_stress (j, i)
+            ! compute the stress using cauchy stress formula (this needs to be averaged over the size of the particle)
+            !-------------------------------------------------------
+            !
+            !    \sigma_{ij} = 1/A \sum_{c} r_j * Fcn_i
+            !
+            !-------------------------------------------------------
+
+            sigxx(i) = sigxx(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * cosa(j,i)
+            sigyy(i) = sigyy(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * sina(j,i)
+            sigxy(i) = sigxy(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * cosa(j,i)
+            sigyx(i) = sigyx(i) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * sina(j,i)
+
+            ! Newton's third law equivalent for stress
+            sigxx(j) = sigxx(j) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * cosa(j,i)
+            sigyy(j) = sigyy(j) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * sina(j,i)
+            sigxy(j) = sigxy(j) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        sina(j,i) * r(i) * cosa(j,i)
+            sigyx(j) = sigyx(j) - (                            &
+                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
+                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
+                        cosa(j,i) * r(i) * sina(j,i)
             ! end if
             
             ! if ( flag_diag_pressure .eqv. .true. ) then
@@ -125,8 +196,8 @@ subroutine stepper (tstep)
         end do
 
         ! compute the total forcing from winds, currents and coriolis on particule i
-        call forcing (i)
-        call coriolis(i)
+!        call forcing (i)
+!        call coriolis(i)
 
          ! verify the bondary conditions for each particle
         call verify_bc (i)
@@ -201,9 +272,9 @@ subroutine normal_forces (side, tstep)
         ftmp = 0d0!maxval(tfx(n-29:n))
 !        if (tstep*dt < 75d-2) then
 !            if (tstep*dt > 25d-2) then
-                do i = n, n - 9, -1!n, n - 29 , -1
-                    tfy(i) = tfy(i) + ftmp + pfn * tanh( tstep / tau )
-                end do
+                !do i = n, n - 9, -1!n, n - 29 , -1
+                    tfx(10) = tfx(10) + ftmp + pfn * tanh( tstep / tau )
+                !end do
 !            end if       
         !end if
      end if    
