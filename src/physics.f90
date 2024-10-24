@@ -11,14 +11,15 @@ subroutine coulomb (j, i)
 	! ensures slipping if force_t is too big
     if ( abs( fct(j,i) ) > friction_coeff * abs( fcn(j,i) ) ) then
 
-        fct(j,i) = - friction_coeff * fcn(j,i) * sign(1d0, velt(j,i))
+        fct(j,i) = - friction_coeff * abs( fcn(j,i) ) * &
+                    sign(1d0, velt(j,i))
 
     end if
     
 end subroutine coulomb
 
 
-subroutine coulomb_bc (i, dir)
+subroutine coulomb_bc (i, dir1, dir2)
 
     implicit none
 
@@ -27,13 +28,21 @@ subroutine coulomb_bc (i, dir)
     include "CB_const.h"
 
     integer, intent(in) :: i
-    integer, intent(in) :: dir
+    integer, intent(in) :: dir1, dir2
+
+    double precision :: velu_bc, velv_bc
+
+    ! relative velocities
+    velu_bc = ( (1 - dir2) * u(i) - dir2 * u(i) )
+
+    velv_bc = ( (1 - dir2) * v(i) - dir2 * v(i) )
 
 	! ensures slipping if force_t is too big
     if ( abs( ft_bc(i) ) > friction_coeff * abs( fn_bc(i) ) ) then
 
-        ft_bc(i) = - friction_coeff * fn_bc(i) * &
-                    sign(1d0, (1 - dir) * u(i) + dir * v(i) )
+        ft_bc(i) = - friction_coeff * abs( fn_bc(i) ) * &
+                    sign(1d0, (1 - dir1) * velu_bc +    &
+                    dir1 * velv_bc )
 
     end if
     

@@ -1,4 +1,4 @@
-subroutine plastic_contact (j, i, deltat_r, m_redu, hmin, krc)
+subroutine plastic_contact (j, i, m_redu, hmin, krc)
 
     implicit none
 
@@ -7,15 +7,15 @@ subroutine plastic_contact (j, i, deltat_r, m_redu, hmin, krc)
     include "CB_const.h"
 
     integer, intent(in) :: j, i
-    double precision, intent(in) :: deltat_r, m_redu, hmin
+    double precision, intent(in) :: m_redu, hmin
     double precision, intent(out) :: krc
 
     double precision :: knc, ktc, gamn, gamt
 
     ! compute the spring constants
-    knc    = sigmanc_crit * hmin ** 2 * deltat_r / deltan(j,i)
+    knc    = sigmanc_crit * hmin ** 2 * delt_ridge(j,i) / deltan(j,i)
     ktc    = 6d0 * gc / ec * knc
-    krc    = knc * deltat_r ** 2 / 12
+    krc    = knc * delt_ridge(j,i) ** 2 / 12
 
     ! compute the dashpots constants
     gamn   = -beta * sqrt( 4d0 * knc * m_redu )
@@ -25,12 +25,12 @@ subroutine plastic_contact (j, i, deltat_r, m_redu, hmin, krc)
     fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
     fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
 
-    call update_shape (j, i, deltat_r)
+    call update_shape (j, i)
 
 end subroutine plastic_contact
 
 
-subroutine update_shape (j, i, deltat_r)
+subroutine update_shape (j, i)
 
     implicit none 
 
@@ -39,7 +39,6 @@ subroutine update_shape (j, i, deltat_r)
     include "CB_const.h"
 
     integer, intent(in) :: j, i
-    double precision, intent(in) :: deltat_r
 
     double precision :: hmin, dh, Vol, Area
 
@@ -47,10 +46,10 @@ subroutine update_shape (j, i, deltat_r)
 
     Area = r(i) ** 2 * acos((dist(j,i) ** 2 - r(j) ** 2 + r(i) ** 2) &
             / (2 * dist(j,i)) / r(i)) - (dist(j,i) ** 2 - r(j) ** 2  &
-            + r(i) ** 2) / (2 * dist(j,i)) * deltat_r / 2d0 +        &
-        r(j) ** 2 * acos((dist(j,i) ** 2 - r(i) ** 2 + r(j) ** 2)    &
+            + r(i) ** 2) / (2 * dist(j,i)) * delt_ridge(j,i) / 2d0 + &
+            r(j) ** 2 * acos((dist(j,i) ** 2 - r(i) ** 2 + r(j) ** 2)&
             / (2 * dist(j,i)) / r(j)) - (dist(j,i) ** 2 - r(i) ** 2  &
-            + r(j) ** 2) / (2 * dist(j,i)) * deltat_r / 2d0
+            + r(j) ** 2) / (2 * dist(j,i)) * delt_ridge(j,i) / 2d0
 
     Vol = Area * hmin
 
@@ -79,7 +78,7 @@ subroutine update_shape (j, i, deltat_r)
 end subroutine update_shape
 
 
-subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir)
+subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir1, dir2)
 
     implicit none
 
@@ -87,11 +86,17 @@ subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir)
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer, intent(in) :: i, dir
+    integer, intent(in) :: i, dir1, dir2
     double precision, intent(in) :: deltan_bc, deltat_bc, deltat_r_bc
     double precision, intent(out) :: krc
 
     double precision :: knc, ktc, gamn, gamt
+    double precision :: velu_bc, velv_bc
+
+    ! relative velocities
+    velu_bc = ( (1 - dir2) * u(i) - dir2 * u(i) )
+
+    velv_bc = ( (1 - dir2) * v(i) - dir2 * v(i) )
 
     ! compute the spring constants
     knc    = sigmanc_crit * h(i) ** 2 * deltat_r_bc / deltan_bc
@@ -104,10 +109,10 @@ subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir)
 
     ! compute the forces
     fn_bc(i) = knc * deltan_bc &
-                - gamn * ( dir * u(i) + (1 - dir) * v(i) )
+                - gamn * ( dir1 * velu_bc + (1 - dir1) * velv_bc )
 
     ft_bc(i) = ktc * deltat_bc &
-                - gamt * ( (1 - dir) * u(i) + dir * v(i) )
+                - gamt * ( (1 - dir1) * velu_bc + dir1 * velv_bc )
 
     call update_shape_bc (i, deltat_r_bc)
 

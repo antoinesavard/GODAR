@@ -54,7 +54,7 @@ subroutine contact_forces (j, i)
         if ( sigmanc_crit * hmin .le. fcn(j,i) / delt_ridge(j,i) &
         / hmin ) then
             
-            call plastic_contact (j, i, delt_ridge, m_redu, hmin, krc)
+            call plastic_contact (j, i, m_redu, hmin, krc)
 
         end if
     end if
@@ -111,6 +111,13 @@ subroutine contact_bc (i, dir1, dir2, bd)
     double precision :: krc
     double precision :: deltat_bc, deltan_bc, delt_ridge_bc
     double precision :: mrolling_bc
+    double precision :: velu_bc, velv_bc
+
+    ! relative velocities
+    velu_bc = ( (1 - dir2) * u(i) - dir2 * u(i) )
+
+    velv_bc = ( (1 - dir2) * v(i) - dir2 * v(i) )
+
 
     ! compute the compression of the particle
     deltan_bc = ( (1 - dir2) * (r(i) - x(i)) +                     &
@@ -123,10 +130,10 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ! compression has delta_t > 0
     if (bd .eq. 1) then
-        deltat_bc1(i) = -u(i) * dt + deltat_bc1(i)
+        deltat_bc1(i) = -velu_bc * dt + deltat_bc1(i)
         deltat_bc = deltat_bc1(i)
     else if (bd .eq. 2) then
-        deltat_bc2(i) = -v(i) * dt + deltat_bc2(i)
+        deltat_bc2(i) = -velv_bc * dt + deltat_bc2(i)
         deltat_bc = deltat_bc2(i)
     end if
 
@@ -144,7 +151,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ktc    = 6d0 * gc / ec * knc
 
-    krc = knc * delt_ridge_bc ** 2 / 12
+    krc    = knc * delt_ridge_bc ** 2 / 12
 
     ! compute the dashpots constant
     gamn   = -beta * sqrt( 4d0 * knc * mass(i) )
@@ -155,11 +162,11 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! is using dir as a way to pick the proper velocity for 
     ! normal or tangent force.
     fn_bc(i) = knc * deltan_bc &
-                - gamn * ( dir1 * u(i) + (1 - dir1) * v(i) )
+                - gamn * ( dir1 * velu_bc + (1 - dir1) * velv_bc )
 
     ! tangential force
     ft_bc(i) = ktc * deltat_bc &
-                - gamt * ( (1 - dir1) * u(i) + dir1 * v(i) )
+                - gamt * ( (1 - dir1) * velu_bc + dir1 * velv_bc )
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
@@ -167,13 +174,13 @@ subroutine contact_bc (i, dir1, dir2, bd)
         / h(i) ) then
             
             call plastic_contact_bc (i, deltan_bc, deltat_bc, &
-                                    delt_ridge_bc, krc, dir1)
+                                    delt_ridge_bc, krc, dir1, dir2)
 
         end if
     end if
 
 	! make sure that disks are slipping if not enough normal force
-    call coulomb_bc (i, dir1)
+    call coulomb_bc (i, dir1, dir2)
 
     ! moments due to rolling
     if (bd .eq. 1) then
@@ -182,7 +189,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc1(i) ) > 2 * abs(fn_bc(i)) / knc / &
-            deltat_bc ) then
+            delt_ridge_bc ) then
                 
             mrolling_bc = 0d0  
             !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
@@ -196,7 +203,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc2(i) ) > 2 * abs(fn_bc(i)) / knc / &
-            deltat_bc ) then
+            delt_ridge_bc ) then
                 
             mrolling_bc = 0d0
             !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
