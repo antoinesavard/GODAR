@@ -124,6 +124,22 @@ program ice
             num_threads = thread_num
         end if
 
+
+
+        print *, 'Total number of threads: ', n_ranks * num_threads
+
+        if (n_ranks > 1) then
+
+            print '(a)', &
+        '',&
+        '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',&
+        '!                                                        !',&
+        "!    Watch out! MPI is not working properly :'(          !",&
+        '!                                                        !',&
+        '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',&
+        '' 
+        end if
+
         print '(a)', &
         '',&
         '|--------------------------------------------------------|',&

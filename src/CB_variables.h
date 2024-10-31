@@ -50,7 +50,8 @@
                 deltat_bc1  (n),    & ! tangential compression on bd 1
                 deltat_bc2  (n),    & ! tangential compression on bd 2
                 theta_bc1   (n),    & ! angle for rolling on bd 1
-                theta_bc2   (n)       ! angle for rolling on bd 2
+                theta_bc2   (n),    & ! angle for rolling on bd 2
+                delt_ridge_bc(n)      ! tangent overlap for ridging bd
 
         
     common/variables/        & ! particle variables
@@ -106,4 +107,5 @@
                 deltat_bc1,  & ! tangential compression on bd 1      [m]
                 deltat_bc2,  & ! tangential compression on bd 2      [m]
                 theta_bc1,   & ! angle for rolling on boundary 1   [rad]
-                theta_bc2      ! angle for rolling on boundary 2   [rad]
+                theta_bc2,   & ! angle for rolling on boundary 2   [rad]
+                delt_ridge_bc  ! tangent overlap ridging bd          [m]

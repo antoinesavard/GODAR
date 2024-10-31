@@ -146,11 +146,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         sigxy(i)  = 0d0
         sigyx(i)  = 0d0
 
-        ! ! initial pressure
-        ! tac(i)    = 0d0
-        ! tab(i)    = 0d0
-
-        ! tp(i)     = 0d0
+        ! pressure
+        tp(i)  = 0d0
+        tac(i) = 0d0
+        tab(i) = 0d0
+        pc(i)  = 0d0
+        pb(i)  = 0d0
 
         ! initial forces and moments in the contact plane
         do j = 1, n
@@ -171,6 +172,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             ! sheltering coefficient
             hsfa(j, i) = 1d0
             hsfw(j, i) = 1d0
+            ! contact area
+            ac(j, i) = 0d0
         end do
 
         ! boundary

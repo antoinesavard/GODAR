@@ -73,27 +73,25 @@ subroutine diag_mean_pressure (j, i)
     !    P_i = \sum_{c} Fcn_{ij} * a_{ij} / \sum_{c} a_{ij}
     !
     !-------------------------------------------------------
-    ac     = deltat(j, i) * min(h(i), h(j))
-    tac(i) = tac(i) + ac
-
-    tab(i) = tab(i) + sb(j, i)
+    ! local area
+    ac(j,i) = delt_ridge(j, i) * min(h(i), h(j))
+    ! total contact area
+    tac(i)  = tac(i) + ac(j, i)
+    ! total bond area
+    tab(i)  = tab(i) + sb(j, i)
     
-    pc(i)  = pc(i) - fcn(j, i) * ac
-    pb(i)  = pb(i) - fbn(j, i) * sb(j, i)
-
-    tp(i)  = tp(i) + pc(i) / tac(i)        &
-                   + pb(i) / tab(i)       
+    ! pressure from contacts and bonds
+    pc(i)   = pc(i) - fcn(j, i) * ac(j, i)
+    pb(i)   = pb(i) - fbn(j, i) * sb(j, i)     
 
     ! symmetric part
-    tac(j) = tac(j) + ac
+    tac(j) = tac(j) + ac(j, i)
 
     tab(j) = tab(j) + sb(j, i)
     
-    pc(j)  = pc(j) - fcn(j, i) * ac
+    pc(j)  = pc(j) - fcn(j, i) * ac(j ,i)
     pb(j)  = pb(j) - fbn(j, i) * sb(j, i)
-
-    tp(j)  = tp(j) + pc(i) / tac(i)        &
-                   + pb(i) / tab(i)
+    ! end if
 
 
 end subroutine diag_mean_pressure

@@ -159,6 +159,7 @@ subroutine broadcast_total_forces
     include "CB_mpi.h"
     include "CB_diagnostics.h"
 
+    ! total forces
     call mpi_allreduce( &
     tfx_r, tfx, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
@@ -171,7 +172,7 @@ subroutine broadcast_total_forces
     m_r, m, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
-    ! same for stresses
+    ! total stresses
     call mpi_allreduce( &
     tsigxx_r, tsigxx, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
@@ -188,7 +189,10 @@ subroutine broadcast_total_forces
     tsigyx_r, tsigyx, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
-    ! same for pressure
+    ! total pressure
+    call mpi_allreduce( &
+    tp_r, tp, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
     
 
 end subroutine broadcast_total_forces
@@ -214,6 +218,7 @@ subroutine force_reduction
     include "CB_mpi.h"
     include "CB_diagnostics.h"
 
+    ! contact
     call mpi_allreduce( &
     fcx, fcx_r, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
@@ -223,6 +228,11 @@ subroutine force_reduction
     mpi_sum, mpi_comm_world, ierr)
 
     call mpi_allreduce( &
+    mc, mc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    ! bond
+    call mpi_allreduce( &
     fbx, fbx_r, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
@@ -231,14 +241,56 @@ subroutine force_reduction
     mpi_sum, mpi_comm_world, ierr)
 
     call mpi_allreduce( &
-    mc, mc_r, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
-
-    call mpi_allreduce( &
     mb, mb_r, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
-    ! same for stresses
+    ! forcing
+    call mpi_allreduce( &
+    fwx, fwx_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fwy, fwy_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    mw, mw_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fax, fax_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fay, fay_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    ma, ma_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fcorx, fcorx_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fcory, fcory_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    ! boundary
+    call mpi_allreduce( &
+    fx_bc, fx_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    fy_bc, fy_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    m_bc, m_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    ! stress
     call mpi_allreduce( &
     sigxx, sigxx_r, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
@@ -255,7 +307,48 @@ subroutine force_reduction
     sigyx, sigyx_r, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
-    ! same for pressure
+    ! boundary stress
+    call mpi_allreduce( &
+    sigxx_bc, sigxx_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+    
+    call mpi_allreduce( &
+    sigyy_bc, sigyy_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    sigxy_bc, sigxy_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    sigyx_bc, sigyx_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    ! pressure
+    call mpi_allreduce( &
+    tac, tac_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+    
+    call mpi_allreduce( &
+    tab, tab_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    pc, pc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    pb, pb_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    ! boundary pressure
+    call mpi_allreduce( &
+    ta_bc, ta_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    p_bc, p_bc_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
 
 
 end subroutine force_reduction

@@ -6,13 +6,14 @@ subroutine clear_posts (expno_str)
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, stat (23)
+    integer :: i, stat(24)
 	character(len=2), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
                          filet, fileo, fileb 
     character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
                          filefby, filem, filemc, filemb
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
+    character(len=20) :: filetp
     character(len=20) :: fileinfo
 
     ! position and state files
@@ -43,9 +44,14 @@ subroutine clear_posts (expno_str)
     filetsigxy = "output/tsigxy." // trim(adjustl(expno_str))
     filetsigyx = "output/tsigyx." // trim(adjustl(expno_str))
 
+    ! pressure file
+    filetp = "output/tp." // trim(adjustl(expno_str))
+
     ! info file
     fileinfo = "output/info." // trim(adjustl(expno_str))
 
+    ! open the files
+    ! position and state
 	open (10, file = filex, iostat = stat(1), status = 'old')
 	open (11, file = filey, iostat = stat(2), status = 'old')
     open (12, file = fileu, iostat = stat(3), status = 'old')
@@ -55,22 +61,29 @@ subroutine clear_posts (expno_str)
 	open (16, file = filet, iostat = stat(7), status = 'old')
 	open (17, file = fileo, iostat = stat(8), status = 'old')
 	open (18, file = fileb, iostat = stat(9), status = 'old')
+    ! forces
     open (19, file = filetfx, iostat = stat(10), status = 'old')
 	open (20, file = filetfy, iostat = stat(11), status = 'old')
     open (21, file = filefcx, iostat = stat(12), status = 'old')
 	open (22, file = filefcy, iostat = stat(13), status = 'old')
 	open (23, file = filefbx, iostat = stat(14), status = 'old')
 	open (24, file = filefby, iostat = stat(15), status = 'old')
+    ! moments
 	open (25, file = filem, iostat = stat(16), status = 'old')
 	open (26, file = filemc, iostat = stat(17), status = 'old')
 	open (27, file = filemb, iostat = stat(18), status = 'old')
+    ! stresses
     open (28, file = filetsigxx, iostat = stat(19), status = 'old')
     open (29, file = filetsigyy, iostat = stat(20), status = 'old')
     open (30, file = filetsigxy, iostat = stat(21), status = 'old')
     open (31, file = filetsigyx, iostat = stat(22), status = 'old')
-    open (32, file = fileinfo, iostat = stat(23), status = 'old')
+    ! pressure
+    open (32, file = filetp, iostat = stat(23), status = 'old')
+    ! info
+    open (33, file = fileinfo, iostat = stat(24), status = 'old')
 
-    do i = 10, 32
+    ! delete them
+    do i = 10, 33
         if (stat(i-9) .eq. 0) then
 			close(i, status = 'delete') 
 		else 

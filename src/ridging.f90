@@ -61,6 +61,7 @@ subroutine update_shape (j, i)
 
         h(i) = h(i) + dh
 
+        ! recalculate floe freeboard
         call floe_properties(i)
 
     else if ( hmin .eq. h(j) ) then
@@ -71,14 +72,19 @@ subroutine update_shape (j, i)
 
         h(j) = h(j) + dh
 
+        ! recalculate floe freeboard
         call floe_properties(j)
 
     end if
 
+    ! update the new tangent overlap for pressure
+    delt_ridge(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
+                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 )
+
 end subroutine update_shape
 
 
-subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir1, dir2)
+subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, krc, dir1, dir2)
 
     implicit none
 
@@ -87,7 +93,7 @@ subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir1, 
     include "CB_const.h"
 
     integer, intent(in) :: i, dir1, dir2
-    double precision, intent(in) :: deltan_bc, deltat_bc, deltat_r_bc
+    double precision, intent(in) :: deltan_bc, deltat_bc
     double precision, intent(out) :: krc
 
     double precision :: knc, ktc, gamn, gamt
@@ -99,9 +105,9 @@ subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir1, 
     velv_bc = ( (1 - dir2) * v(i) - dir2 * v(i) )
 
     ! compute the spring constants
-    knc    = sigmanc_crit * h(i) ** 2 * deltat_r_bc / deltan_bc
+    knc    = sigmanc_crit * h(i) ** 2 * delt_ridge_bc(i) / deltan_bc
     ktc    = 6d0 * gc / ec * knc
-    krc    = knc * deltat_r_bc ** 2 / 12
+    krc    = knc * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the dashpots constants
     gamn   = -beta * sqrt( 4d0 * knc * m(i) )
@@ -114,12 +120,12 @@ subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, deltat_r_bc, krc, dir1, 
     ft_bc(i) = ktc * deltat_bc &
                 - gamt * ( (1 - dir1) * velu_bc + dir1 * velv_bc )
 
-    call update_shape_bc (i, deltat_r_bc)
+    call update_shape_bc (i, deltan_bc)
 
 end subroutine plastic_contact_bc
 
 
-subroutine update_shape_bc (i, deltat_r_bc)
+subroutine update_shape_bc (i, deltan_bc)
 
     implicit none 
 
@@ -128,11 +134,11 @@ subroutine update_shape_bc (i, deltat_r_bc)
     include "CB_const.h"
 
     integer, intent(in) :: i
-    double precision, intent(in) :: deltat_r_bc
+    double precision, intent(in) :: deltan_bc
 
     double precision :: dh, Vol, Area
 
-    Area = r(i) ** 2 * asin(deltat_r_bc / 2 / r(i))
+    Area = r(i) ** 2 * asin(delt_ridge_bc(i) / 2 / r(i))
 
     Vol = Area * h(i)
 
@@ -142,6 +148,10 @@ subroutine update_shape_bc (i, deltat_r_bc)
 
     h(i) = h(i) + dh
 
+    ! recalculate the floe freeboard etc.
     call floe_properties(i)
+
+    ! update the new tangent overlap for pressure
+    delt_ridge_bc(i) = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
 
 end subroutine update_shape_bc

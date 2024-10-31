@@ -109,7 +109,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
     double precision :: fit
     double precision :: knc, ktc, gamn, gamt
     double precision :: krc
-    double precision :: deltat_bc, deltan_bc, delt_ridge_bc
+    double precision :: deltat_bc, deltan_bc
     double precision :: mrolling_bc
     double precision :: velu_bc, velv_bc
 
@@ -126,7 +126,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
                         dir2 * (r(i) + y(i) - ny) ) * (1 - dir1)
 
     deltat_bc = 0d0
-    delt_ridge_bc = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
+    delt_ridge_bc(i) = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
 
     ! compression has delta_t > 0
     if (bd .eq. 1) then
@@ -151,7 +151,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ktc    = 6d0 * gc / ec * knc
 
-    krc    = knc * delt_ridge_bc ** 2 / 12
+    krc    = knc * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the dashpots constant
     gamn   = -beta * sqrt( 4d0 * knc * mass(i) )
@@ -170,11 +170,11 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
-        if ( sigmanc_crit * h(i) .le. fn_bc(i) / delt_ridge_bc &
+        if ( sigmanc_crit * h(i) .le. fn_bc(i) / delt_ridge_bc(i) &
         / h(i) ) then
             
             call plastic_contact_bc (i, deltan_bc, deltat_bc, &
-                                    delt_ridge_bc, krc, dir1, dir2)
+                                    delt_ridge_bc(i), krc, dir1, dir2)
 
         end if
     end if
@@ -189,7 +189,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc1(i) ) > 2 * abs(fn_bc(i)) / knc / &
-            delt_ridge_bc ) then
+            delt_ridge_bc(i) ) then
                 
             mrolling_bc = 0d0  
             !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
@@ -203,7 +203,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc2(i) ) > 2 * abs(fn_bc(i)) / knc / &
-            delt_ridge_bc ) then
+            delt_ridge_bc(i) ) then
                 
             mrolling_bc = 0d0
             !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &

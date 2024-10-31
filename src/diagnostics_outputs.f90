@@ -16,6 +16,7 @@ subroutine sea_ice_post (tstep, expno_str)
     character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
                          filefby, filem, filemc, filemb
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
+    character(len=20) :: filetp
 
 	! position and state files
     filex = "output/x." // trim(adjustl(expno_str))
@@ -44,6 +45,9 @@ subroutine sea_ice_post (tstep, expno_str)
     filetsigyy = "output/tsigyy." // trim(adjustl(expno_str))
     filetsigxy = "output/tsigxy." // trim(adjustl(expno_str))
     filetsigyx = "output/tsigyx." // trim(adjustl(expno_str))
+
+    ! pressure file
+    filetp = "output/tp." // trim(adjustl(expno_str))
 
     ! ! writing in the files
     ! ! physical properties
@@ -105,6 +109,7 @@ subroutine sea_ice_post (tstep, expno_str)
     !                 "Newtons per meter", expno_str, "tsigyx", tstep)
 
     ! opening the files
+    ! position and state
 	open (10, file = filex, access = 'append', status = 'unknown')
 	open (11, file = filey, access = 'append', status = 'unknown')
     open (12, file = fileu, access = 'append', status = 'unknown')
@@ -114,20 +119,27 @@ subroutine sea_ice_post (tstep, expno_str)
 	open (16, file = filet, access = 'append', status = 'unknown')
 	open (17, file = fileo, access = 'append', status = 'unknown')
 	open (18, file = fileb, access = 'append', status = 'unknown')
+    ! forces
     open (19, file = filetfx, access = 'append', status = 'unknown')
 	open (20, file = filetfy, access = 'append', status = 'unknown')
     open (21, file = filefcx, access = 'append', status = 'unknown')
 	open (22, file = filefcy, access = 'append', status = 'unknown')
 	open (23, file = filefbx, access = 'append', status = 'unknown')
 	open (24, file = filefby, access = 'append', status = 'unknown')
+    ! moments
 	open (25, file = filem, access = 'append', status = 'unknown')
 	open (26, file = filemc, access = 'append', status = 'unknown')
 	open (27, file = filemb, access = 'append', status = 'unknown')
+    ! stresses
     open (28, file = filetsigxx, access = 'append', status = 'unknown')
     open (29, file = filetsigyy, access = 'append', status = 'unknown')
     open (30, file = filetsigxy, access = 'append', status = 'unknown')
     open (31, file = filetsigyx, access = 'append', status = 'unknown')
+    ! pressure
+    open (32, file = filetp, access = 'append', status = 'unknown')
 
+
+    ! write on the files
 	write(10,*) ( x(i),   	i=1, n )
 	write(11,*) ( y(i),    	i=1, n )
     write(12,*) ( u(i),   	i=1, n )
@@ -153,8 +165,9 @@ subroutine sea_ice_post (tstep, expno_str)
     write(29,*) ( tsigyy(i),	i=1, n )
     write(30,*) ( tsigxy(i),	i=1, n )
     write(31,*) ( tsigyx(i),	i=1, n )
+    write(32,*) ( tp(i),	i=1, n )
 
-    do i = 10, 31
+    do i = 10, 32
         close(i)
     end do
 

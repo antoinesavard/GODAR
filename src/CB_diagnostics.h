@@ -19,14 +19,15 @@
                 sigyx_bc    (n)       ! yx stress on each particle
 
     double precision ::             & ! pressure variables  
-                ac               ,  & ! area of one contact 
+                ac          (n,n),  & ! area of one contact 
                 tac         (n)  ,  & ! total area of contact
                 tab         (n)  ,  & ! total area of bonds
                 pc          (n)  ,  & ! pressure of contacts
                 pb          (n)  ,  & ! pressure of bonds
+                ! total
                 tp          (n)  ,  & ! total pressure
                 ! boundary conditions
-                tac_bc      (n)  ,  & ! total area of bc contacts
+                ta_bc       (n)  ,  & ! total area of bc contacts
                 p_bc        (n)       ! total pressure of bc
 
 
@@ -43,7 +44,6 @@
                 sigxy_bc,    & ! xy stress on each particle      [N/m^2]
                 sigyx_bc       ! yx stress on each particle      [N/m^2]
 
-
     common/diag_omp_stress/     & ! stress openmp variables
                 sigxx   ,    & ! xx stress on each particle      [N/m^2]
                 sigyy   ,    & ! yy stress on each particle      [N/m^2]
@@ -53,11 +53,14 @@
 
     common/diag_pressure_var/   & ! pressure variables
                 ac            , & ! area of one contact           [m^-2]
+                ! total
+                tp            , & ! total pressure                   [N]
+                ! boundary conditions
+                ta_bc         , & ! total area of bc contacts     [m^-2]
+                p_bc              ! total pressure of bc             [N]
+
+    common/diag_omp_pressure/   & ! pressure openmp variables
                 tac           , & ! total area of contact         [m^-2]
                 tab           , & ! total area of bonds           [m^-2]
                 pc            , & ! pressure of contacts             [N]
-                pb            , & ! pressure of bonds                [N]
-                tp            , & ! total pressure                   [N]
-                ! boundary conditions
-                tac_bc        , & ! total area of bc contacts     [m^-2]
-                p_bc              ! total pressure of bc             [N]
+                pb                ! pressure of bonds                [N]

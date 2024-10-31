@@ -30,6 +30,7 @@ subroutine stepper (tstep)
 
     ! reset the forces and sheltering height
     call reset_forces
+
     if ( shelter .eqv. .true. ) then
         call reset_shelter
     end if
@@ -78,19 +79,41 @@ subroutine stepper (tstep)
                 
                 ! change coordinate system
 				! update contact force on particle i by particle j
-                fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i)
-                fcy(i) = fcy(i) - fcn(j,i) * sina(j,i)
+                fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i) +    &
+                                        fct(j,i) * sina(j,i)
+                fcy(i) = fcy(i) - fcn(j,i) * sina(j,i) -    &
+                                        fct(j,i) * cosa(j,i)
 
                 ! update moment on particule i by particule j due to tangent contact 
                 mc(i) = mc(i) - r(i) * fct(j,i) - mcc(j,i)
 
                 ! Newton's third law
                 ! update contact force on particle j by particle i
-                fcx(j) = fcx(j) + fcn(j,i) * cosa(j,i)
-                fcy(j) = fcy(j) + fcn(j,i) * sina(j,i)
+                fcx(j) = fcx(j) + fcn(j,i) * cosa(j,i) -    &
+                                        fct(j,i) * sina(j,i)
+                fcy(j) = fcy(j) + fcn(j,i) * sina(j,i) +    &
+                                        fct(j,i) * cosa(j,i)
 
                 ! update moment on particule j by particule i due to tangent contact 
                 mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)
+
+                ! if ( flag_diag_pressure .eqv. .true. ) then
+                ! compute the average pressure inside particle i
+                !-------------------------------------------------------
+                !
+                !    P_i = \sum_{c} Fcn_{ij} * a_{ij} / \sum_{c} a_{ij}
+                !
+                !-------------------------------------------------------
+                ! local area
+                ac(j,i) = delt_ridge(j, i) * min(h(i), h(j))
+                ! total contact area
+                tac(i)  = tac(i) + ac(j, i)
+                ! pressure from contacts
+                pc(i)   = pc(i) - fcn(j, i) * ac(j, i)
+                ! symmetric part
+                tac(j) = tac(j) + ac(j, i)
+                pc(j)  = pc(j) - fcn(j, i) * ac(j ,i)
+                ! end if
 
             else
             
@@ -126,6 +149,23 @@ subroutine stepper (tstep)
 
                     ! update moment on particule j by i due to bond
                     mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
+
+                    ! if ( flag_diag_pressure .eqv. .true. ) then
+                    ! compute the average pressure inside particle i
+                    !---------------------------------------------------
+                    !
+                    ! P_i = \sum_{c} Fbn_{ij} * a_{ij} / \sum_{c} a_{ij}
+                    !
+                    !---------------------------------------------------
+                    ! total bond area
+                    tab(i)  = tab(i) + sb(j, i)                   
+                    ! pressure from bonds
+                    pb(i)   = pb(i) - fbn(j, i) * sb(j, i)     
+                    
+                    ! symmetric part
+                    tab(j) = tab(j) + sb(j, i)
+                    pb(j)  = pb(j) - fbn(j, i) * sb(j, i)
+                    ! end if
 
                 end if
 
@@ -188,10 +228,6 @@ subroutine stepper (tstep)
                         sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
                         cosa(j,i) * r(i) * sina(j,i)
             ! end if
-            
-            ! if ( flag_diag_pressure .eqv. .true. ) then
-            !     call diag_mean_pressure (j, i)
-            ! end if
 
         end do
 
@@ -213,22 +249,25 @@ subroutine stepper (tstep)
 
     ! sum all forces together on particule i
     do i = last_iter, first_iter, -1
-        tfx_r(i) = fcx_r(i) + fbx_r(i) + fax(i) + fwx(i) + fcorx(i) &
-                    + fx_bc(i)
-        tfy_r(i) = fcy_r(i) + fby_r(i) + fay(i) + fwy(i) + fcory(i) &
-                    + fy_bc(i)
+        tfx_r(i) = fcx_r(i) + fbx_r(i) + fax_r(i) + fwx_r(i) &
+                    + fcorx_r(i) + fx_bc_r(i)
+        tfy_r(i) = fcy_r(i) + fby_r(i) + fay_r(i) + fwy_r(i) &
+                    + fcory_r(i) + fy_bc(i)
 
         ! sum all moments on particule i together
-        m_r(i) =  mc_r(i) + mb_r(i) + ma(i) + mw(i) + m_bc(i)
+        m_r(i) =  mc_r(i) + mb_r(i) + ma_r(i) + mw_r(i) + m_bc_r(i)
 
         ! same for stresses
-        tsigxx_r(i) = sigxx_r(i) + sigxx_bc(i)
-        tsigyy_r(i) = sigyy_r(i) + sigyy_bc(i)
-        tsigxy_r(i) = sigxy_r(i) + sigxy_bc(i)
-        tsigyx_r(i) = sigyx_r(i) + sigyx_bc(i)
+        tsigxx_r(i) = sigxx_r(i) + sigxx_bc_r(i)
+        tsigyy_r(i) = sigyy_r(i) + sigyy_bc_r(i)
+        tsigxy_r(i) = sigxy_r(i) + sigxy_bc_r(i)
+        tsigyx_r(i) = sigyx_r(i) + sigyx_bc_r(i)
 
-        ! ! same for pressure
-        ! tp_r(i) = pc_r(i) + pc_r(i) + p_bc(i)
+        ! same for pressure
+        tp_r(i) =   merge(pc_r(i) / tac_r(i), 0d0, tac_r(i) /= 0d0) &
+                  + merge(pb_r(i) / tab_r(i), 0d0, tab_r(i) /= 0d0) &
+                  + merge(p_bc_r(i) / ta_bc_r(i), 0d0,              &
+                            ta_bc_r(i) /= 0d0)
     end do
 
     ! broadcast forces to all so that the nodes can each update their x and u
@@ -245,47 +284,3 @@ subroutine stepper (tstep)
     call position
 
 end subroutine stepper
-
-
-subroutine normal_forces (side, tstep)
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-
-    character (*), intent(in) :: side
-    integer, intent(in) :: tstep
-
-    double precision :: ftmp, tau
-    integer :: i
-    
-    ! ~12 seconds is required to resolve the elastic wave travelling 30km
-    tau = 50 / dt
-
-    ! forces on the right of the assembly
-    ! forces on the right of the assembly
-    if ( side == "right" ) then
-        ftmp = 0d0!maxval(tfx(n-29:n))
-!        if (tstep*dt < 75d-2) then
-!            if (tstep*dt > 25d-2) then
-                !do i = n, n - 9, -1!n, n - 29 , -1
-                    tfx(10) = tfx(10) + ftmp + pfn * tanh( tstep / tau )
-                !end do
-!            end if       
-        !end if
-     end if    
-
-    ! no forces on the left of assembly (fixed)
-    if ( side == "left" ) then
-        do i = n - 30, n - 59 , -1
-            tfy(i) = 0d0
-            tfx(i) = 0d0
-        end do
-    end if
-
-
-end subroutine normal_forces
