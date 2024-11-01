@@ -86,9 +86,6 @@ subroutine rel_pos_vel (j, i)
 	! normal overlap (displacement) deltan >=0
 	deltan(j,i)  =  r(i) + r(j) - dist(j,i)
     
-    ! tangent overlap
-    deltat(j,i)  =  0d0
-    
 end subroutine rel_pos_vel
 
 
