@@ -1,4 +1,4 @@
-subroutine plastic_contact (j, i, m_redu, hmin, krc)
+subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt)
 
     implicit none
 
@@ -8,9 +8,9 @@ subroutine plastic_contact (j, i, m_redu, hmin, krc)
 
     integer, intent(in) :: j, i
     double precision, intent(in) :: m_redu, hmin
-    double precision, intent(out) :: krc
+    double precision, intent(out) :: ktc, krc, gamt
 
-    double precision :: knc, ktc, gamn, gamt
+    double precision :: knc, gamn
 
     ! compute the spring constants
     knc    = sigmanc_crit * hmin ** 2 * delt_ridge(j,i) / deltan(j,i)
@@ -84,7 +84,7 @@ subroutine update_shape (j, i)
 end subroutine update_shape
 
 
-subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, krc, dir1, dir2)
+subroutine plastic_contact_bc (i,  dir1, dir2, deltan_bc, deltat_bc, ktc, krc, gamt)
 
     implicit none
 
@@ -94,9 +94,9 @@ subroutine plastic_contact_bc (i, deltan_bc, deltat_bc, krc, dir1, dir2)
 
     integer, intent(in) :: i, dir1, dir2
     double precision, intent(in) :: deltan_bc, deltat_bc
-    double precision, intent(out) :: krc
+    double precision, intent(out) :: ktc, krc, gamt
 
-    double precision :: knc, ktc, gamn, gamt
+    double precision :: knc, gamn
     double precision :: velu_bc, velv_bc
 
     ! relative velocities

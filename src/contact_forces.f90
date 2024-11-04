@@ -54,13 +54,13 @@ subroutine contact_forces (j, i)
         if ( sigmanc_crit * hmin .le. fcn(j,i) / delt_ridge(j,i) &
         / hmin ) then
             
-            call plastic_contact (j, i, m_redu, hmin, krc)
+            call plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt)
 
         end if
     end if
 
 	! make sure that disks are slipping if not enough normal force
-    call coulomb (j, i)
+    call coulomb (j, i, ktc, gamt)
 
     if ( bond (j, i) .eq. 0 ) then
         ! moments due to rolling
@@ -70,7 +70,7 @@ subroutine contact_forces (j, i)
         if ( abs( thetarelc(j, i) ) > 2 * abs(fcn(j,i)) / knc / &
             delt_ridge(j,i) ) then
                 
-            mrolling = 0
+            mrolling = 0d0
             !mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
                         !sign(1d0, omegarel(j,i))
         
@@ -173,17 +173,18 @@ subroutine contact_bc (i, dir1, dir2, bd)
         if ( sigmanc_crit * h(i) .le. fn_bc(i) / delt_ridge_bc(i) &
         / h(i) ) then
             
-            call plastic_contact_bc (i, deltan_bc, deltat_bc, &
-                                    delt_ridge_bc(i), krc, dir1, dir2)
+            call plastic_contact_bc (i, dir1, dir2, deltan_bc, &
+                                        deltat_bc, delt_ridge_bc(i), &
+                                        ktc, krc, gamt)
 
         end if
     end if
 
-	! make sure that disks are slipping if not enough normal force
-    call coulomb_bc (i, dir1, dir2)
-
     ! moments due to rolling
     if (bd .eq. 1) then
+
+        ! make sure that disks are slipping if not enough normal force
+        call coulomb_bc (i, dir1, dir2, ktc, gamt, deltat_bc1(i))
 
         mrolling_bc = -krc * theta_bc1(i) 
 
@@ -198,6 +199,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
         end if
 
     else if (bd .eq. 2) then
+
+        ! make sure that disks are slipping if not enough normal force
+        call coulomb_bc (i, dir1, dir2, ktc, gamt, deltat_bc2(i))
 
         mrolling_bc = -krc * theta_bc2(i)
 

@@ -18,6 +18,7 @@
     double precision ::             & ! force variables
                 fcn         (n,n),  & ! normal contact forces
                 fct         (n,n),  & ! tangential contact forces
+                fcr         (n,n),  & ! rolling forces due to friction
                 fcx         (n)  ,  & ! contact forces in x
                 fcy         (n)  ,  & ! contact forces in y
                 mc          (n)  ,  & ! moment due to contact
@@ -43,6 +44,7 @@
     double precision ::             & ! boundary condition forces
                 fn_bc       (n),    & ! normal force
                 ft_bc       (n),    & ! tangential force
+                fr_bc       (n),    & ! rolling force due to friction
                 fx_bc       (n),    & ! force in x direction
                 fy_bc       (n),    & ! force in y direction
                 mc_bc       (n),    & ! moment of rolling on boundary
@@ -71,6 +73,7 @@
     common/variables/        & ! force variables
                 fcn     ,    & ! perp forces contact                 [N]
                 fct     ,    & ! tangent forces contact              [N]
+                fcr     ,    & ! rolling forces friction             [N]
                 mcc     ,    & ! moment due to rolling             [N*m]
                 tfx     ,    & ! total force in x                    [N]
                 tfy     ,    & ! total force in y                    [N]
@@ -100,6 +103,7 @@
     common/variables/        & ! boundary condition forces
                 fn_bc   ,    & ! normal force                        [N]
                 ft_bc   ,    & ! tangential force                    [N]
+                fr_bc   ,    & ! rolling forces friction             [N]
                 fx_bc   ,    & ! force in x direction                [N]
                 fy_bc   ,    & ! force in y direction                [N]
                 mc_bc   ,    & ! moment of rolling on boundary     [N*m]

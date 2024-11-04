@@ -80,9 +80,9 @@ subroutine stepper (tstep)
                 ! change coordinate system
 				! update contact force on particle i by particle j
                 fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i) +    &
-                                        fct(j,i) * sina(j,i)
+                                        fcr(j,i) * sina(j,i)
                 fcy(i) = fcy(i) - fcn(j,i) * sina(j,i) -    &
-                                        fct(j,i) * cosa(j,i)
+                                        fcr(j,i) * cosa(j,i)
 
                 ! update moment on particule i by particule j due to tangent contact 
                 mc(i) = mc(i) - r(i) * fct(j,i) - mcc(j,i)
@@ -90,9 +90,9 @@ subroutine stepper (tstep)
                 ! Newton's third law
                 ! update contact force on particle j by particle i
                 fcx(j) = fcx(j) + fcn(j,i) * cosa(j,i) -    &
-                                        fct(j,i) * sina(j,i)
+                                        fcr(j,i) * sina(j,i)
                 fcy(j) = fcy(j) + fcn(j,i) * sina(j,i) +    &
-                                        fct(j,i) * cosa(j,i)
+                                        fcr(j,i) * cosa(j,i)
 
                 ! update moment on particule j by particule i due to tangent contact 
                 mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)

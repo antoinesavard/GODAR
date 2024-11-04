@@ -157,6 +157,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         do j = 1, n
             fcn(j,i)  =  0d0
             fct(j,i)  =  0d0
+            fcr(j,i)  =  0d0
             mbb(j,i)  =  0d0
             mcc(j,i)  =  0d0
             fbn(j,i)  =  0d0

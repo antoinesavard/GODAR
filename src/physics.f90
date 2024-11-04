@@ -1,4 +1,4 @@
-subroutine coulomb (j, i)
+subroutine coulomb (j, i, ktc, gamt)
 
     implicit none
 
@@ -7,19 +7,29 @@ subroutine coulomb (j, i)
     include "CB_const.h"
 
     integer, intent(in) :: i, j
+    double precision, intent(in) :: ktc, gamt
 
-	! ensures slipping if force_t is too big
+	! ensures slipping if fct is too big (kinetic friction)
+    ! this is applied both on center of mass and moment
     if ( abs( fct(j,i) ) > friction_coeff * abs( fcn(j,i) ) ) then
 
         fct(j,i) = - friction_coeff * abs( fcn(j,i) ) * &
                     sign(1d0, velt(j,i))
+        deltat(j,i) = (fct(j,i) + gamt * velt(j,i)) / ktc
+        fcr(j,i) = fct(j,i)
+
+    ! static friction is not applied on center of mass, it only
+    ! creates a moment
+    else
+
+        fcr(j,i) = 0d0
 
     end if
     
 end subroutine coulomb
 
 
-subroutine coulomb_bc (i, dir1, dir2)
+subroutine coulomb_bc (i, dir1, dir2, ktc, gamt, deltat_bc)
 
     implicit none
 
@@ -29,6 +39,8 @@ subroutine coulomb_bc (i, dir1, dir2)
 
     integer, intent(in) :: i
     integer, intent(in) :: dir1, dir2
+    double precision, intent(in) :: ktc, gamt
+    double precision, intent(out) :: deltat_bc
 
     double precision :: velu_bc, velv_bc
 
@@ -37,12 +49,22 @@ subroutine coulomb_bc (i, dir1, dir2)
 
     velv_bc = ( (1 - dir2) * v(i) - dir2 * v(i) )
 
-	! ensures slipping if force_t is too big
+	! ensures slipping if force_t is too big (kinetic friction)
+    ! this is applied both on center of mass and moment
     if ( abs( ft_bc(i) ) > friction_coeff * abs( fn_bc(i) ) ) then
 
         ft_bc(i) = - friction_coeff * abs( fn_bc(i) ) * &
                     sign(1d0, (1 - dir1) * velu_bc +    &
                     dir1 * velv_bc )
+        deltat_bc = (ft_bc(i) + gamt * ((1 - dir1) * velu_bc +    &
+                    dir1 * velv_bc)) / ktc
+        fr_bc(i) = ft_bc(i)
+
+    ! static friction is not applied on center of mass, it only
+    ! creates a moment
+    else
+
+        fr_bc(i) = 0d0
 
     end if
     

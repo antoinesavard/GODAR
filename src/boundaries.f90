@@ -27,7 +27,7 @@ subroutine verify_bc (i)
 
         ! update the forces applied by the boundaries on each particle
         fy_bc(i) = fy_bc(i) + fn_bc(i)
-        fx_bc(i) = fx_bc(i) + ft_bc(i)
+        fx_bc(i) = fx_bc(i) + fr_bc(i)
 
         ! update the moment applied by the boundaries on each particle
         m_bc(i) = m_bc(i) + mc_bc(i) + r(i) * ft_bc(i)
@@ -57,7 +57,7 @@ subroutine verify_bc (i)
 
         ! update the forces applied by the boundaries on each particle
         fy_bc(i) = fy_bc(i) - fn_bc(i)
-        fx_bc(i) = fx_bc(i) - ft_bc(i)
+        fx_bc(i) = fx_bc(i) - fr_bc(i)
 
         ! update the moment applied by the boundaries on each particle
         m_bc(i) = m_bc(i) - mc_bc(i) - r(i) * ft_bc(i)
@@ -92,7 +92,7 @@ subroutine verify_bc (i)
 
         ! update the forces applied by the boundaries on each particle
         fx_bc(i) = fx_bc(i) + fn_bc(i)
-        fy_bc(i) = fy_bc(i) + ft_bc(i)
+        fy_bc(i) = fy_bc(i) + fr_bc(i)
 
         ! update the moment applied by the boundaries on each particle
         m_bc(i) = m_bc(i) - mc_bc(i) - r(i) * ft_bc(i)
@@ -123,7 +123,7 @@ subroutine verify_bc (i)
 
         ! update the forces applied by the boundaries on each particle
         fx_bc(i) = fx_bc(i) - fn_bc(i)
-        fy_bc(i) = fy_bc(i) - ft_bc(i)
+        fy_bc(i) = fy_bc(i) - fr_bc(i)
 
         ! update the moment applied by the boundaries on each particle
         m_bc(i) = m_bc(i) - mc_bc(i) - r(i) * ft_bc(i)
