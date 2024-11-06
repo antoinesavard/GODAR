@@ -14,7 +14,7 @@ subroutine get_default
     !-------------------------------------------------------------------
 
     dynamics  = .true.             ! dynamical forcings
-    slippping = .false.            ! enables slipping
+    slipping  = .false.            ! enables slipping
     thermodyn = .false.            ! thermo or not
     cohesion  = .true.             ! bonds/no bond
     ridging   = .true.             ! plastic behavior at contact
