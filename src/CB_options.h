@@ -4,10 +4,11 @@
 
     logical ::                      & ! bool options for the model
                 dynamics        ,   &
+                slipping        ,   &
                 thermodyn       ,   &
                 cohesion        ,   &
-		ridging         ,   &
-		shelter
+		            ridging         ,   &
+		            shelter
 
     logical ::                          & ! bool flags for diagnostics
                 flag_diag_stress    ,   & ! compute and output stress
@@ -16,10 +17,11 @@
         
     common/options/                 & ! options for the model
                 dynamics        ,   & ! dynamical forcings
+                slipping        ,   & ! slipping or not
                 thermodyn       ,   & ! melt/growth
                 cohesion        ,   & ! bond/no bond
-		ridging         ,   & ! plastic behavior at contact
-		shelter               ! sheltering from other particles
+		            ridging         ,   & ! plastic behavior at contact
+		            shelter               ! sheltering from other particles
 
     common/flags/                       & ! flags for the diagnostics
                 flag_diag_stress    ,   & ! stress diag

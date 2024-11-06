@@ -123,7 +123,7 @@ subroutine read_namelist (namelist_name)
 
     !---- namelist variables -------------------------------------------
     namelist /options_nml/ &
-        dynamics, thermodyn, cohesion, ridging, shelter
+        dynamics, slipping, thermodyn, cohesion, ridging, shelter
     
     namelist /numerical_param_nml/ &
         rtree, dt, nt, comp

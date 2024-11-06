@@ -1,5 +1,6 @@
 &options_nml
     dynamics  = .true.             ! dynamical forcing
+    slipping  = .false.            ! enables slipping
     thermodyn = .false.            ! growth/melt
     cohesion  = .false.            ! bond/no bond
     ridging   = .false.            ! plastic behavior at contact

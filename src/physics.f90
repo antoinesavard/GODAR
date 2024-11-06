@@ -5,6 +5,7 @@ subroutine coulomb (j, i, ktc, gamt)
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+    include "CB_options.h"
 
     integer, intent(in) :: i, j
     double precision, intent(in) :: ktc, gamt
@@ -15,56 +16,54 @@ subroutine coulomb (j, i, ktc, gamt)
 
         fct(j,i) = - friction_coeff * abs( fcn(j,i) ) * &
                     sign(1d0, velt(j,i))
-        deltat(j,i) = (fct(j,i) + gamt * velt(j,i)) / ktc
         fcr(j,i) = fct(j,i)
+        
+        if ( slipping .eqv. .true. ) then
+            deltat(j,i) = (fct(j,i) + gamt * velt(j,i)) / ktc
+        end if
 
     ! static friction is not applied on center of mass, it only
     ! creates a moment
     else
 
-        fcr(j,i) = 0d0
+        fcr(j,i) = fct(j,i)
 
     end if
     
 end subroutine coulomb
 
 
-subroutine coulomb_bc (i, dir1, dir2, ktc, gamt, deltat_bc)
+subroutine coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc)
 
     implicit none
 
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+    include "CB_options.h" 
 
     integer, intent(in) :: i
-    integer, intent(in) :: dir1, dir2
+    double precision, intent(in) :: velt_bc
     double precision, intent(in) :: ktc, gamt
     double precision, intent(out) :: deltat_bc
-
-    double precision :: velu_bc, velv_bc
-
-    ! relative velocities
-    velu_bc = ( (1 - dir2) * u(i) - dir2 * u(i) )
-
-    velv_bc = ( (1 - dir2) * v(i) - dir2 * v(i) )
 
 	! ensures slipping if force_t is too big (kinetic friction)
     ! this is applied both on center of mass and moment
     if ( abs( ft_bc(i) ) > friction_coeff * abs( fn_bc(i) ) ) then
 
         ft_bc(i) = - friction_coeff * abs( fn_bc(i) ) * &
-                    sign(1d0, (1 - dir1) * velu_bc +    &
-                    dir1 * velv_bc )
-        deltat_bc = (ft_bc(i) + gamt * ((1 - dir1) * velu_bc +    &
-                    dir1 * velv_bc)) / ktc
+                    sign(1d0, velt_bc )
         fr_bc(i) = ft_bc(i)
+        
+        if ( slipping .eqv. .true. ) then
+            deltat_bc = (ft_bc(i) + gamt * velt_bc) / ktc
+        end if
 
     ! static friction is not applied on center of mass, it only
     ! creates a moment
     else
 
-        fr_bc(i) = 0d0
+        fr_bc(i) = ft_bc(i)
 
     end if
     
