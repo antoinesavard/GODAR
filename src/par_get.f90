@@ -14,7 +14,7 @@ subroutine get_default
     !-------------------------------------------------------------------
 
     dynamics  = .true.             ! dynamical forcings
-    slipping  = .false.            ! enables slipping
+    slipping  = .true.             ! enables slipping
     thermodyn = .false.            ! thermo or not
     cohesion  = .true.             ! bonds/no bond
     ridging   = .true.             ! plastic behavior at contact
@@ -240,6 +240,19 @@ subroutine read_namelist (namelist_name)
     end if
 
     close(filenb)
+
+    ! warnings
+    if (slipping .eqv. .false.) then
+        print '(a)', &
+    '',&
+    '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',&
+    '!                                                        !',&
+    "!    Watch out! Slipping is required for                 !",&
+    "!    numerical stability of the tangent forces!          !",&
+    '!                                                        !',&
+    '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',&
+    ''
+    end if
 
     ! recompute compound variables with updated values of parameters
     t = nt * dt

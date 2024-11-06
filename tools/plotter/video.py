@@ -7,10 +7,17 @@ import sys
 
 # ----------------------------------------------------------------------
 
-xaxis_limits = 30  # in km
-yaxis_limits = 30  # in km
+xaxis_limits = 6  # in km
+yaxis_limits = 3  # in km
+
+# coming from sim
+nt = 1e5
+dt = 1e-3  # tstep size in sim
+comp = 1e2  # compression in sim
+
+# miscalleneous
 sf = 1e3  # conversion ratio m <-> km
-compression = 1  # data compression
+compression = 1  # data compression of videos
 
 # ----------------------------------------------------------------------
 
@@ -186,7 +193,7 @@ def animate(k, time):
                     angleb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
                 )
                 bond.set_width(lb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]])
-    time.set_text("t = {}".format(k + 1))
+    time.set_text("t = {}s".format(round(dt * comp * compression * (k + 1))))
 
     return disks, radii, bonds
 
