@@ -14,7 +14,7 @@ subroutine bond_forces (j, i)
     double precision :: fit
     double precision :: r_redu, hmin
 
-    thetarelb(j,i) = omegarel(j,i) * dt + thetarelb(j,i)
+    thetarelb(j,i) = -omegarel(j,i) * dt + thetarelb(j,i)
 
     ! compression has delta>0
     deltanb(j,i) = -veln(j,i) * dt + deltanb(j,i)
@@ -44,17 +44,17 @@ subroutine bond_forces (j, i)
                 - gamma_d * velt(j,i)
 
 	! moments for bending and twisting motion
-    mbending = -ktb(j, i) * ib(j, i) * thetarelb(j,i)
+    mbending = ktb(j, i) * ib(j, i) * thetarelb(j,i)
 
     ! moments due to rolling
-    mrolling = -krb * thetarelb(j, i)
+    mrolling = krb * thetarelb(j, i)
 
     ! ensures no rolling if moment is too big
     if ( abs(thetarelb(j, i)) > 2 * (sqrt(3d0) * sigmacb_crit * &
          hb(j,i) + abs(fcn(j,i))) / knc * deltat(j,i) ) then
             
         mrolling = 0
-        !mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
+        !mrolling = abs(fcn(j,i)) * deltat(j,i) / 6 * &
                     !sign(1d0, omegarel(j,i))
 
     end if

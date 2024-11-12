@@ -22,7 +22,7 @@ subroutine contact_forces (j, i)
                     r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 ) 
 
     ! relative angle
-    thetarelc(j,i) = omegarel(j,i) * dt + thetarelc(j,i)
+    thetarelc(j,i) = -omegarel(j,i) * dt + thetarelc(j,i)
 
     ! reduced variables
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
@@ -64,14 +64,14 @@ subroutine contact_forces (j, i)
 
     if ( bond (j, i) .eq. 0 ) then
         ! moments due to rolling
-        mrolling = -krc * thetarelc(j, i) 
+        mrolling = krc * thetarelc(j, i) 
 
         ! ensures no rolling if moment is too big
         if ( abs( thetarelc(j, i) ) > 2 * abs(fcn(j,i)) / knc / &
             delt_ridge(j,i) ) then
                 
             mrolling = 0d0
-            !mrolling = -abs(fcn(j,i)) * deltat(j,i) / 6 * &
+            !mrolling = abs(fcn(j,i)) * deltat(j,i) / 6 * &
                         !sign(1d0, omegarel(j,i))
         
         end if
@@ -145,9 +145,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ! update the relative angle that the particle makes with bd
     if (bd .eq. 1) then
-        theta_bc1(i) = omega(i) * dt + theta_bc1(i)
+        theta_bc1(i) = -omega(i) * dt + theta_bc1(i)
     else if (bd .eq. 2) then
-        theta_bc2(i) = omega(i) * dt + theta_bc2(i)
+        theta_bc2(i) = -omega(i) * dt + theta_bc2(i)
     end if
 
     ! compute the springs constant
@@ -190,14 +190,14 @@ subroutine contact_bc (i, dir1, dir2, bd)
         ! make sure that disks are slipping if not enough normal force
         call coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc1(i))
 
-        mrolling_bc = -krc * theta_bc1(i)
+        mrolling_bc = krc * theta_bc1(i)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc1(i) ) > 2 * abs(fn_bc(i)) / knc / &
             delt_ridge_bc(i) ) then
                 
             mrolling_bc = 0d0  
-            !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
+            !mrolling_bc = abs(fn_bc(i)) * deltat_bc / 6 * &
                         !sign(1d0, omega(i))
         
         end if
@@ -207,14 +207,14 @@ subroutine contact_bc (i, dir1, dir2, bd)
         ! make sure that disks are slipping if not enough normal force
         call coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc2(i))
 
-        mrolling_bc = -krc * theta_bc2(i)
+        mrolling_bc = krc * theta_bc2(i)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc2(i) ) > 2 * abs(fn_bc(i)) / knc / &
             delt_ridge_bc(i) ) then
                 
             mrolling_bc = 0d0
-            !mrolling_bc = -abs(fn_bc(i)) * deltat_bc / 6 * &
+            !mrolling_bc = abs(fn_bc(i)) * deltat_bc / 6 * &
                         !sign(1d0, omega(i))
         
         end if

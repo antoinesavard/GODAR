@@ -79,7 +79,14 @@ def check_dim(arr, bond=0):
 
 def draw(ax, r, radius, angle, edge):
     """Add this Particle's Circle patch to the Matplotlib Axes ax."""
-    circle = Circle(xy=r, radius=radius, edgecolor="b", fill=True, zorder=0)
+    circle = Circle(
+        xy=r,
+        radius=radius,
+        facecolor="xkcd:pale grey",
+        edgecolor="xkcd:light grey",
+        linewidth=0.5,
+        zorder=0,
+    )
     angle_rect = Rectangle(
         xy=r,
         height=1 / 1000,
