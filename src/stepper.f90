@@ -95,7 +95,7 @@ subroutine stepper (tstep)
                                         fcr(j,i) * cosa(j,i)
 
                 ! update moment on particule j by particule i due to tangent contact 
-                mc(j) = mc(j) + r(j) * fct(j,i) + mcc(j,i)
+                mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)
 
                 ! if ( flag_diag_pressure .eqv. .true. ) then
                 ! compute the average pressure inside particle i
@@ -148,7 +148,7 @@ subroutine stepper (tstep)
 
 
                     ! update moment on particule j by i due to bond
-                    mb(j) = mb(j) + r(j) * fbt(j,i) + mbb(j, i)
+                    mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
 
                     ! if ( flag_diag_pressure .eqv. .true. ) then
                     ! compute the average pressure inside particle i
@@ -232,8 +232,8 @@ subroutine stepper (tstep)
         end do
 
         ! compute the total forcing from winds, currents and coriolis on particule i
-!        call forcing (i)
-!        call coriolis(i)
+        call forcing (i)
+        call coriolis(i)
 
          ! verify the bondary conditions for each particle
         call verify_bc (i)
@@ -276,7 +276,7 @@ subroutine stepper (tstep)
     ! forces on right side plate
     !call normal_forces("right", tstep)
 
-    call gravity
+    !call gravity
     ! forces on left side plate
     !call normal_forces("left", tstep)
 

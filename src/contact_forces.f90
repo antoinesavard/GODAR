@@ -42,7 +42,7 @@ subroutine contact_forces (j, i)
     ! damping
     gamn   = -beta * sqrt( 4d0 * knc * m_redu )
 
-    gamt   = -beta * sqrt( 4d0 * ktc * m_redu )
+    gamt   = -2 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
 
     ! compute the normal/tangent force
     fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
@@ -162,7 +162,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! compute the dashpots constant
     gamn   = -beta * sqrt( 4d0 * knc * mass(i) )
 
-    gamt   = -beta * sqrt( 4d0 * ktc * mass(i) )
+    gamt   = -2 * beta * sqrt( 2d0/3d0 * ktc * mass(i) )
 
     ! compute the normal/tangent force
     ! is using dir as a way to pick the proper velocity for 
