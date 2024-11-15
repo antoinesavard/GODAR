@@ -19,10 +19,10 @@ subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt)
 
     ! compute the dashpots constants
     gamn   = -beta * sqrt( 4d0 * knc * m_redu )
-    gamt   = -beta * sqrt( 4d0 * ktc * m_redu )
+    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
 
     ! compute the forces
-    fcn(j,i) = knc * deltan(j,i) - gamn * veln(j,i)
+    fcn(j,i) = max(knc * deltan(j,i) - gamn * veln(j,i),0d0)
     fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
 
     call update_shape (j, i)
@@ -106,10 +106,10 @@ subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, k
 
     ! compute the dashpots constants
     gamn   = -beta * sqrt( 4d0 * knc * m(i) )
-    gamt   = -beta * sqrt( 4d0 * ktc * m(i) )
+    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) )
 
     ! compute the forces
-    fn_bc(i) = knc * deltan_bc - gamn * veln_bc
+    fn_bc(i) = max(knc * deltan_bc - gamn * veln_bc, 0d0)
     ft_bc(i) = ktc * deltat_bc - gamt * velt_bc
 
     call update_shape_bc (i, deltan_bc)
