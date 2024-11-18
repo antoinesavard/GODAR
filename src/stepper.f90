@@ -95,7 +95,7 @@ subroutine stepper (tstep)
                                         fcr(j,i) * cosa(j,i)
 
                 ! update moment on particule j by particule i due to tangent contact 
-                mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)
+                mc(j) = mc(j) - r(j) * fct(j,i) + mcc(j,i)
 
                 ! if ( flag_diag_pressure .eqv. .true. ) then
                 ! compute the average pressure inside particle i
@@ -148,7 +148,7 @@ subroutine stepper (tstep)
 
 
                     ! update moment on particule j by i due to bond
-                    mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
+                    mb(j) = mb(j) - r(j) * fbt(j,i) + mbb(j, i)
 
                     ! if ( flag_diag_pressure .eqv. .true. ) then
                     ! compute the average pressure inside particle i

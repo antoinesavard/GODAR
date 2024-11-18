@@ -13,7 +13,7 @@ subroutine contact_forces (j, i)
     double precision :: m_redu, r_redu, hmin
     double precision :: fit
     double precision :: knc, ktc, gamn, gamt
-    double precision :: krc, mrolling
+    double precision :: krc, gamr, mrolling
 
     ! compression has delta_t > 0
     deltat(j,i) = -velt(j,i) * dt + deltat(j,i)
@@ -44,6 +44,8 @@ subroutine contact_forces (j, i)
 
     gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
 
+    gamr   = gamn * delt_ridge(j,i) ** 2 / 12
+
     ! compute the normal/tangent force
     fcn(j,i) = max(knc * deltan(j,i) - gamn * veln(j,i), 0d0)
 
@@ -54,7 +56,7 @@ subroutine contact_forces (j, i)
         if ( sigmanc_crit * hmin .le. fcn(j,i) / delt_ridge(j,i) &
         / hmin ) then
             
-            call plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt)
+            call plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt, gamr)
 
         end if
     end if
@@ -64,7 +66,7 @@ subroutine contact_forces (j, i)
 
     if ( bond (j, i) .eq. 0 ) then
         ! moments due to rolling
-        mrolling = krc * thetarelc(j, i) 
+        mrolling = krc * thetarelc(j, i) - gamr * omegarel(j, i)
 
         ! ensures no rolling if moment is too big
         if ( abs( thetarelc(j, i) ) > 2 * abs(fcn(j,i)) / knc / &
@@ -108,7 +110,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     double precision :: fit
     double precision :: knc, ktc, gamn, gamt
-    double precision :: krc
+    double precision :: krc, gamr
     double precision :: deltat_bc, deltan_bc
     double precision :: mrolling_bc
     double precision :: veln_bc, velt_bc
@@ -164,6 +166,8 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) )
 
+    gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
+
     ! compute the normal/tangent force
     ! is using dir as a way to pick the proper velocity for 
     ! normal or tangent force.
@@ -179,7 +183,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
             
             call plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, &
                                         deltat_bc, delt_ridge_bc(i), &
-                                        ktc, krc, gamt)
+                                        ktc, krc, gamt, gamr)
 
         end if
     end if
@@ -190,7 +194,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
         ! make sure that disks are slipping if not enough normal force
         call coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc1(i))
 
-        mrolling_bc = krc * theta_bc1(i)
+        mrolling_bc = krc * theta_bc1(i) - gamr * omega(i)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc1(i) ) > 2 * abs(fn_bc(i)) / knc / &
@@ -207,7 +211,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
         ! make sure that disks are slipping if not enough normal force
         call coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc2(i))
 
-        mrolling_bc = krc * theta_bc2(i)
+        mrolling_bc = krc * theta_bc2(i) - gamr * omega(i)
 
         ! ensures no rolling if moment is too big
         if ( abs( theta_bc2(i) ) > 2 * abs(fn_bc(i)) / knc / &

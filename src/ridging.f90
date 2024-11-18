@@ -1,4 +1,4 @@
-subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt)
+subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt, gamr)
 
     implicit none
 
@@ -8,7 +8,7 @@ subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt)
 
     integer, intent(in) :: j, i
     double precision, intent(in) :: m_redu, hmin
-    double precision, intent(out) :: ktc, krc, gamt
+    double precision, intent(out) :: ktc, krc, gamt, gamr
 
     double precision :: knc, gamn
 
@@ -20,6 +20,7 @@ subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt)
     ! compute the dashpots constants
     gamn   = -beta * sqrt( 4d0 * knc * m_redu )
     gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
+    gamr   = gamn * delt_ridge(j,i) ** 2 / 12
 
     ! compute the forces
     fcn(j,i) = max(knc * deltan(j,i) - gamn * veln(j,i),0d0)
@@ -84,7 +85,7 @@ subroutine update_shape (j, i)
 end subroutine update_shape
 
 
-subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, krc, gamt)
+subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, krc, gamt, gamr)
 
     implicit none
 
@@ -95,7 +96,7 @@ subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, k
     integer, intent(in) :: i
     double precision, intent(in) :: veln_bc, velt_bc
     double precision, intent(in) :: deltan_bc, deltat_bc
-    double precision, intent(out) :: ktc, krc, gamt
+    double precision, intent(out) :: ktc, krc, gamt, gamr
 
     double precision :: knc, gamn
 
@@ -107,6 +108,7 @@ subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, k
     ! compute the dashpots constants
     gamn   = -beta * sqrt( 4d0 * knc * m(i) )
     gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) )
+    gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the forces
     fn_bc(i) = max(knc * deltan_bc - gamn * veln_bc, 0d0)
