@@ -125,7 +125,7 @@ subroutine stepper (tstep)
 			if ( bond (j, i) .eq. 1 ) then
 
 				call bond_forces (j, i)
-				call bond_breaking (j, i)
+				!call bond_breaking (j, i)
 
                 if ( bond (j, i) .eq. 1 ) then
 
@@ -194,46 +194,47 @@ subroutine stepper (tstep)
             !-------------------------------------------------------
 
             sigxx(i) = sigxx(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * cosa(j,i)
+                        (fcn(j,i) + fbn(j,i)) * cosa(j,i) -    &
+                        (fct(j,i) + fbt(j,i)) * sina(j,i) )    &
+                        * r(i) * cosa(j,i)
             sigyy(i) = sigyy(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * sina(j,i)
+                        (fcn(j,i) + fbn(j,i)) * sina(j,i) +    &
+                        (fct(j,i) + fbt(j,i)) * cosa(j,i) )    &
+                        * r(i) * sina(j,i)
             sigxy(i) = sigxy(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * cosa(j,i)
+                        (fcn(j,i) + fbn(j,i)) * cosa(j,i) -    &
+                        (fct(j,i) + fbt(j,i)) * sina(j,i) )    &
+                        * r(i) * sina(j,i)
             sigyx(i) = sigyx(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * sina(j,i)
+                        (fcn(j,i) + fbn(j,i)) * sina(j,i) +    &
+                        (fct(j,i) + fbt(j,i)) * cosa(j,i) )    &
+                        * r(i) * cosa(j,i)
 
             ! Newton's third law equivalent for stress
-            sigxx(j) = sigxx(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * cosa(j,i)
-            sigyy(j) = sigyy(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * sina(j,i)
-            sigxy(j) = sigxy(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * cosa(j,i)
-            sigyx(j) = sigyx(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * sina(j,i)
+            sigxx(j) = sigxx(j) + (                            &
+                        (fcn(j,i) + fbn(j,i)) * cosa(j,i) -    &
+                        (fct(j,i) + fbt(j,i)) * sina(j,i) )    &
+                        * r(j) * cosa(j,i)
+            sigyy(j) = sigyy(j) + (                            &
+                        (fcn(j,i) + fbn(j,i)) * sina(j,i) +    &
+                        (fct(j,i) + fbt(j,i)) * cosa(j,i) )    &
+                        * r(j) * sina(j,i)
+            sigxy(j) = sigxy(j) + (                            &
+                        (fcn(j,i) + fbn(j,i)) * cosa(j,i) -    &
+                        (fct(j,i) + fbt(j,i)) * sina(j,i) )    &
+                        * r(j) * sina(j,i)
+            sigyx(j) = sigyx(j) + (                            &
+                        (fcn(j,i) + fbn(j,i)) * sina(j,i) +    &
+                        (fct(j,i) + fbt(j,i)) * cosa(j,i) )    &
+                        * r(j) * cosa(j,i)
+
             ! end if
 
         end do
 
         ! compute the total forcing from winds, currents and coriolis on particule i
-        call forcing (i)
-        call coriolis(i)
+!        call forcing (i)
+!        call coriolis(i)
 
          ! verify the bondary conditions for each particle
         call verify_bc (i)
@@ -279,6 +280,9 @@ subroutine stepper (tstep)
     !call gravity
     ! forces on left side plate
     !call normal_forces("left", tstep)
+
+    tfx=0d0
+    tfy=0d0
 
     ! integration in time
     call velocity

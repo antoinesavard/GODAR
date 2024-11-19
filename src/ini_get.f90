@@ -125,7 +125,6 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         ! initial velocity
         u(i)      =  0d0
         v(i)      =  0d0
-        omega(i)  =  0d0
 
         ! initial forces
         tfx(i)    =  0d0
