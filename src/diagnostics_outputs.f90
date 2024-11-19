@@ -36,7 +36,7 @@ subroutine sea_ice_post (tstep, expno_str)
 	filefcy = "output/fcy." // trim(adjustl(expno_str))
 	filefbx = "output/fbx." // trim(adjustl(expno_str))
 	filefby = "output/fby." // trim(adjustl(expno_str))
-	filem   = "output/m." // trim(adjustl(expno_str))
+	filem   = "output/mom." // trim(adjustl(expno_str))
 	filemc  = "output/mc." // trim(adjustl(expno_str))
 	filemb  = "output/mb." // trim(adjustl(expno_str))
 
