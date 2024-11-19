@@ -100,15 +100,14 @@ def draw(ax, r, radius, angle, edge):
     return circle, angle_rect
 
 
-def draw_bond(ax, r, lb, angleb):
+def draw_bond(ax, r, lb, angleb, radius, lambda_rb=1, lambda_lb=1):
     bond_rect = Rectangle(
         xy=r,
-        height=1 / 1000,
-        width=lb,
+        height=lambda_rb * radius,
+        width=lambda_lb * lb,
         angle=angleb,
-        edgecolor=(0, 0, 0, 0.5),
-        fill=True,
-        zorder=2,
+        facecolor=(0, 0, 0, 0.25),
+        zorder=1,
     )
     ax.add_patch(bond_rect)
     return bond_rect

@@ -6,18 +6,21 @@ import os
 import sys
 
 # ----------------------------------------------------------------------
-
+# figures
 xaxis_limits = 6  # in km
+xoffset = 0
 yaxis_limits = 3  # in km
+xlenght = 6.2  # 2.4
+trans = False  # transparent background or not
 
 # coming from sim
-nt = 1e5
+nt = 2e5
 dt = 1e-3  # tstep size in sim
 comp = 1e2  # compression in sim
 
 # miscalleneous
 sf = 1e3  # conversion ratio m <-> km
-compression = 1  # data compression of videos
+compression = 5  # data compression of videos
 
 # ----------------------------------------------------------------------
 
@@ -101,14 +104,71 @@ os.chdir("../plots/anim/")
 # create the figure to animate
 # --------------------------------------
 
-fig = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
-ax = fig.add_axes([0.14, 0.14, 0.8, 0.8])
-ax.set_ylabel("Position [km]", rotation=90)
-ax.set_xlabel("Position [km]")
+
+def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False):
+    # init plot
+    basefigsizex = 7
+    figsizex = x * (0.325581 + 0.474419 + 0.1 * (number_plots + 1))
+    figsizey = y
+    fig = plt.figure(
+        dpi=300,
+        figsize=(figsizex, figsizey),
+    )
+    if trans:
+        fig.patch.set_facecolor("None")
+
+    # definitions for the axis
+
+    # graphs
+    extraspaceinit = 0.1 * basefigsizex / figsizex
+    graphsizex = (0.9 - extraspaceinit) / number_plots
+    graphsizey = yaxis / xaxis * graphsizex * figsizex / figsizey
+    separation = (1 - extraspaceinit - number_plots * graphsizex) / (number_plots + 1)
+
+    bottom, height = (0.125, graphsizey)
+    left, width = (separation + extraspaceinit, graphsizex)
+
+    rect = [
+        left,
+        bottom,
+        width,
+        height,
+    ]
+
+    ax = fig.add_axes(rect)
+
+    # ticks
+    ax.tick_params(
+        which="both",
+        direction="out",
+        bottom=False,
+        top=False,
+        left=True,
+        right=False,
+        labelleft=True,
+    )
+
+    return fig, ax
+
+
+fig, ax = init_figure(
+    1,
+    xaxis_limits,
+    yaxis_limits,
+    xlenght,
+    3.2,
+    trans,
+)
+
+fig.text(0.03, 0.5, r"$y$ [km]")
+fig.text(0.54, 0.025, r"$x$ [km]")
 
 # limits of the plot in kilometers
-ax.set_xlim(0, xaxis_limits)
+ax.set_xlim(-xoffset, xaxis_limits - xoffset)
 ax.set_ylim(0, yaxis_limits)
+
+# colors
+ax.set_facecolor("xkcd:baby blue")
 
 # second figure
 fig_strip = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
@@ -119,8 +179,8 @@ ax_strip.set_xlim(0, xaxis_limits)
 ax_strip.set_ylim(0, yaxis_limits)
 
 # keep track of time in the figure
-time = ax.text(0.8, 1.02, "", transform=ax.transAxes)
-time_strip = ax_strip.text(2, 2, "", transform=ax_strip.transAxes)
+time = fig.text(0.65, 1.02, "", transform=ax.transAxes)
+time_strip = fig_strip.text(2, 2, "", transform=ax_strip.transAxes)
 
 disks = []
 radii = []
@@ -148,6 +208,7 @@ def init(ax, time):
                     p,
                     lb[0, i, j],
                     angleb[0, i, j],
+                    radius=2 * min(r[0, i], r[0, j]),
                 )
                 bonds.append(bond)
                 num_bonds[i] += 1
@@ -188,11 +249,20 @@ def animate(k, time):
             elif b[k, loc[j, 0], loc[j, 1]] is False:
                 bond.set_visible(False)
             else:
-                bond.xy = p
+                pb = np.array(
+                    [
+                        x[k, i]
+                        + r[k, i] * np.sin(np.deg2rad(angleb[k, loc[j, 0], loc[j, 1]])),
+                        y[k, i]
+                        - r[k, i] * np.cos(np.deg2rad(angleb[k, loc[j, 0], loc[j, 1]])),
+                    ]
+                )
+                bond.xy = pb
                 bond.angle = (
                     angleb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
                 )
                 bond.set_width(lb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]])
+                bond.set_height(2 * min(r[k, i], r[k, j]))
     time.set_text("t = {}s".format(round(dt * comp * compression * (k + 1))))
 
     return disks, radii, bonds
