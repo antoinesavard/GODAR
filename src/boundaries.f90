@@ -126,18 +126,15 @@ subroutine check_wall(i, dir1, dir2, bd)
     m_bc(i) = m_bc(i) - mc_bc(i) - r(i) * ft_bc(i)
 
     ! compute the stress using cauchy stress formula due to the boundaries, always negative
-    sigxx_bc(i) = sigxx_bc(i) - (                           &
-                fn_bc(i) * cosa_bc - ft_bc(i) * sina_bc )   &
-                * r(i) * cosa_bc
-    sigyy_bc(i) = sigyy_bc(i) - (                           &
-                fn_bc(i) * cosa_bc - ft_bc(i) * sina_bc )   &
-                * r(i) * sina_bc
-    sigxy_bc(i) = sigxy_bc(i) - (                           &
-                fn_bc(i) * cosa_bc - ft_bc(i) * sina_bc )   &
-                * r(i) * sina_bc
-    sigyx_bc(i) = sigyx_bc(i) - (                           &
-                fn_bc(i) * cosa_bc - ft_bc(i) * sina_bc )   &
-                * r(i) * cosa_bc
+    ! off diag are always 0
+    sigxx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * cosa_bc ** 2
+    sigyy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * sina_bc ** 2
+    sigxy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * cosa_bc * sina_bc
+    sigyx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * sina_bc * cosa_bc
 
     ! compute the pressure
     ! total contact area
