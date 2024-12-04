@@ -25,6 +25,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 		Hfile = 'output/h.' // trim(adjustl(expno_str_r))
 		Tfile = 'output/theta.' // trim(adjustl(expno_str_r))
 		Ofile = 'output/omega.' // trim(adjustl(expno_str_r))
+        Ufile = 'output/u.' // trim(adjustl(expno_str_r))
+        Vfile = 'output/v.' // trim(adjustl(expno_str_r))
         Bfile = 'output/bond.' // trim(adjustl(expno_str_r))
 		
 		k = int(nt_r)
@@ -83,14 +85,32 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         end do
         close(107)
 
-        open(108, file = Bfile, status='old')
-        do j = 1, (n + 1) * (k - 1)
-            read (108, *)
-        end do
-        do j = (n + 1) * k - n, (n + 1) * k - 1
-            read (108, *) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
+        open(108, file = Ufile, status='old')
+        do j = 1, k-1
+			read (108, *)
+		end do
+        do j = k, k
+			read (108, *) ( u(i),	i = 1, n)
         end do
         close(108)
+
+        open(109, file = Vfile, status='old')
+        do j = 1, k-1
+			read (109, *)
+		end do
+        do j = k, k
+			read (109, *) ( v(i),	i = 1, n)
+        end do
+        close(109)
+
+        open(110, file = Bfile, status='old')
+        do j = 1, (n + 1) * (k - 1)
+            read (110, *)
+        end do
+        do j = (n + 1) * k - n, (n + 1) * k - 1
+            read (110, *) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
+        end do
+        close(110)
 
 	else
 
@@ -118,14 +138,16 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 		do i = 102, 107
 			close(i)
 		end do
-        
+
+        do i = 1, n
+            ! initial velocity
+            u(i)      =  0d0
+            v(i)      =  0d0
+        end do
+
     end if
 
     do i = 1, n
-        ! initial velocity
-        u(i)      =  0d0
-        v(i)      =  0d0
-
         ! initial forces
         tfx(i)    =  0d0
         tfy(i)    =  0d0
