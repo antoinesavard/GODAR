@@ -7,10 +7,10 @@ import sys
 
 # ----------------------------------------------------------------------
 # figures
-xaxis_limits = 6  # in km
+xaxis_limits = 12  # in km
 xoffset = 0
-yaxis_limits = 3  # in km
-xlenght = 6.2  # 2.4
+yaxis_limits = 10  # in km
+xlenght = 4  # 6.2  # 2.4
 trans = False  # transparent background or not
 
 # coming from sim
@@ -87,6 +87,7 @@ b = tuf.check_dim(b, 1)
 t = np.degrees(t)
 edge = np.where(o >= 0, "g", "r")
 lb = np.zeros_like(b)
+rb = np.zeros_like(b)
 angleb = np.zeros_like(b)
 
 # --------------------------------------
@@ -97,6 +98,7 @@ for i in range(b.shape[-1] - 1):
     for j in range(i + 1, b.shape[-2]):
         lb[:, i, j] = tuf.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
         angleb[:, i, j] = tuf.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+        rb[:, i, j] = tuf.rb_func(r[:, i], r[:, j])
 
 os.chdir("../plots/anim/")
 
@@ -208,7 +210,7 @@ def init(ax, time):
                     p,
                     lb[0, i, j],
                     angleb[0, i, j],
-                    radius=2 * min(r[0, i], r[0, j]),
+                    radius=2 * rb[0, i, j],
                 )
                 bonds.append(bond)
                 num_bonds[i] += 1
@@ -262,7 +264,9 @@ def animate(k, time):
                     angleb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
                 )
                 bond.set_width(lb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]])
-                bond.set_height(2 * min(r[k, i], r[k, j]))
+                bond.set_height(
+                    2 * rb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
+                )
     time.set_text("t = {}s".format(round(dt * comp * compression * (k + 1))))
 
     return disks, radii, bonds

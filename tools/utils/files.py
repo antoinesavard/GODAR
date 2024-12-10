@@ -128,3 +128,7 @@ def lb_func(x1, y1, x2, y2):
 
 def angleb_func(x1, y1, x2, y2):
     return np.degrees(np.arctan2(y2 - y1, x2 - x1))
+
+
+def rb_func(r1, r2):
+    return np.where(r1 >= r2, r1, r2)
