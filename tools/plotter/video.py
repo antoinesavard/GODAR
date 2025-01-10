@@ -7,16 +7,16 @@ import sys
 
 # ----------------------------------------------------------------------
 # figures
-xaxis_limits = 12  # in km
+xaxis_limits = 26.5  # in km
 xoffset = 0
-yaxis_limits = 10  # in km
-xlenght = 4  # 6.2  # 2.4
+yaxis_limits = 16  # in km
+xlenght = 5.5  # 6.2  # 2.4
 trans = False  # transparent background or not
 
 # coming from sim
-nt = 2e5
+nt = 1e8
 dt = 1e-3  # tstep size in sim
-comp = 1e2  # compression in sim
+comp = 1e5  # compression in sim
 
 # miscalleneous
 sf = 1e3  # conversion ratio m <-> km
@@ -98,7 +98,8 @@ for i in range(b.shape[-1] - 1):
     for j in range(i + 1, b.shape[-2]):
         lb[:, i, j] = tuf.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
         angleb[:, i, j] = tuf.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
-        rb[:, i, j] = tuf.rb_func(r[:, i], r[:, j])
+for i in range(rb.shape[0] - 1):
+    rb[i] = tuf.rb_func(r[i], r[i])
 
 os.chdir("../plots/anim/")
 
@@ -268,6 +269,10 @@ def animate(k, time):
                     2 * rb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
                 )
     time.set_text("t = {}s".format(round(dt * comp * compression * (k + 1))))
+
+    if k == r.shape[0] - 1:
+        fig.savefig("../../plots/plot/collision{}-{}.png".format(expno, k + 1))
+        fig.savefig("../../plots/plot/collision{}-{}.pdf".format(expno, k + 1))
 
     return disks, radii, bonds
 

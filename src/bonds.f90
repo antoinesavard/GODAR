@@ -83,21 +83,18 @@ subroutine bond_breaking (j, i)
 
 	if ( taub(j, i) .gt. tau_crit * hb(j,i) ) then
 		
-        print*, "1"
 		bond(j, i) = 0
         fbn(j, i)  = 0d0
         fbt(j, i)  = 0d0
 
 	else if ( sigmacb(i, j) .gt. sigmacb_crit * hb(j,i) ) then
 		
-        print*, "2"
 		bond(j, i) = 0
         fbn(j, i)  = 0d0
         fbt(j, i)  = 0d0
 
 	else if ( sigmatb(j, i) .gt. sigmatb_crit * hb(j,i) ) then
 
-        print*, "3"
 		bond(j, i) = 0
         fbn(j, i)  = 0d0
         fbt(j, i)  = 0d0

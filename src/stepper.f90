@@ -67,6 +67,8 @@ subroutine stepper (tstep)
                     if ( deltan(j, i) .ge. -1d2 ) then ! can be fancier
                         bond (j, i) = 1
                     end if
+                end if
+                if ( bond(j, i) .eq. 1 ) then
                     call bond_properties (j, i)
                 end if
 			end if
@@ -275,7 +277,7 @@ subroutine stepper (tstep)
     call broadcast_total_forces
 
     ! forces on right side plate
-    !call normal_forces("right", tstep)
+!    call normal_forces("top", tstep)
 
 !    call gravity
     ! forces on left side plate

@@ -155,7 +155,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! compute the springs constant
     knc    = pi * ec * h(i)  *                  &
                 fit( deltan_bc * r(i) /         &
-                ( 2 * h(i) ** 2 ) )
+                ( 4 * h(i) ** 2 ) )
 
     ktc    = 6d0 * gc / ec * knc
 
@@ -182,8 +182,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
         / h(i) ) then
             
             call plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, &
-                                        deltat_bc, delt_ridge_bc(i), &
-                                        ktc, krc, gamt, gamr)
+                                        deltat_bc, ktc, krc, gamt, gamr)
 
         end if
     end if

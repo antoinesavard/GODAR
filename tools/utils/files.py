@@ -131,4 +131,4 @@ def angleb_func(x1, y1, x2, y2):
 
 
 def rb_func(r1, r2):
-    return np.where(r1 >= r2, r1, r2)
+    return np.minimum.outer(r1, r2)
