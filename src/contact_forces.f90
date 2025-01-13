@@ -56,7 +56,8 @@ subroutine contact_forces (j, i)
         if ( sigmanc_crit * hmin .le. fcn(j,i) / delt_ridge(j,i) &
         / hmin ) then
             
-            call plastic_contact (j, i, m_redu, hmin, ktc, krc, gamt, gamr)
+            call plastic_contact (j, i, m_redu, hmin, ktc, krc, &
+                                    gamn, gamt, gamr)
 
         end if
     end if
@@ -182,7 +183,8 @@ subroutine contact_bc (i, dir1, dir2, bd)
         / h(i) ) then
             
             call plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, &
-                                        deltat_bc, ktc, krc, gamt, gamr)
+                                        deltat_bc, ktc, krc, gamn,   &
+                                        gamt, gamr)
 
         end if
     end if
