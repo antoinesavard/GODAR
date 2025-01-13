@@ -64,7 +64,7 @@ subroutine stepper (tstep)
 			! bond initialization
 			if ( cohesion .eqv. .true. ) then
                 if ( tstep .eq. 1 ) then
-                    if ( deltan(j, i) .ge. -1d2 ) then ! can be fancier
+                    if ( deltan(j, i) .ge. -1d-2 ) then ! can be fancier
                         bond (j, i) = 1
                     end if
                 end if
