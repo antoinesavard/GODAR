@@ -163,7 +163,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
     krc    = knc * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the dashpots constant
-    gamn   = -beta * sqrt( 4d0 * knc * mass(i) )
+    gamn   = -beta * sqrt( 4d0 * knc * mass(i) / 2d0 )
 
     gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) )
 
