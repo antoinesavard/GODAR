@@ -26,7 +26,10 @@ subroutine stepper (tstep)
     type(dArgDynamicArray) :: da
 
     ! Build the tree
-    tree = KdTree(x, y)
+    ! you can't skip any timesteps for now as the tree building process does not make a copy of the data and changing the data on which the tree is based will throw a seg fault. To prevent this, we need to change the tree building code so that it makes a copy of the data.
+!    if ( mod(tstep, int(ntree)) == 1 ) then
+        tree = KdTree(x, y)
+!    end if
 
     ! reset the forces and sheltering height
     call reset_forces
@@ -245,7 +248,9 @@ subroutine stepper (tstep)
     !$omp end parallel do
 
     ! deallocate tree memory
-    call tree%deallocate()
+!    if ( mod(tstep, int(ntree)) == 1 ) then
+        call tree%deallocate()
+!    end if
 
     ! reduce all the force variables
     call force_reduction

@@ -25,6 +25,7 @@ subroutine get_default
     !-------------------------------------------------------------------
 
     rtree    =  1d3                ! search radius in kd-tree
+    ntree    =  1d0                ! time steps between tree builds
 
     dt       =  1d-3               ! length of time step [s]
     nt       =  1d3                ! number of tstep
@@ -127,7 +128,7 @@ subroutine read_namelist (namelist_name)
         dynamics, slipping, thermodyn, cohesion, ridging, shelter
     
     namelist /numerical_param_nml/ &
-        rtree, dt, nt, comp
+        rtree, ntree, dt, nt, comp
 
     namelist /physical_param_nml/ &
         Cdair, Csair, Cdwater, Cswater, z0w, lat, rhoair, &

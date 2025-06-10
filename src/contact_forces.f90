@@ -163,9 +163,11 @@ subroutine contact_bc (i, dir1, dir2, bd)
     krc    = knc * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the dashpots constant
+    ! note the 1/2 factor in gamn and gamt: this is a choice. If the 1/2 is kept, the walls are made out of particles of the same size/mass as the colliding particle. If it is removed, then the walls are just 1 large particle with r=inf and m=inf. 
+    ! Ususally, for idealized test where all particles are the same, better to have 1/2 for clean graphs, and in more "real" tests, better to remove it so that the walls are the same for each particles.
     gamn   = -beta * sqrt( 4d0 * knc * mass(i) / 2d0 )
 
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) )
+    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) / 2d0 )
 
     gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
 

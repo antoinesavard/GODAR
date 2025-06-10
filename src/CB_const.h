@@ -3,7 +3,7 @@
 !=======================================================================
 
     double precision :: t, dt, nt, comp
-    double precision :: rtree
+    double precision :: rtree, ntree
 
     double precision :: rhoair, rhoice, rhowater
     double precision :: Cdair, Cdwater, Csair, Cswater
@@ -22,21 +22,22 @@
             dt              ,    & ! time step                       [s]
             nt              ,    & ! total number of time step
             comp            ,    & ! compression of the output
-            rtree                  ! distance to search tree         [m]
+            rtree           ,    & ! distance to search tree         [m]
+            ntree                  ! time steps between tree builds
 
     common/const/                & ! general constants
-            rhoair          ,    & ! air density				[kg/m^3]
-            rhoice          ,    & ! ice density				[kg/m^3]
-            rhowater        ,    & ! water density				[kg/m^3]
+            rhoair          ,    & ! air density		[kg/m^3]
+            rhoice          ,    & ! ice density		[kg/m^3]
+            rhowater        ,    & ! water density		[kg/m^3]
             Cdair           ,    & ! air skin drag coeff
             Cdwater         ,    & ! water skin drag coeff
             Csair           ,    & ! air body drag coeff
             Cswater         ,    & ! water body drag coeff
-            z0w             ,    & ! viscosity limit over water		 [m]
+            z0w             ,    & ! viscosity limit over water	     [m]
             lat                    ! latitude of domain coriolis   [rad]
 
     common/const/                & ! disks parameters
-            e_modul         ,    & ! elastic moduli				 [N/m^2]
+            e_modul         ,    & ! elastic moduli		 [N/m^2]
             poiss_ratio     ,    & ! poisson ratio
             ec              ,    & ! effective contact modulus
             gc              ,    & ! effective shear modulus
@@ -48,7 +49,7 @@
     common/const/                & ! math constants
             pi
 
-    common/const/                & ! input files
+    common/const_char/           & ! input files
             Xfile           ,    &
             Yfile           ,    &
             Rfile           ,    &
