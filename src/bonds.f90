@@ -145,7 +145,7 @@ subroutine bond_properties (j, i)
     ! lb is the lenght
 	rb  (j, i) = lambda_rb * min(r(i), r(j))
 	hb  (j, i) = (h(i) + h(j)) / 2d0
-	lb  (j, i) = lambda_lb * (r(i) + r(j))
+	lb  (j, i) = lambda_lb * dist(j, i)
 
     ! sb is the cross section area
     ! ib is the inertia

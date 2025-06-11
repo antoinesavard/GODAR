@@ -14,8 +14,8 @@ subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamn, gamt, gamr)
     double precision :: knc
 
     ! compute the spring constants
-    knc    = (sigmanc_crit * hmin ** 2 * delt_ridge(j,i) &
-                + gamn * veln(j,i)) / deltan(j,i)
+    knc    = max((sigmanc_crit * hmin ** 2 * delt_ridge(j,i) &
+                + gamn * veln(j,i)) / deltan(j,i), 0d0)
     ktc    = 6d0 * gc / ec * knc
     krc    = knc * delt_ridge(j,i) ** 2 / 12
 
@@ -40,6 +40,7 @@ subroutine update_shape (j, i)
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+    include "CB_bond.h"
 
     integer, intent(in) :: j, i
 
