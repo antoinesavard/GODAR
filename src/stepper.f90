@@ -7,6 +7,7 @@ subroutine stepper (tstep)
     use m_KdTree, only: KdTree, KdTreeSearch
     use dArgDynamicArray_Class, only: dArgDynamicArray
     use m_strings, only: str
+    use global_kdtree
 
     implicit none
 
@@ -21,15 +22,18 @@ subroutine stepper (tstep)
 
     integer :: i, j, k
     integer, intent(in) :: tstep
-    type(KdTree) :: tree
+    double precision, dimension(n) :: xtree, ytree
     type(KdTreeSearch) :: search
     type(dArgDynamicArray) :: da
 
+
+    if ( tstep == 1 .or. mod(tstep, int(ntree)) == 0 ) then
+        xtree = x
+        ytree = y
+    end if
+
     ! Build the tree
-    ! you can't skip any timesteps for now as the tree building process does not make a copy of the data and changing the data on which the tree is based will throw a seg fault. To prevent this, we need to change the tree building code so that it makes a copy of the data.
-!    if ( mod(tstep, int(ntree)) == 1 ) then
-        tree = KdTree(x, y)
-!    end if
+    call tree_building(tstep, xtree, ytree)
 
     ! reset the forces and sheltering height
     call reset_forces
@@ -50,8 +54,8 @@ subroutine stepper (tstep)
     !&&#endif
     do i = last_iter, first_iter, -1
         ! Find all the particles j near i
-        da = search%kNearest(tree, x, y, xQuery = x(i), yQuery = y(i), &
-                            radius = r(i) + rtree)
+        da = search%kNearest(tree, xtree, ytree, xQuery = x(i), &
+                            yQuery = y(i), radius = r(i) + rtree)
         ! loop over the nearest neighbors except the first because this is the particle i
         do k = 1, size(da%i%values) - 1
             j = da%i%values(k + 1)
@@ -248,9 +252,7 @@ subroutine stepper (tstep)
     !$omp end parallel do
 
     ! deallocate tree memory
-!    if ( mod(tstep, int(ntree)) == 1 ) then
-        call tree%deallocate()
-!    end if
+    call tree_cleanup(tstep)
 
     ! reduce all the force variables
     call force_reduction
