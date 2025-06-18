@@ -108,5 +108,8 @@ Export("EXE")
 # The datetime module
 datetime = SConscript("datetime/SConscript", variant_dir="build/datetime")
 
+# The kdtree module
+kdtree = SConscript("kdtree/SConscript", variant_dir="build/kdtree")
+
 # The GoDAR library and executable
 godar = SConscript("src/SConscript", variant_dir="build/godar")
