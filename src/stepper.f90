@@ -54,7 +54,7 @@ subroutine stepper (tstep)
     !&&#endif
     do i = last_iter, first_iter, -1
         ! Find all the particles j near i
-        da = search%kNearest(tree, xtree, ytree, xQuery = x(i), &
+        da = search%kNearest(tree, x, y, xQuery = x(i), &
                             yQuery = y(i), radius = r(i) + rtree)
         ! loop over the nearest neighbors except the first because this is the particle i
         do k = 1, size(da%i%values) - 1
@@ -288,7 +288,7 @@ subroutine stepper (tstep)
 
 !    call gravity
     ! forces on left side plate
-    !call normal_forces("left", tstep)
+!    call normal_forces("side", tstep)
 
     ! integration in time
     call velocity
