@@ -105,8 +105,8 @@ subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, k
     double precision :: knc
 
     ! compute the spring constants
-    knc    = (sigmanc_crit * h(i) ** 2 * delt_ridge_bc(i) &
-                + gamn * veln_bc) / deltan_bc
+    knc    = max((sigmanc_crit * h(i) ** 2 * delt_ridge_bc(i) &
+                + gamn * veln_bc) / deltan_bc, 0d0)
     ktc    = 6d0 * gc / ec * knc
     krc    = knc * delt_ridge_bc(i) ** 2 / 12
 
