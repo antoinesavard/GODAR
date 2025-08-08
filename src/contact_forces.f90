@@ -53,7 +53,7 @@ subroutine contact_forces (j, i)
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
-        if ( sigmanc_crit * hmin .le. fcn(j,i) / delt_ridge(j,i) &
+        if ( sigmanc_crit * hmin .lt. fcn(j,i) / delt_ridge(j,i) &
         / hmin ) then
             
             call plastic_contact (j, i, m_redu, hmin, ktc, krc, &
@@ -184,7 +184,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
-        if ( sigmanc_crit * h(i) .le. fn_bc(i) / delt_ridge_bc(i) &
+        if ( sigmanc_crit * h(i) .lt. fn_bc(i) / delt_ridge_bc(i) &
         / h(i) ) then
             
             call plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, &
