@@ -1,26 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
 from matplotlib.animation import FuncAnimation
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import tools.utils.files as tuf
 import os
 import sys
 
 # ----------------------------------------------------------------------
 # figures
-xaxis_limits = 26.5  # in km
+xaxis_limits = 30  # in km
 xoffset = 0
-yaxis_limits = 16  # in km
-xlenght = 5.5  # 6.2  # 2.4
-trans = False  # transparent background or not
+yaxis_limits = 10  # in km
+xlenght = 8.9  # #11 2.7  #13 5 #14 8.9
+trans = True  # transparent background or not
+clean = True  # removes the green/red bars
+stress = True  # plots the stress as facecolor rather than just white
 
 # coming from sim
-nt = 1e8
+nt = 2e8
 dt = 1e-3  # tstep size in sim
 comp = 1e5  # compression in sim
 
 # miscalleneous
 sf = 1e3  # conversion ratio m <-> km
-compression = 5  # data compression of videos
+compression = 1  # data compression of videos
 
 # ----------------------------------------------------------------------
 
@@ -53,6 +57,10 @@ filesh = tuf.list_files(output_dir, "h", expno)
 filest = tuf.list_files(output_dir, "theta", expno)
 fileso = tuf.list_files(output_dir, "omega", expno)
 filesb = tuf.list_files(output_dir, "bond", expno)
+filestsigxx = tuf.list_files(output_dir, "tsigxx", expno)
+filestsigyy = tuf.list_files(output_dir, "tsigyy", expno)
+filestsigxy = tuf.list_files(output_dir, "tsigxy", expno)
+filestsigyx = tuf.list_files(output_dir, "tsigyx", expno)
 
 # loading the files in memory
 x, y, r, h, t, o, b = (
@@ -69,7 +77,7 @@ x, y, r, h, t, o, b = (
 x = x[::compression] / sf
 y = y[::compression] / sf
 r = r[::compression] / sf
-h = h[::compression] / sf
+h = h[::compression]
 t = t[::compression]
 o = np.sign(o[::compression])
 b = b[::compression]
@@ -90,6 +98,62 @@ lb = np.zeros_like(b)
 rb = np.zeros_like(b)
 angleb = np.zeros_like(b)
 
+
+def map_to_color(array, cmap=plt.cm.viridis):
+    norm = Normalize(vmin=np.nanmin(array), vmax=1 * np.nanmax(array))
+    mapper = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+
+    return mapper.to_rgba(array), mapper
+
+
+def map_to_alpha(array, low, high):
+    minimum = np.min(array)
+    maximum = np.max(array)
+
+    diff = maximum - minimum
+    diffScale = high - low
+
+    return (array - minimum) * (diffScale / diff) + low
+
+
+alpha = map_to_alpha(h, 0.5, 1)
+
+if stress:
+    # load
+    tsigxx, tsigyy, tsigxy, tsigyx = (
+        tuf.multiload(output_dir, filestsigxx, 0, n),
+        tuf.multiload(output_dir, filestsigyy, 0, n),
+        tuf.multiload(output_dir, filestsigxy, 0, n),
+        tuf.multiload(output_dir, filestsigyx, 0, n),
+    )
+    # compress
+    tsigxx = tsigxx[::compression] / sf
+    tsigyy = tsigyy[::compression] / sf
+    tsigxy = tsigxy[::compression] / sf
+    tsigyx = tsigyx[::compression] / sf
+    # convert it in real stress
+    tsigxx = tsigxx / r**2 / np.pi
+    tsigyy = tsigyy / r**2 / np.pi
+    tsigxy = tsigxy / r**2 / np.pi
+    tsigyx = tsigyx / r**2 / np.pi
+    # check dims
+    tsigxx = tuf.check_dim(tsigxx)
+    tsigyy = tuf.check_dim(tsigyy)
+    tsigxy = tuf.check_dim(tsigxy)
+    tsigyx = tuf.check_dim(tsigyx)
+    # combine
+    sigma = np.sqrt(tsigxx**2 + tsigyy**2 + tsigxy**2 + tsigyx**2)
+    sigma_cm, mapper = map_to_color(sigma)
+    dxx = tsigxx - (tsigxx + tsigyy) / 2
+    dyy = tsigyy - (tsigxx + tsigyy) / 2
+    dxy = tsigxy
+    dyx = tsigyx
+
+    j1 = (dxx + dyy) / 2
+    j2 = np.sqrt((dxx**2 + dyy**2 + 2 * dxy**2) / 2)
+    j1_cm, mapper = map_to_color(j1)
+    j2_cm, mapper = map_to_color(j2)
+
 # --------------------------------------
 # compute some things
 # --------------------------------------
@@ -108,7 +172,7 @@ os.chdir("../plots/anim/")
 # --------------------------------------
 
 
-def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False):
+def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False, stress=False):
     # init plot
     basefigsizex = 7
     figsizex = x * (0.325581 + 0.474419 + 0.1 * (number_plots + 1))
@@ -139,6 +203,12 @@ def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False):
     ]
 
     ax = fig.add_axes(rect)
+    if stress:
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="2%", pad=0.05)
+        cax.set_label("$J_1$ [Pa]")
+    else:
+        cax = None
 
     # ticks
     ax.tick_params(
@@ -151,16 +221,17 @@ def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False):
         labelleft=True,
     )
 
-    return fig, ax
+    return fig, ax, cax
 
 
-fig, ax = init_figure(
+fig, ax, cax = init_figure(
     1,
     xaxis_limits,
     yaxis_limits,
     xlenght,
     3.2,
     trans,
+    stress,
 )
 
 fig.text(0.03, 0.5, r"$y$ [km]")
@@ -172,6 +243,9 @@ ax.set_ylim(0, yaxis_limits)
 
 # colors
 ax.set_facecolor("xkcd:baby blue")
+if stress:
+    ax.set_facecolor("white")
+    fig.colorbar(mapper, cax=cax, orientation="vertical")
 
 # second figure
 fig_strip = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
@@ -182,7 +256,7 @@ ax_strip.set_xlim(0, xaxis_limits)
 ax_strip.set_ylim(0, yaxis_limits)
 
 # keep track of time in the figure
-time = fig.text(0.65, 1.02, "", transform=ax.transAxes)
+time = fig.text(0, 1.02, "", transform=ax.transAxes, horizontalalignment="left")
 time_strip = fig_strip.text(2, 2, "", transform=ax_strip.transAxes)
 
 disks = []
@@ -235,10 +309,15 @@ def animate(k, time):
         p = np.array([x[k, i], y[k, i]])
         disk.center = p
         disk.radius = r[k, i]
+        disk.set_alpha(1)
+        if stress:
+            disk.set_facecolor(j2_cm[k, i])
         rad.xy = p
         rad.angle = t[k, i]
         rad.set_width(r[k, i])
         rad.set_edgecolor(edge[k, i])
+        if clean is True:
+            rad.set_visible(False)
         if i == len(disks) - 1:
             continue
         index = np.sum(num_bonds[:i], dtype=int)
@@ -268,9 +347,11 @@ def animate(k, time):
                 bond.set_height(
                     2 * rb[k, loc[j, 0], loc[j, 1]] * b[k, loc[j, 0], loc[j, 1]]
                 )
-    time.set_text("t = {}s".format(round(dt * comp * compression * (k + 1))))
+    time.set_text(
+        r"$t = {}\>$hour".format(round(dt * comp * compression * (k + 1) / 60 / 60))
+    )
 
-    if k == r.shape[0] - 1:
+    if k == 0 or k == r.shape[0] - 11:
         fig.savefig("../../plots/plot/collision{}-{}.png".format(expno, k + 1))
         fig.savefig("../../plots/plot/collision{}-{}.pdf".format(expno, k + 1))
 
