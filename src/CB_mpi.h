@@ -44,6 +44,11 @@
                 sigyy_bc_r  (n),    &
                 sigxy_bc_r  (n),    &
                 sigyx_bc_r  (n),    &
+                ! forcing stress
+                sigxx_aw_r  (n),    &
+                sigyy_aw_r  (n),    &
+                sigxy_aw_r  (n),    &
+                sigyx_aw_r  (n),    &
                 ! pressure
                 tac_r       (n),    &
                 tab_r       (n),    &
@@ -104,6 +109,11 @@
                 sigyy_bc_r     ,    &
                 sigxy_bc_r     ,    &
                 sigyx_bc_r     ,    &
+                ! forcing stress
+                sigxx_aw_r     ,    &
+                sigyy_aw_r     ,    &
+                sigxy_aw_r     ,    &
+                sigyx_aw_r     ,    &
                 ! pressure
                 tac_r          ,    &
                 tab_r          ,    &

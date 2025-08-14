@@ -6,6 +6,7 @@ subroutine forcing (i)
     include "CB_variables.h"
     include "CB_const.h"
     include "CB_forcings.h"
+    include "CB_diagnostics.h"
 
     integer, intent(in) :: i
 
@@ -18,7 +19,7 @@ subroutine forcing (i)
     ! unitless minimum sheltering coefficient
     shelter_coeff_a = minval(hsfa, dim=1)
     shelter_coeff_w = minval(hsfw, dim=1)
-    
+
     !###############################################################
     if ( L2norm(ua - u(i), va - v(i)) .eq. 0d0 ) then
         fdax = 0d0
@@ -85,7 +86,7 @@ subroutine forcing (i)
 
     ! torque induced drag due to rotation of floes when no speed
 	! if speed, use second expression valid for |U| >> |omega*r|
-	if ( L2norm(ua - u(i), va - v(i)) < 1d0 ) then
+	if ( L2norm(ua - u(i), va - v(i)) < 1d-2 ) then
 		ma(i)  = - 2d0 * pi / 5d0 * r(i) ** 5 * rhoair * Csair * &
                 omega(i) * ABS(omega(i))
 	else
@@ -100,6 +101,13 @@ subroutine forcing (i)
 		mw(i) = - 3d0 / 4d0 * pi * rhowater * Cswater * &
 				sqrt( uw ** 2 + vw ** 2) * omega(i) * r(i) ** 4
 	end if
+
+    ! compute the stress using cauchy stress formula due to the winds and currents
+    ! off diag are always 0
+    sigxx_aw(i) = (fax(i) + fwx(i)) * r(i)
+    sigyy_aw(i) = (fay(i) + fwy(i)) * r(i)
+    sigxy_aw(i) = 0d0
+    sigyx_aw(i) = 0d0
 
 end subroutine forcing
 
@@ -117,15 +125,15 @@ subroutine sheltering (j, i)
     double precision :: S_shelter
 
     ! sheltering height from air and water
-    hsfa(j, i) = S_shelter(hfa(i), hfa(j), deltan(j,i), cosa(j,i), &
+    hsfa(i, j) = S_shelter(hfa(i), hfa(j), deltan(j,i), cosa(j,i), &
                     sina(j,i), ua, va)
-    hsfw(j, i) = S_shelter(hfw(i), hfw(j), deltan(j,i), cosa(j,i), &
+    hsfw(i, j) = S_shelter(hfw(i), hfw(j), deltan(j,i), cosa(j,i), &
                     sina(j,i), uw, vw)
 
     ! sheltering for the reverse direction
-    hsfa(i, j) = S_shelter(hfa(j), hfa(i), deltan(j,i), -cosa(j,i), &
+    hsfa(j, i) = S_shelter(hfa(j), hfa(i), deltan(j,i), -cosa(j,i), &
                     -sina(j,i), ua, va)
-    hsfw(i, j) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
+    hsfw(j, i) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
                     -sina(j,i), uw, vw)
 end subroutine
 
@@ -134,12 +142,12 @@ subroutine coriolis (i)
 
 	implicit none
 
-	integer, intent(in) :: i
-    double precision :: omega_earth
-
     include "parameter.h"
     include "CB_variables.h"
     include "CB_const.h"
+
+	integer, intent(in) :: i
+    double precision :: omega_earth
 
     omega_earth = 7.2921d-5
 
@@ -156,9 +164,14 @@ double precision function log_profile (hf, z0)
 
     double precision, intent(in) :: hf, z0
 
-    log_profile = ( log( hf / z0 ) ** 2.0d0 - 2.0d0 *           &
-                         log( hf / z0 ) + 2.0d0 - 2.0d0 * z0 / hf) / &
-                         log( 10 / z0 ) ** 2.0d0
+    ! this is the true profile to use but it is unnecessarily complex
+    ! we can use a nice little approximation that is valid within 1%
+    ! because z0 is very small in compared to hf
+    ! log_profile = ( log( hf / z0 ) ** 2.0d0 - 2.0d0 *           &
+    !                 log( hf / z0 ) + 2.0d0 - 2.0d0 * z0 / hf) / &
+    !                 log( 10 / z0 ) ** 2.0d0
+
+    log_profile = ( log( hf / z0 ) / log( 10 / z0 ) ) ** 2.0d0
 
 end function log_profile
 
@@ -168,6 +181,8 @@ double precision function heaviside (x)
 
     double precision, intent(in) :: x
 
+    ! note how we use the -fno-sign-zero compiler option to prevent 
+    ! signed zeros coming from here
     heaviside = sign(5d-1, x) + 0.5
 
 end function heaviside
@@ -176,20 +191,33 @@ double precision function S_shelter (hfi, hfj, deltan, cosa, sina, uf, vf)
 
     implicit none
 
+    include "CB_const.h"
+
     double precision, intent(in) :: hfi, hfj, deltan
     double precision, intent(in) :: uf, vf, cosa, sina
     
-    double precision :: heaviside
+    double precision :: heaviside, L2norm
+    
+    ! D: is the distance factor
+    ! G: is the upwind factor
+    ! costheta: where theta is the angle between the wind vector 
+    ! and the vector joining the center of the disks.
+    ! wnorm: is the L2norm of the winds
+    double precision :: D, G, costheta, wnorm
 
-    S_shelter = (                                               &
-                heaviside(deltan) * heaviside(hfi - hfj) *      &
-                (1 - hfj / hfi) + ( 1 - heaviside(deltan) ) *   &
-                ( 1 - exp(- 0.18 * abs(deltan) / hfj) )         &
-                ) * (-uf * cosa - vf * sina) /                  &
-                sqrt(uf**2 + vf**2) *                           &
-                (                                               &
-                heaviside(-cosa * uf) + heaviside(-sina * vf)   &
-                )
+    wnorm = L2norm(uf, vf)
+    costheta = (uf * cosa + vf * sina) / wnorm
+
+    D = 1 -                                                 &
+        ( 1 - heaviside(deltan) ) *                         &
+        ( 1 - exp(- 0.18 * abs(deltan / costheta) / hfj) )  &
+        -                                                   &
+        heaviside(deltan) *                                 &
+        heaviside(hfi - hfj) * (1 - hfj / hfi)
+    
+    G = heaviside(costheta) * costheta
+
+    S_shelter = 1 - D * G
 
 end function S_shelter
 

@@ -52,7 +52,7 @@ subroutine stepper (tstep)
     !$omp reduction(+:sigxx,sigyy,sigxy,sigyx) &
     !$omp reduction(+:tac,tab,pc,pb)
     !&&#endif
-    do i = last_iter, first_iter, -1
+    do i = first_iter, last_iter
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), &
                             yQuery = y(i), radius = r(i) + rtree)
@@ -258,7 +258,7 @@ subroutine stepper (tstep)
     call force_reduction
 
     ! sum all forces together on particule i
-    do i = last_iter, first_iter, -1
+    do i = first_iter, last_iter
         tfx_r(i) = fcx_r(i) + fbx_r(i) + fax_r(i) + fwx_r(i) &
                     + fcorx_r(i) + fx_bc_r(i)
         tfy_r(i) = fcy_r(i) + fby_r(i) + fay_r(i) + fwy_r(i) &
@@ -268,10 +268,10 @@ subroutine stepper (tstep)
         m_r(i) =  mc_r(i) + mb_r(i) + ma_r(i) + mw_r(i) + m_bc_r(i)
 
         ! same for stresses
-        tsigxx_r(i) = sigxx_r(i) + sigxx_bc_r(i)
-        tsigyy_r(i) = sigyy_r(i) + sigyy_bc_r(i)
-        tsigxy_r(i) = sigxy_r(i) + sigxy_bc_r(i)
-        tsigyx_r(i) = sigyx_r(i) + sigyx_bc_r(i)
+        tsigxx_r(i) = sigxx_r(i) + sigxx_bc_r(i) + sigxx_aw_r(i)
+        tsigyy_r(i) = sigyy_r(i) + sigyy_bc_r(i) + sigyy_aw_r(i)
+        tsigxy_r(i) = sigxy_r(i) + sigxy_bc_r(i) + sigxy_aw_r(i)
+        tsigyx_r(i) = sigyx_r(i) + sigyx_bc_r(i) + sigyx_aw_r(i)
 
         ! same for pressure
         tp_r(i) =   merge(pc_r(i) / tac_r(i), 0d0, tac_r(i) /= 0d0) &

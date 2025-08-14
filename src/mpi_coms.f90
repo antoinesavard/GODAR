@@ -324,6 +324,23 @@ subroutine force_reduction
     sigyx_bc, sigyx_bc_r, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
 
+    ! forcing stress
+    call mpi_allreduce( &
+    sigxx_aw, sigxx_aw_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+    
+    call mpi_allreduce( &
+    sigyy_aw, sigyy_aw_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    sigxy_aw, sigxy_aw_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    sigyx_aw, sigyx_aw_r, n, mpi_double_precision, &
+    mpi_sum, mpi_comm_world, ierr)
+
     ! pressure
     call mpi_allreduce( &
     tac, tac_r, n, mpi_double_precision, &

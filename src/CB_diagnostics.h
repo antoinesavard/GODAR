@@ -16,7 +16,12 @@
                 sigxx_bc    (n)  ,  & ! xx stress on each particle
                 sigyy_bc    (n)  ,  & ! yy stress on each particle
                 sigxy_bc    (n)  ,  & ! xy stress on each particle
-                sigyx_bc    (n)       ! yx stress on each particle
+                sigyx_bc    (n)  ,  & ! yx stress on each particle
+                ! forcings
+                sigxx_aw    (n)  ,  & ! xx stress on each particle
+                sigyy_aw    (n)  ,  & ! yy stress on each particle
+                sigxy_aw    (n)  ,  & ! xy stress on each particle
+                sigyx_aw    (n)       ! yx stress on each particle
 
     double precision ::             & ! pressure variables  
                 ac          (n,n),  & ! area of one contact 
@@ -42,7 +47,13 @@
                 sigxx_bc,    & ! xx stress on each particle      [N/m^2]
                 sigyy_bc,    & ! yy stress on each particle      [N/m^2]
                 sigxy_bc,    & ! xy stress on each particle      [N/m^2]
-                sigyx_bc       ! yx stress on each particle      [N/m^2]
+                sigyx_bc,    & ! yx stress on each particle      [N/m^2]
+                ! forcings
+                sigxx_aw,    & ! xx stress on each particle      [N/m^2]
+                sigyy_aw,    & ! yy stress on each particle      [N/m^2]
+                sigxy_aw,    & ! xy stress on each particle      [N/m^2]
+                sigyx_aw       ! yx stress on each particle      [N/m^2]
+
 
     common/diag_omp_stress/     & ! stress openmp variables
                 sigxx   ,    & ! xx stress on each particle      [N/m^2]
