@@ -16,63 +16,71 @@ subroutine forcing (i)
     double precision :: log_profile, L2norm
     double precision :: shelter_coeff_a(n), shelter_coeff_w(n)
 
+    double precision :: atm_vel_norm, ocn_vel_norm, atm_log, ocn_log
+
     ! unitless minimum sheltering coefficient
     shelter_coeff_a = minval(hsfa, dim=1)
     shelter_coeff_w = minval(hsfw, dim=1)
 
+    ! local variables to speed up the code
+    atm_vel_norm = L2norm(ua - u(i), va - v(i))
+    ocn_vel_norm = L2norm(uw - u(i), vw - v(i))
+    atm_log = log_profile(hfa(i), z0w)
+    ocn_log = log_profile(hfw(i), z0w)
+
     !###############################################################
-    if ( L2norm(ua - u(i), va - v(i)) .eq. 0d0 ) then
+    if ( atm_vel_norm .eq. 0d0 ) then
         fdax = 0d0
         fday = 0d0
         fsax = 0d0
         fsay = 0d0
     else
         ! wind drag forcing
-        fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *      &
-                    L2norm(ua - u(i), va - v(i)) * log_profile(hfa(i), &
-                    z0w) * shelter_coeff_a(i) * pi / 2d0
+        fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *   &
+                    atm_vel_norm * atm_log * shelter_coeff_a(i) *   &
+                    pi / 2d0
 
-        fday     = rhoair * Cdair * hfa(i) * r(i) * (va - v(i)) *      &
-                    L2norm(ua - u(i), va - v(i)) * log_profile(hfa(i), &
-                    z0w) * shelter_coeff_a(i) * pi / 2d0
+        fday     = rhoair * Cdair * hfa(i) * r(i) * (va - v(i)) *   &
+                    atm_vel_norm * atm_log * shelter_coeff_a(i) *   &
+                    pi / 2d0
 
         ! wind skin forcing
-        fsax     = rhoair * pi * r(i) ** 2 * Csair *               &
-                    (ua - u(i)) / L2norm(ua - u(i), va - v(i)) * ( &
-                    L2norm(ua - u(i), va - v(i)) ** 2 + r(i) ** 2  &
+        fsax     = rhoair * pi * r(i) ** 2 * Csair *    &
+                    (ua - u(i)) / atm_vel_norm * (      &
+                    atm_vel_norm ** 2 + r(i) ** 2       &
                     * ABS(omega(i)) ** 2 / 4d0)
 
-        fsay     = rhoair * pi * r(i) ** 2 * Csair *               &
-                    (va - v(i)) / L2norm(ua - u(i), va - v(i)) * ( &
-                    L2norm(ua - u(i), va - v(i)) ** 2 + r(i) ** 2  &
+        fsay     = rhoair * pi * r(i) ** 2 * Csair *    &
+                    (va - v(i)) / atm_vel_norm * (      &
+                    atm_vel_norm ** 2 + r(i) ** 2       &
                     * ABS(omega(i)) ** 2 / 4d0)
     end if
 
     !###############################################################
-    if ( L2norm(uw - u(i), vw - v(i)) .eq. 0d0 ) then
+    if ( ocn_vel_norm .eq. 0d0 ) then
         fdwx = 0d0
         fdwy = 0d0
         fswx = 0d0
         fswy = 0d0
     else
         ! water drag forcing
-        fdwx = rhowater * Cdwater * hfw(i) * r(i) * (uw -            &
-                u(i)) * L2norm(uw - u(i), vw - v(i)) *               &
-                log_profile(hfw(i), z0w) * shelter_coeff_w(i) * pi / 2d0
+        fdwx = rhowater * Cdwater * hfw(i) * r(i) * (uw - u(i)) *   &
+                ocn_vel_norm * ocn_log * shelter_coeff_w(i) *       &
+                pi / 2d0
 
-        fdwy = rhowater * Cdwater * hfw(i) * r(i) * (vw -            &
-                v(i)) * L2norm(uw - u(i), vw - v(i)) *               &
-                log_profile(hfw(i), z0w) * shelter_coeff_w(i) * pi / 2d0
+        fdwy = rhowater * Cdwater * hfw(i) * r(i) * (vw - v(i)) *   &
+                ocn_vel_norm * ocn_log * shelter_coeff_w(i) *       &
+                pi / 2d0
 
         ! water skin forcing
-        fswx = rhowater * pi * r(i) ** 2 * Cswater *               &
-                (uw - u(i)) / L2norm(uw - u(i), vw - v(i)) * (     &
-                L2norm(uw - u(i), vw - v(i)) ** 2 + r(i) ** 2      &
+        fswx = rhowater * pi * r(i) ** 2 * Cswater *    &
+                (uw - u(i)) / ocn_vel_norm * (          &
+                ocn_vel_norm ** 2 + r(i) ** 2           &
                 * ABS(omega(i)) ** 2 / 4d0)
 
-        fswy = rhowater * pi * r(i) ** 2 * Cswater * &
-                (vw - v(i)) / L2norm(uw - u(i), vw - v(i)) * (     &
-                L2norm(uw - u(i), vw - v(i)) ** 2 + r(i) ** 2      &
+        fswy = rhowater * pi * r(i) ** 2 * Cswater *    &
+                (vw - v(i)) / ocn_vel_norm * (          &
+                ocn_vel_norm ** 2 + r(i) ** 2           &
                 * ABS(omega(i)) ** 2 / 4d0)
     end if
 
@@ -86,7 +94,7 @@ subroutine forcing (i)
 
     ! torque induced drag due to rotation of floes when no speed
 	! if speed, use second expression valid for |U| >> |omega*r|
-	if ( L2norm(ua - u(i), va - v(i)) < 1d-2 ) then
+	if ( atm_vel_norm < 1d-2 ) then
 		ma(i)  = - 2d0 * pi / 5d0 * r(i) ** 5 * rhoair * Csair * &
                 omega(i) * ABS(omega(i))
 	else
@@ -94,7 +102,7 @@ subroutine forcing (i)
 				sqrt( ua ** 2 + va ** 2) * omega(i) * r(i) ** 4
 	end if
 
-	if ( L2norm(uw - u(i), vw - v(i)) < 1d-2 ) then
+	if ( ocn_vel_norm < 1d-2 ) then
     	mw(i) = - 2d0 * pi / 5d0 * r(i) ** 5 * rhowater * Cswater * &
 				omega(i) * ABS(omega(i))
 	else
