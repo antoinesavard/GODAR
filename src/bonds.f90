@@ -76,10 +76,13 @@ subroutine bond_breaking (j, i)
 	integer, intent(in) :: i, j
 
 	taub(j, i) = abs(fbt(j, i)) / sb(j, i)
-	sigmatb(j, i) = - abs(fbn(j, i)) / sb(j, i) + abs(mbb(j, i)) * 	&
+	sigmatb(j, i) = - fbn(j, i) / sb(j, i) + abs(mbb(j, i)) * 	&
 					rb(j, i) / ib(j, i)
-	sigmacb(j, i) = abs(fbn(j, i)) / sb(j, i) + abs(mbb(j, i)) * 	&
+	sigmacb(j, i) = fbn(j, i) / sb(j, i) + abs(mbb(j, i)) * 	&
 					rb(j, i) / ib(j, i)
+
+    print*, i,j, "tau=",taub(j,i), "sigt=",sigmatb(j,i), "sigc=",sigmacb(j,i)
+    print*, "fbt=",fbt(j, i), "fbn=",fbn(j,i)
 
 	if ( taub(j, i) .gt. tau_crit * hb(j,i) ) then
 		
