@@ -60,7 +60,7 @@ env = Environment(
 #           Coretran Librairy
 # ---------------------------------------
 
-# you need to change these two paths 
+# you need to change these two paths
 # should be done automatically
 env.Append(LIBPATH="/path/to/coretran/lib")
 env.Append(F90PATH="/path/to/coretran/include")
@@ -73,6 +73,16 @@ nf_prefix = subprocess.check_output(["nf-config", "--prefix"], text=True).strip(
 
 env.Append(LIBPATH=nf_prefix + "/lib")
 env.Append(F90PATH=nf_prefix + "/include")
+
+# Query h5fc
+hdf5 = subprocess.check_output(["h5fc", "-show"], text=True).split()
+
+# Separate includes and libs
+h5_inc = [f[2:] for f in hdf5 if f.startswith("-I")]
+h5_lib = [f[2:] for f in hdf5 if f.startswith("-L")]
+
+env.Append(LIBPATH=h5_lib[0])
+env.Append(F90PATH=h5_inc[0])
 
 # Command line options to modify the build environment.
 # Use scons-3 debug=1 to compile with debugging flags.
