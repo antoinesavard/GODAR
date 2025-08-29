@@ -13,20 +13,22 @@ subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamn, gamt, gamr)
 
     double precision :: knc
 
-    ! compute the spring constants
-    knc    = max((sigmanc_crit * hmin ** 2 * delt_ridge(j,i) &
-                + gamn * veln(j,i)) / deltan(j,i), 0d0)
-    ktc    = 6d0 * gc / ec * knc
-    krc    = knc * delt_ridge(j,i) ** 2 / 12
+    ! ! compute the spring constants
+    ! knc    = max((sigmanc_crit * hmin ** 2 * delt_ridge(j,i) &
+    !             + gamn * veln(j,i)) / deltan(j,i), 0d0)
+    ! ktc    = 6d0 * gc / ec * knc
+    ! krc    = knc * delt_ridge(j,i) ** 2 / 12
 
-    ! compute the dashpots constants
-    gamn   = -beta * sqrt( 4d0 * knc * m_redu )
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
-    gamr   = gamn * delt_ridge(j,i) ** 2 / 12
+    ! ! compute the dashpots constants
+    ! gamn   = -beta * sqrt( 4d0 * knc * m_redu )
+    ! gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
+    ! gamr   = gamn * delt_ridge(j,i) ** 2 / 12
 
-    ! compute the forces
-    fcn(j,i) = max(knc * deltan(j,i) - gamn * veln(j,i),0d0)
-    fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
+    ! ! compute the forces
+    ! fcn(j,i) = max(knc * deltan(j,i) - gamn * veln(j,i), 0d0)
+    ! fct(j,i) = max(ktc * deltat(j,i) - gamt * velt(j,i), 0d0)
+
+    fcn(j,i) = min(fcn(j,i), sigmanc_crit * hmin**2 * delt_ridge(j,i))
 
     call update_shape (j, i)
 
@@ -104,20 +106,23 @@ subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, k
 
     double precision :: knc
 
-    ! compute the spring constants
-    knc    = max((sigmanc_crit * h(i) ** 2 * delt_ridge_bc(i) &
-                + gamn * veln_bc) / deltan_bc, 0d0)
-    ktc    = 6d0 * gc / ec * knc
-    krc    = knc * delt_ridge_bc(i) ** 2 / 12
+    ! ! compute the spring constants
+    ! knc    = (sigmanc_crit * h(i) ** 2 * delt_ridge_bc(i) &
+    !             + gamn * veln_bc) / deltan_bc
+    ! ktc    = 6d0 * gc / ec * knc
+    ! krc    = knc * delt_ridge_bc(i) ** 2 / 12
 
-    ! compute the dashpots constants
-    gamn   = -beta * sqrt( 4d0 * knc * m(i) )
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) )
-    gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
+    ! ! compute the dashpots constants
+    ! gamn   = -beta * sqrt( 4d0 * knc * m(i) )
+    ! gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) )
+    ! gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
 
-    ! compute the forces
-    fn_bc(i) = max(knc * deltan_bc - gamn * veln_bc, 0d0)
-    ft_bc(i) = ktc * deltat_bc - gamt * velt_bc
+    ! ! compute the forces
+    ! fn_bc(i) = max(knc * deltan_bc - gamn * veln_bc, 0d0)
+    ! ft_bc(i) = ktc * deltat_bc - gamt * velt_bc
+
+    fn_bc(i) = min(fn_bc(i), sigmanc_crit * h(i)**2 * delt_ridge_bc(i))
+
 
     call update_shape_bc (i, deltan_bc)
 
