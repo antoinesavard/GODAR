@@ -59,7 +59,7 @@ if [[ "$(uname)" == "Linux" ]]; then
 
     sed -i "s|^env\.Append(LIBPATH=\"/path.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
 
-    sed -i "s|^env\.Append(F90PATH=\"path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
+    sed -i "s|^env\.Append(F90PATH=\"/path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
 
     echo "Done"
 
