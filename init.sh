@@ -57,9 +57,9 @@ if [[ "$(uname)" == "Linux" ]]; then
 
     echo "Modifying SConstruct to match coretran install path"
 
-    sed -i "s|^env\.Append(LIBPATH=.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
+    sed -i "s|^env\.Append(LIBPATH=\"/path.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
 
-    sed -i "s|^env\.Append(F90PATH=.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
+    sed -i "s|^env\.Append(F90PATH=\"path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
 
     echo "Done"
 
@@ -92,9 +92,9 @@ elif [[ "$(uname)" == "Darwin" ]]; then
 
     echo "Modifying SConstruct to match coretran install path"
 
-    sed -i "" "s|^env\.Append(LIBPATH=.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
+    sed -i "" "s|^env\.Append(LIBPATH=\"/path.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
 
-    sed -i "" "s|^env\.Append(F90PATH=.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
+    sed -i "" "s|^env\.Append(F90PATH=\"/path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
 
     echo "Done"
 

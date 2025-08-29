@@ -1,5 +1,6 @@
 from glob import glob
 import os
+import subprocess
 
 # This file sets up the compilation environment for Godar and its libraries.
 
@@ -68,15 +69,10 @@ env.Append(F90PATH="/path/to/coretran/include")
 #           NetCDF and hdf5 Librairies
 # ---------------------------------------
 
-# you need to change these paths for netcdf
-env.Append(LIBPATH='/path/to/netcdf/lib')
-env.Append(F90PATH='/path/to/netcdf/include')
+nf_prefix = subprocess.check_output(["nf-config", "--prefix"], text=True).strip()
 
-# and for hdf5
-# they probably are at the same place
-env.Append(LIBPATH='/path/to/hdf5/lib')
-env.Append(F90PATH='/path/to/hdf5/include')
-
+env.Append(LIBPATH=nf_prefix + "/lib")
+env.Append(F90PATH=nf_prefix + "/include")
 
 # Command line options to modify the build environment.
 # Use scons-3 debug=1 to compile with debugging flags.
