@@ -75,9 +75,6 @@ subroutine stepper (tstep)
                         bond (j, i) = 1
                     end if
                 end if
-                if ( bond(j, i) .eq. 1 ) then
-                    call bond_properties (j, i)
-                end if
 			end if
 
             ! verify if two particles are colliding
@@ -133,6 +130,7 @@ subroutine stepper (tstep)
 			! compute forces from bonds between particle i and j
 			if ( bond (j, i) .eq. 1 ) then
 
+                call bond_properties (j ,i)
 				call bond_forces (j, i)
 				call bond_breaking (j, i)
 

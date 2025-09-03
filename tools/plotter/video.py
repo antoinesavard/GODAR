@@ -12,15 +12,14 @@ import sys
 xaxis_limits = 30  # in km
 xoffset = 0
 yaxis_limits = 10  # in km
-xlenght = 8.9  # #11 2.7  #13 5 #14 8.9
 trans = True  # transparent background or not
 clean = True  # removes the green/red bars
-stress = True  # plots the stress as facecolor rather than just white
+stress = False  # plots the stress as facecolor rather than just white
+stress_invariant = 2  # J1 or J2 invariant
 
 # coming from sim
-nt = 2e8
 dt = 1e-3  # tstep size in sim
-comp = 1e5  # compression in sim
+comp = 5e5  # compression in sim
 
 # miscalleneous
 sf = 1e3  # conversion ratio m <-> km
@@ -153,6 +152,7 @@ if stress:
     j2 = np.sqrt((dxx**2 + dyy**2 + 2 * dxy**2) / 2)
     j1_cm, mapper = map_to_color(j1)
     j2_cm, mapper = map_to_color(j2)
+    j_cm = j1_cm * (2 - stress_invariant) + j2_cm * (stress_invariant - 1)
 
 # --------------------------------------
 # compute some things
@@ -172,41 +172,15 @@ os.chdir("../plots/anim/")
 # --------------------------------------
 
 
-def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False, stress=False):
-    # init plot
-    basefigsizex = 7
-    figsizex = x * (0.325581 + 0.474419 + 0.1 * (number_plots + 1))
-    figsizey = y
-    fig = plt.figure(
-        dpi=300,
-        figsize=(figsizex, figsizey),
-    )
+def init_figure(trans=False, stress=False):
+    fig, ax = plt.subplots()
+    fig.set_layout_engine("tight")
+    ax.set_aspect("equal")
     if trans:
         fig.patch.set_facecolor("None")
-
-    # definitions for the axis
-
-    # graphs
-    extraspaceinit = 0.1 * basefigsizex / figsizex
-    graphsizex = (0.9 - extraspaceinit) / number_plots
-    graphsizey = yaxis / xaxis * graphsizex * figsizex / figsizey
-    separation = (1 - extraspaceinit - number_plots * graphsizex) / (number_plots + 1)
-
-    bottom, height = (0.125, graphsizey)
-    left, width = (separation + extraspaceinit, graphsizex)
-
-    rect = [
-        left,
-        bottom,
-        width,
-        height,
-    ]
-
-    ax = fig.add_axes(rect)
     if stress:
         divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="2%", pad=0.05)
-        cax.set_label("$J_1$ [Pa]")
+        cax = divider.append_axes("right", size="5%", pad=0.1)
     else:
         cax = None
 
@@ -214,7 +188,7 @@ def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False, stress=F
     ax.tick_params(
         which="both",
         direction="out",
-        bottom=False,
+        bottom=True,
         top=False,
         left=True,
         right=False,
@@ -225,17 +199,17 @@ def init_figure(number_plots, xaxis, yaxis, x=2.15, y=3.2, trans=False, stress=F
 
 
 fig, ax, cax = init_figure(
-    1,
-    xaxis_limits,
-    yaxis_limits,
-    xlenght,
-    3.2,
     trans,
     stress,
 )
 
-fig.text(0.03, 0.5, r"$y$ [km]")
-fig.text(0.54, 0.025, r"$x$ [km]")
+ax.set_ylabel(
+    r"$y$ [km]",
+    rotation=0,
+    multialignment="left",
+    ha="right",
+)
+ax.set_xlabel(r"$x$ [km]")
 
 # limits of the plot in kilometers
 ax.set_xlim(-xoffset, xaxis_limits - xoffset)
@@ -245,7 +219,13 @@ ax.set_ylim(0, yaxis_limits)
 ax.set_facecolor("xkcd:baby blue")
 if stress:
     ax.set_facecolor("white")
-    fig.colorbar(mapper, cax=cax, orientation="vertical")
+    cax = fig.colorbar(mapper, cax=cax, orientation="vertical")
+    cax.set_label(
+        "$J_1$ [Pa]",
+        rotation=0,
+        multialignment="left",
+        ha="left",
+    )
 
 # second figure
 fig_strip = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
@@ -311,7 +291,7 @@ def animate(k, time):
         disk.radius = r[k, i]
         disk.set_alpha(1)
         if stress:
-            disk.set_facecolor(j2_cm[k, i])
+            disk.set_facecolor(j_cm[k, i])
         rad.xy = p
         rad.angle = t[k, i]
         rad.set_width(r[k, i])
