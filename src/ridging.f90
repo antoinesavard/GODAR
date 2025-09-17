@@ -25,7 +25,7 @@ subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamn, gamt, gamr)
     gamr   = gamn * delt_ridge(j,i) ** 2 / 12
 
     ! compute the forces
-    fcn(j,i) = min(fcn(j,i), sigmanc_crit * hmin**2 * delt_ridge(j,i))
+    fcn(j,i) = min(fcn(j,i), sigmanc_crit * hmin**2 * delt_ridge(j,i)) !knc * deltan(j,i) - gamn * veln(j,i) !
     fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
 
     call update_shape (j, i)
@@ -45,17 +45,18 @@ subroutine update_shape (j, i)
     integer, intent(in) :: j, i
 
     double precision :: hmin, dh, Vol, Area
+    double precision :: delta_ij, delta_ji
 
     hmin = min(h(i), h(j))
+    delta_ij = (dist(j,i) ** 2 - r(j) ** 2 + r(i) ** 2) / &
+                (2 * dist(j,i))
+    delta_ji = (dist(j,i) ** 2 - r(i) ** 2 + r(j) ** 2) / &
+                (2 * dist(j,i))
 
-    Area = r(i) ** 2 * acos((dist(j,i) ** 2 - r(j) ** 2 + r(i) ** 2) &
-            / (2 * dist(j,i)) / r(i)) - (dist(j,i) ** 2 - r(j) ** 2  &
-            + r(i) ** 2) / (2 * dist(j,i)) * delt_ridge(j,i) / 2d0 + &
-            r(j) ** 2 * acos((dist(j,i) ** 2 - r(i) ** 2 + r(j) ** 2)&
-            / (2 * dist(j,i)) / r(j)) - (dist(j,i) ** 2 - r(i) ** 2  &
-            + r(j) ** 2) / (2 * dist(j,i)) * delt_ridge(j,i) / 2d0
+    Area = r(i) ** 2 * acos(delta_ij / r(i)) - delta_ij * &
+            delt_ridge(j, i) / 2d0 + r(j) ** 2 * acos(delta_ji / r(j)) - delta_ji * delt_ridge(j,i) / 2d0
 
-    Vol = Area * hmin
+    Vol = Area * hmin / 2d0
 
     if ( hmin .eq. h(i) ) then
 
@@ -111,12 +112,14 @@ subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, k
     krc    = knc * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the dashpots constants
-    gamn   = -beta * sqrt( 4d0 * knc * m(i) )
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) )
+    ! note the 1/2 factor in gamn and gamt: this is a choice.
+    ! same reason as above for consistency
+    gamn   = -beta * sqrt( 4d0 * knc * m(i) / 1d0 )
+    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) / 1d0 )
     gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the forces
-    fn_bc(i) = min(fn_bc(i), sigmanc_crit * h(i)**2 * delt_ridge_bc(i))
+    fn_bc(i) = min(fn_bc(i), sigmanc_crit * h(i)**2 * delt_ridge_bc(i)) !knc * deltan_bc - gamn * veln_bc !
     ft_bc(i) = ktc * deltat_bc - gamt * velt_bc
 
     call update_shape_bc (i, deltan_bc)
@@ -137,7 +140,8 @@ subroutine update_shape_bc (i, deltan_bc)
 
     double precision :: dh, Vol, Area
 
-    Area = r(i) ** 2 * asin(delt_ridge_bc(i) / 2 / r(i))
+    Area = r(i) ** 2 * asin(delt_ridge_bc(i) / 2 / r(i)) &
+            - delt_ridge_bc(i) * ( r(i) - deltan_bc ) / 2
 
     Vol = Area * h(i)
 
@@ -151,6 +155,6 @@ subroutine update_shape_bc (i, deltan_bc)
     call floe_properties(i)
 
     ! update the new tangent overlap for pressure
-    delt_ridge_bc(i) = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
+    delt_ridge_bc(i) = 2 * sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
 
 end subroutine update_shape_bc

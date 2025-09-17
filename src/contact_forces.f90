@@ -18,6 +18,7 @@ subroutine contact_forces (j, i)
     ! compression has delta_t > 0
     deltat(j,i) = -velt(j,i) * dt + deltat(j,i)
     
+    ! this is the whole length of contact
     delt_ridge(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
                     r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 ) 
 
@@ -135,7 +136,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
                         dir2 * (r(i) + y(i) - ny) ) * (1 - dir1)
 
     deltat_bc = 0d0
-    delt_ridge_bc(i) = sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
+
+    ! this is the full contact length
+    delt_ridge_bc(i) = 2 * sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
 
     ! compression has delta_t > 0
     if (bd .eq. 1) then
@@ -159,8 +162,7 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! Ususally, for idealized test where all particles are the same, better to have 1/2 for clean graphs, and in more "real" tests, better to remove it so that the walls are the same for each particles.
     knc    = pi * ec * h(i)  *                  &
                 fit( deltan_bc * r(i) /         &
-                ( 2 * 2 * h(i) ** 2 ) )
-
+                ( 1d0 * 2d0 * h(i) ** 2 ) )
     ktc    = 6d0 * gc / ec * knc
 
     krc    = knc * delt_ridge_bc(i) ** 2 / 12
@@ -168,9 +170,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! compute the dashpots constant
     ! note the 1/2 factor in gamn and gamt: this is a choice.
     ! same reason as above for consistency
-    gamn   = -beta * sqrt( 4d0 * knc * mass(i) / 2d0 )
+    gamn   = -beta * sqrt( 4d0 * knc * mass(i) / 1d0 )
 
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) / 2d0 )
+    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) / 1d0 )
 
     gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
 
