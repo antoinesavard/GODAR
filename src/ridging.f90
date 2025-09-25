@@ -56,7 +56,17 @@ subroutine update_shape (j, i)
     Area = r(i) ** 2 * acos(delta_ij / r(i)) - delta_ij * &
             delt_ridge(j, i) / 2d0 + r(j) ** 2 * acos(delta_ji / r(j)) - delta_ji * delt_ridge(j,i) / 2d0
 
-    Vol = Area * hmin / 2d0
+    ! take the max value to make sure we don't get negatives
+    ! this is purely a compilation/numerical trick
+    ! not doing this can result in particles exploding
+    ! because when using aggressive optimization flags at
+    ! compilation, and since asin/acos are extra sensitive on the
+    ! distances, the area computation can become negative, even
+    ! though it should not happen, in the substraction because 
+    ! the distances are all super small. These negative volumes
+    ! increase the radius -> which increase the contact forces ->
+    ! leads to explosions. 
+    Vol = max(Area * hmin / 2d0, 0d0)
 
     if ( hmin .eq. h(i) ) then
 
@@ -143,7 +153,17 @@ subroutine update_shape_bc (i, deltan_bc)
     Area = r(i) ** 2 * asin(delt_ridge_bc(i) / 2 / r(i)) &
             - delt_ridge_bc(i) * ( r(i) - deltan_bc ) / 2
 
-    Vol = Area * h(i)
+    ! take the max value to make sure we don't get negatives
+    ! this is purely a compilation/numerical trick
+    ! not doing this can result in particles exploding
+    ! because when using aggressive optimization flags at
+    ! compilation, and since asin/acos are extra sensitive on the
+    ! distances, the area computation can become negative, even
+    ! though it should not happen, in the substraction because 
+    ! the distances are all super small. These negative volumes
+    ! increase the radius -> which increase the contact forces ->
+    ! leads to explosions. 
+    Vol = max(Area * h(i), 0d0)
 
     dh = Vol / ( pi * r(i) ** 2d0 )
 
