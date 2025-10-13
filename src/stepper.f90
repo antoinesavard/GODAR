@@ -79,9 +79,11 @@ subroutine stepper (tstep)
 
             ! verify if two particles are colliding
             if ( deltan(j,i) .gt. 0 ) then
-                
+
+!               call dilation (j, i) ! to implement
+             
                 call contact_forces (j, i)
-				!call bond_creation (j, i) ! to implement
+!               call bond_creation (j, i) ! to implement
                 
                 ! change coordinate system
 				! update contact force on particle i by particle j
@@ -260,7 +262,7 @@ subroutine stepper (tstep)
         tfx_r(i) = fcx_r(i) + fbx_r(i) + fax_r(i) + fwx_r(i) &
                     + fcorx_r(i) + fx_bc_r(i)
         tfy_r(i) = fcy_r(i) + fby_r(i) + fay_r(i) + fwy_r(i) &
-                    + fcory_r(i) + fy_bc(i)
+                    + fcory_r(i) + fy_bc_r(i)
 
         ! sum all moments on particule i together
         m_r(i) =  mc_r(i) + mb_r(i) + ma_r(i) + mw_r(i) + m_bc_r(i)
