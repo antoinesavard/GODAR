@@ -60,19 +60,17 @@ find_package(coretran REQUIRED CONFIG)
 # netcdf
 find_program(NF_CONFIG nf-config)
 if(NF_CONFIG)
-    execute_process(COMMAND ${NF_CONFIG} --includedir
-        OUTPUT_VARIABLE NETCDF_INCLUDE_DIR
+    execute_process(COMMAND ${NF_CONFIG} --prefix
+        OUTPUT_VARIABLE NETCDF_PREFIX
         OUTPUT_STRIP_TRAILING_WHITESPACE)
-    execute_process(COMMAND ${NF_CONFIG} --flibs
-        OUTPUT_VARIABLE NETCDF_FLIBS
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-    # Extract -L paths (library directories)
-    string(REGEX MATCHALL "-L([^ ]+)" NETCDF_LIB_DIRS "${NETCDF_FLIBS}")
-    string(REGEX REPLACE "-L" "" NETCDF_LIB_DIRS "${NETCDF_LIB_DIRS}") 
-    # Now use find_library with these hints
+
+    set(NETCDF_INCLUDE_DIR "${NETCDF_PREFIX}/include")
+    set(NETCDF_LIB_DIR "${NETCDF_PREFIX}/lib")
+
     find_library(NETCDF_LIBRARY NAMES netcdff
-        HINTS ${NETCDF_LIB_DIRS}
+        HINTS ${NETCDF_LIB_DIR}
         REQUIRED)
+    
     message(STATUS "Found NetCDF-Fortran via nf-config:")
     message(STATUS "  Include:  ${NETCDF_INCLUDE_DIR}")
     message(STATUS "  Library:  ${NETCDF_LIBRARY}")
