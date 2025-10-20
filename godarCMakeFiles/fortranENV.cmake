@@ -63,15 +63,18 @@ if(NF_CONFIG)
     execute_process(COMMAND ${NF_CONFIG} --includedir
         OUTPUT_VARIABLE NETCDF_INCLUDE_DIR
         OUTPUT_STRIP_TRAILING_WHITESPACE)
-    execute_process(COMMAND ${NF_CONFIG} --prefix
-        OUTPUT_VARIABLE NETCDF_PREFIX
+    execute_process(COMMAND ${NF_CONFIG} --flibs
+        OUTPUT_VARIABLE NETCDF_FLIBS
         OUTPUT_STRIP_TRAILING_WHITESPACE)
+    # Extract -L paths (library directories)
+    string(REGEX MATCHALL "-L([^ ]+)" NETCDF_LIB_DIRS "${NETCDF_FLIBS}")
+    string(REGEX REPLACE "-L" "" NETCDF_LIB_DIRS "${NETCDF_LIB_DIRS}") 
+    # Now use find_library with these hints
+    find_library(NETCDF_LIBRARY NAMES netcdff
+        HINTS ${NETCDF_LIB_DIRS}
+        REQUIRED)
     message(STATUS "Found NetCDF-Fortran via nf-config:")
     message(STATUS "  Include:  ${NETCDF_INCLUDE_DIR}")
-    # Find the Fortran library
-    find_library(NETCDF_LIBRARY NAMES netcdff
-        HINTS ${NETCDF_PREFIX}/lib
-        REQUIRED)
     message(STATUS "  Library:  ${NETCDF_LIBRARY}")
 else()
     # Fallback to manual search
