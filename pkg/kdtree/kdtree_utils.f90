@@ -51,3 +51,27 @@ subroutine tree_cleanup(tstep)
 
 
 end subroutine tree_cleanup
+
+
+! subroutine kdtree_update()
+
+!     implicit none
+
+!     include "parameter.h"
+!     include "CB_variables.h"
+!     include "CB_const.h"
+
+!     double precision :: max_veln, max_velt, max_veln_bc, max_velt_bc
+!     double precision :: min_r1, min_r2
+
+!     max_veln = maxval( veln )
+!     max_velt = maxval( velt )
+!     max_veln_bc = maxval( veln_bc )
+!     max_velt_bc = maxval( velt_bc )
+
+!     max_vel = max( max_veln, max_velt, max_veln_bc, max_velt_bc)
+
+!     min_r1 = minval( r )
+!     min_r2 = minval( r, mask = r > min_r1)
+
+! end subroutine kdtree_update

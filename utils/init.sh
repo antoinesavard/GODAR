@@ -9,7 +9,7 @@ mkdir plots
 mkdir plots/anim
 mkdir plots/plot
 
-cp generic/SConstruct_generic SConstruct
+#cp generic/SConstruct_generic SConstruct
 cp generic/namelist_generic.nml namelist/namelist.nml
 cp generic/input_generic inputs/input
 cp generic/input_restart_generic inputs/input_restart
@@ -22,7 +22,7 @@ cp generic/video_args_generic.dat utils/video_args.dat
 # Set executable permissions for all .sh files in the current directory and subdirectories
 find . -type f -name "*.sh" -exec chmod +x {} \;
 
-scons=SConstruct
+#scons=SConstruct
 start=jobs/start.sh
 
 # modifies what needs to be modified
@@ -55,13 +55,13 @@ if [[ "$(uname)" == "Linux" ]]; then
         fi
     done
 
-    echo "Modifying SConstruct to match coretran install path"
+    # echo "Modifying SConstruct to match coretran install path"
 
-    sed -i "s|^env\.Append(LIBPATH=\"/path.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
+    # sed -i "s|^env\.Append(LIBPATH=\"/path.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
 
-    sed -i "s|^env\.Append(F90PATH=\"/path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
+    # sed -i "s|^env\.Append(F90PATH=\"/path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
 
-    echo "Done"
+    # echo "Done"
 
     echo "Adding coretran install path to PATH"
 
@@ -90,26 +90,26 @@ elif [[ "$(uname)" == "Darwin" ]]; then
         exit 1
     fi
 
-    echo "Modifying SConstruct to match coretran install path"
+    # echo "Modifying SConstruct to match coretran install path"
 
-    sed -i "" "s|^env\.Append(LIBPATH=\"/path.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
+    # sed -i "" "s|^env\.Append(LIBPATH=\"/path.*|env.Append(LIBPATH=\"${core_lib}\")|" "${scons}"
 
-    sed -i "" "s|^env\.Append(F90PATH=\"/path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
+    # sed -i "" "s|^env\.Append(F90PATH=\"/path.*|env.Append(F90PATH=\"${core_inc}\")|" "${scons}"
 
-    echo "Done"
+    # echo "Done"
 
-    # changing the option that is not the same on macOS
-    echo "Changing the -mcmodel option to 'small'"
+    # # changing the option that is not the same on macOS
+    # echo "Changing the -mcmodel option to 'small'"
 
-    sed -i "" "s|^        \"-mcmodel=.*|        \"-mcmodel=small\",|" "${scons}"
+    # sed -i "" "s|^        \"-mcmodel=.*|        \"-mcmodel=small\",|" "${scons}"
 
     # changing jobs/start.sh to accomodate for the dylib of coretran
     echo "Changing ${start} to accomodate for the dylib of coretran"
 
     sed -i '' '4i\
-install_name_tool -change @rpath/libcoretran.dylib '"${core_lib}"'/libcoretran.dylib godar' "${start}"
+install_name_tool -change @rpath/libcoretran.dylib '"${core_lib}"'/libcoretran.dylib bin/godar' "${start}"
 
 else
     # Fallback
-    echo "Why are you using Windows? This is a crime."
+    echo "Why are you using Windows? :'("
 fi

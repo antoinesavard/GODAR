@@ -1,4 +1,4 @@
-program ice
+program godar
 
     use datetime, ONLY: datetime_init, datetime_str, datetime_type, delta_init
     use datetime, ONLY: datetime_delta_type, OPERATOR(+), OPERATOR(<), OPERATOR(==), OPERATOR(-)
@@ -230,4 +230,4 @@ program ice
 
     call mpi_finalize(ierr)
     
-end program ice
+end program godar

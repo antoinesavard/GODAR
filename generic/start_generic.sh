@@ -2,4 +2,4 @@
 
 cd ..
 
-mpirun --bind-to none -n 1 ./godar <inputs/input >out
+mpirun --bind-to none -n 1 ./bin/godar <inputs/input >out

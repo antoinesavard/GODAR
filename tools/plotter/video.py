@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import cmocean as cm
 import tools.utils.files as tuf
 import os
 import sys
@@ -11,15 +13,24 @@ import sys
 # figures
 xaxis_limits = 30  # in km
 xoffset = 0
-yaxis_limits = 10  # in km
+yaxis_limits = 20  # in km
+yoffset = 0
 trans = True  # transparent background or not
 clean = True  # removes the green/red bars
+
+# possible plots
+bond_num_plot = False  # plots number of bonds per particle
+thickness = True  # plots thickness fields
 stress = False  # plots the stress as facecolor rather than just white
 stress_invariant = 2  # J1 or J2 invariant
 
+# what you want
+video = True
+image = False
+
 # coming from sim
 dt = 1e-3  # tstep size in sim
-comp = 5e5  # compression in sim
+comp = 1e5  # compression in sim
 
 # miscalleneous
 sf = 1e3  # conversion ratio m <-> km
@@ -97,9 +108,13 @@ lb = np.zeros_like(b)
 rb = np.zeros_like(b)
 angleb = np.zeros_like(b)
 
+# --------------------------------------
+# functions for colors
+# --------------------------------------
+
 
 def map_to_color(array, cmap=plt.cm.viridis):
-    norm = Normalize(vmin=np.nanmin(array), vmax=1 * np.nanmax(array))
+    norm = Normalize(vmin=-0.5, vmax=1 * np.nanmax(array) + 0.5)
     mapper = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
 
     return mapper.to_rgba(array), mapper
@@ -116,6 +131,21 @@ def map_to_alpha(array, low, high):
 
 
 alpha = map_to_alpha(h, 0.5, 1)
+
+if bond_num_plot:
+    bond_num = np.sum(b, axis=1) + np.sum(np.transpose(b, (0, 2, 1)), axis=1)
+    bond_ratio = np.zeros_like(bond_num)
+    for i in range(bond_num.shape[0]):
+        bond_ratio[-i - 1] = bond_num[i] - bond_num[-1]
+    cmap = plt.get_cmap(
+        "cmo.dense",
+        int(np.max(bond_num)) + 1,
+    )
+    b_cm, mapper = map_to_color(bond_num, cmap=cmap)
+
+if thickness:
+    cmap = plt.get_cmap("cmo.dense")
+    h_cm, mapper = map_to_color(h, cmap=cmap)
 
 if stress:
     # load
@@ -155,7 +185,7 @@ if stress:
     j_cm = j1_cm * (2 - stress_invariant) + j2_cm * (stress_invariant - 1)
 
 # --------------------------------------
-# compute some things
+# compute some things for bonds
 # --------------------------------------
 print("Compute the length and orientation of the bonds...")
 for i in range(b.shape[-1] - 1):
@@ -172,15 +202,22 @@ os.chdir("../plots/anim/")
 # --------------------------------------
 
 
-def init_figure(trans=False, stress=False):
+def init_figure(
+    trans=False,
+    colors=0,
+):
     fig, ax = plt.subplots()
     fig.set_layout_engine("tight")
     ax.set_aspect("equal")
     if trans:
         fig.patch.set_facecolor("None")
-    if stress:
+    if colors >= 1:
         divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.1)
+        cax = divider.append_axes(
+            "right",
+            size="5%",
+            pad=0.1,
+        )
     else:
         cax = None
 
@@ -198,34 +235,177 @@ def init_figure(trans=False, stress=False):
     return fig, ax, cax
 
 
-fig, ax, cax = init_figure(
-    trans,
-    stress,
-)
+def init_figure_image(
+    trans=False,
+    colors=0,
+):
+    # fig, ax = plt.subplots(1, 2, sharey=True)
+    fig = plt.figure(layout="constrained")
+    gs = fig.add_gridspec(1, 2, width_ratios=[1, 1], wspace=0.05)
+    ax0 = fig.add_subplot(gs[0, 0])
+    ax1 = fig.add_subplot(gs[0, 1], sharey=ax0)
 
-ax.set_ylabel(
-    r"$y$ [km]",
-    rotation=0,
-    multialignment="left",
-    ha="right",
-)
-ax.set_xlabel(r"$x$ [km]")
+    # anchor the colorbar to ax1
+    if colors >= 1:
+        fig.subplots_adjust()  # leave space for colorbar
+        cax = inset_axes(
+            ax1,
+            width="100%",  # colorbar width
+            height="5%",  # match ax1 height
+            loc="lower left",
+            bbox_to_anchor=(-0.56, -0.35, 1, 1),
+            bbox_transform=ax1.transAxes,
+            borderpad=0,
+        )
+    else:
+        cax = None
+    # fig = plt.figure("constrained")
+    # if colors >= 1:
+    #     gs = fig.add_gridspec(1, 3, width_ratios=[1, 1, 0.03], wspace=0.05)
+    #     ax0 = fig.add_subplot(gs[0, 0])
+    #     ax1 = fig.add_subplot(gs[0, 1], sharey=ax0)
+    #     cax = fig.add_subplot(gs[0, 2])
+    # else:
+    #     gs = fig.add_gridspec(1, 2, width_ratios=[1, 1], wspace=0.05)
+    #     ax0 = fig.add_subplot(gs[0, 0])
+    #     ax1 = fig.add_subplot(gs[0, 1], sharey=ax0)
+    #     cax = None
 
-# limits of the plot in kilometers
-ax.set_xlim(-xoffset, xaxis_limits - xoffset)
-ax.set_ylim(0, yaxis_limits)
+    # fig.set_layout_engine("tight")
+    ax0.set_aspect("equal")
+    ax1.set_aspect("equal")
+    if trans:
+        fig.patch.set_facecolor("None")
+    # if colors >= 1:
+    #     divider = make_axes_locatable(ax[1])
+    #     cax = divider.append_axes(
+    #         "right",
+    #         size="5%",
+    #         pad=0.1,
+    #     )
+    # else:
+    #     cax = None
 
-# colors
-ax.set_facecolor("xkcd:baby blue")
-if stress:
-    ax.set_facecolor("white")
-    cax = fig.colorbar(mapper, cax=cax, orientation="vertical")
-    cax.set_label(
-        "$J_1$ [Pa]",
+    # ticks
+    ax0.tick_params(
+        which="both",
+        direction="out",
+        bottom=True,
+        top=False,
+        left=True,
+        right=False,
+        labelleft=True,
+    )
+    ax1.tick_params(
+        bottom=True,
+        top=False,
+        left=False,
+        right=False,
+        labelleft=False,
+    )
+    ax = [ax0, ax1]
+
+    return fig, ax, cax
+
+
+if video:
+    fig, ax, cax = init_figure(
+        trans,
+        stress + bond_num_plot + thickness,
+    )
+    ax.set_ylabel(
+        r"$y$ [km]",
         rotation=0,
         multialignment="left",
-        ha="left",
+        ha="right",
     )
+    ax.set_xlabel(r"$x$ [km]")
+
+    # limits of the plot in kilometers
+    ax.set_xlim(-xoffset, xaxis_limits - xoffset)
+    ax.set_ylim(0, yaxis_limits)
+
+    # colors
+    ax.set_facecolor("xkcd:baby blue")
+    if bond_num_plot:
+        ax.set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
+        cb.set_ticks(
+            ticks=np.arange(0, np.max(bond_num) + 1),
+            labels=np.arange(0, np.max(bond_num) + 1, dtype=int),
+        )
+        cb.set_label(
+            "Number of\nbonds", rotation=0, multialignment="left", ha="left", va="top"
+        )
+    elif thickness:
+        ax.set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
+        cb.set_label(
+            "Thickness [m]", rotation=0, multialignment="left", ha="left", va="top"
+        )
+    elif stress:
+        ax.set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
+        cb.set_label(
+            "$J_1$ [Pa]", rotation=0, multialignment="left", ha="left", va="top"
+        )
+    # keep track of time in the figure
+    time = fig.text(0, 1.02, "", transform=ax.transAxes, horizontalalignment="left")
+elif image:
+    fig, ax, cax = init_figure_image(
+        trans,
+        stress + bond_num_plot + thickness,
+    )
+    ax[0].set_ylabel(
+        r"$y$ [km]",
+        rotation=0,
+        multialignment="left",
+        ha="right",
+    )
+    ax[0].set_xlabel(r"$x$ [km]")
+    ax[1].set_xlabel(r"$x$ [km]")
+
+    # limits of the plot in kilometers
+    ax[0].set_xlim(-xoffset, xaxis_limits - xoffset)
+    ax[0].set_ylim(0, yaxis_limits)
+    ax[1].set_xlim(-xoffset, xaxis_limits - xoffset)
+    ax[1].set_ylim(0, yaxis_limits)
+
+    # colors
+    ax[0].set_facecolor("xkcd:baby blue")
+    ax[1].set_facecolor("xkcd:baby blue")
+    if bond_num_plot:
+        ax[0].set_facecolor("white")
+        ax[1].set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="horizontal")
+        cb.set_ticks(
+            ticks=np.arange(0, np.max(bond_num) + 1),
+            labels=np.arange(0, np.max(bond_num) + 1, dtype=int),
+        )
+        cb.set_label(
+            "Number of bonds", rotation=0, multialignment="left", ha="center", va="top"
+        )
+    elif thickness:
+        ax[0].set_facecolor("white")
+        ax[1].set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="horizontal")
+        cb.set_label(
+            "Thickness [m]", rotation=0, multialignment="left", ha="center", va="top"
+        )
+    if stress:
+        ax[0].set_facecolor("white")
+        ax[1].set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="horizontal")
+        cb.set_label(
+            "$J_1$ [Pa]",
+            rotation=0,
+            multialignment="left",
+            ha="center",
+            va="top",
+        )
+    # keep track of time in the figure
+    time0 = fig.text(0, 1.02, "", transform=ax[0].transAxes, horizontalalignment="left")
+    time1 = fig.text(0, 1.02, "", transform=ax[1].transAxes, horizontalalignment="left")
 
 # second figure
 fig_strip = plt.figure(dpi=300, figsize=(4 * xaxis_limits / yaxis_limits, 4))
@@ -236,17 +416,22 @@ ax_strip.set_xlim(0, xaxis_limits)
 ax_strip.set_ylim(0, yaxis_limits)
 
 # keep track of time in the figure
-time = fig.text(0, 1.02, "", transform=ax.transAxes, horizontalalignment="left")
 time_strip = fig_strip.text(2, 2, "", transform=ax_strip.transAxes)
 
-disks = []
-radii = []
-bonds = []
-num_bonds = np.zeros(n)
+
+def init_lists():
+    disks = []
+    radii = []
+    bonds = []
+    num_bonds = np.zeros(n)
+    return disks, radii, bonds, num_bonds
+
 
 # --------------------------------------
 # the functions for the animation
 # --------------------------------------
+
+disks, radii, bonds, num_bonds = init_lists()
 
 
 def init(ax, time):
@@ -269,6 +454,8 @@ def init(ax, time):
                 )
                 bonds.append(bond)
                 num_bonds[i] += 1
+                if bond_num_plot:
+                    bond.set_visible(False)
         disks.append(disk)
         radii.append(rad)
     time.set_text("")
@@ -290,8 +477,15 @@ def animate(k, time):
         disk.center = p
         disk.radius = r[k, i]
         disk.set_alpha(1)
+        if bond_num_plot:
+            disk.set_facecolor(b_cm[k, i])
+            disk.set_linewidth(0)
+        if thickness:
+            disk.set_facecolor(h_cm[k, i])
+            disk.set_linewidth(0)
         if stress:
             disk.set_facecolor(j_cm[k, i])
+            disk.set_linewidth(0)
         rad.xy = p
         rad.angle = t[k, i]
         rad.set_width(r[k, i])
@@ -299,6 +493,8 @@ def animate(k, time):
         if clean is True:
             rad.set_visible(False)
         if i == len(disks) - 1:
+            continue
+        if bond_num_plot:
             continue
         index = np.sum(num_bonds[:i], dtype=int)
         for j, bond in enumerate(
@@ -331,9 +527,62 @@ def animate(k, time):
         r"$t = {}\>$hour".format(round(dt * comp * compression * (k + 1) / 60 / 60))
     )
 
-    if k == 0 or k == r.shape[0] - 11:
+    if k == 0 or k == r.shape[0] - 1:
         fig.savefig("../../plots/plot/collision{}-{}.png".format(expno, k + 1))
         fig.savefig("../../plots/plot/collision{}-{}.pdf".format(expno, k + 1))
+
+    return disks, radii, bonds
+
+
+# --------------------------------------
+# function for plots
+# --------------------------------------
+
+
+def imaginate(
+    k,
+    time,
+    ax,
+):
+    print("Initial drawing in process")
+    for i in range(x.shape[-1]):
+        p = np.array([x[k, i], y[k, i]])
+        disk, rad = tuf.draw(ax, p, r[k, i], t[k, i], edge[k, i])
+        if bond_num_plot:
+            disk.set_facecolor(b_cm[k, i])
+            disk.set_linewidth(0)
+        if thickness:
+            disk.set_facecolor(h_cm[k, i])
+            disk.set_linewidth(0)
+        if stress:
+            disk.set_facecolor(j_cm[k, i])
+            disk.set_linewidth(0)
+        if clean is True:
+            rad.set_visible(False)
+        if i == len(x[-1]) - 1:
+            disks.append(disk)
+            radii.append(rad)
+            continue
+        if bond_num_plot:
+            continue
+        for j in range(i + 1, b.shape[-1]):
+            if b[k, i, j]:
+                bond = tuf.draw_bond(
+                    ax,
+                    p,
+                    lb[k, i, j],
+                    angleb[k, i, j],
+                    radius=2 * rb[k, i, j],
+                )
+                bonds.append(bond)
+                num_bonds[i] += 1
+                if bond_num_plot:
+                    bond.set_visible(False)
+        disks.append(disk)
+        radii.append(rad)
+    time.set_text(
+        r"$t = {}\>$hour".format(round(dt * comp * compression * (k + 1) / 60 / 60))
+    )
 
     return disks, radii, bonds
 
@@ -362,30 +611,38 @@ def animate_wrapper_strip(k):
 # animating and saving the data
 # --------------------------------------
 
-anim = FuncAnimation(
-    fig,
-    animate_wrapper,
-    frames=x.shape[0],
-    init_func=init_wrapper,
-    interval=10,
-    repeat=False,
-    blit=False,
-)
+if video:
+    anim = FuncAnimation(
+        fig,
+        animate_wrapper,
+        frames=x.shape[0],
+        init_func=init_wrapper,
+        interval=10,
+        repeat=False,
+        blit=False,
+    )
+    print("Animating the disks for your eyes.")
+    tuf.save_or_show_animation(
+        anim, 1, "../../plots/anim/collision{}.mp4".format(expno)
+    )
 
-print("Animating the disks for your eyes.")
-tuf.save_or_show_animation(anim, 1, "../../plots/anim/collision{}.mp4".format(expno))
+if image:
+    imaginate(0, time0, ax[0])
+    imaginate(x.shape[0] - 1, time1, ax[1])
+    fig.savefig("../../plots/plot/collision{}-startstop.png".format(expno))
+    fig.savefig("../../plots/plot/collision{}-startstop.pdf".format(expno))
 
-anim_strip = FuncAnimation(
-    fig_strip,
-    animate_wrapper_strip,
-    frames=x.shape[0],
-    init_func=init_wrapper_strip,
-    interval=10,
-    repeat=False,
-    blit=False,
-)
+# anim_strip = FuncAnimation(
+#     fig_strip,
+#     animate_wrapper_strip,
+#     frames=x.shape[0],
+#     init_func=init_wrapper_strip,
+#     interval=10,
+#     repeat=False,
+#     blit=False,
+# )
 
-print("Animating the disks for the computer's eyes.")
-tuf.save_or_show_animation(
-    anim_strip, 1, "../../plots/anim/strip-collision{}.mp4".format(expno)
-)
+# print("Animating the disks for the computer's eyes.")
+# tuf.save_or_show_animation(
+#     anim_strip, 1, "../../plots/anim/strip-collision{}.mp4".format(expno)
+# )

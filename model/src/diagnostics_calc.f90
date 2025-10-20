@@ -95,3 +95,20 @@ subroutine diag_mean_pressure (j, i)
 
 
 end subroutine diag_mean_pressure
+
+
+subroutine dilation (j, i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_diagnostics.h"
+
+    integer, intent(in) :: i, j
+
+    
+
+end subroutine dilation
