@@ -32,129 +32,129 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 		
 		k = int(nt_r)
 
-        open(102, file = Xfile, status='old')
+        open(103, file = Xfile, status='old')
 		do j = 1, k-1
-			read (102, *, iostat=iostat)
-            if (iostat /= 0) exit
-        end do
-        do j = k, k
-			read (102, *, iostat=iostat) ( x(i), i = 1, n)
-            if (iostat /= 0) exit
-        end do
-        close(102)
-
-        open(103, file = Yfile, status='old')
-        do j = 1, k-1
 			read (103, *, iostat=iostat)
             if (iostat /= 0) exit
         end do
         do j = k, k
-			read (103, *, iostat=iostat) ( y(i), i = 1, n)
+			read (103, *, iostat=iostat) ( x(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(103)
 
-        open(104, file = Rfile, status='old')
+        open(104, file = Yfile, status='old')
         do j = 1, k-1
 			read (104, *, iostat=iostat)
             if (iostat /= 0) exit
         end do
         do j = k, k
-			read (104, *, iostat=iostat) ( r(i), i = 1, n)
+			read (104, *, iostat=iostat) ( y(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(104)
 
-        open(105, file = Hfile, status='old')
+        open(105, file = Rfile, status='old')
         do j = 1, k-1
 			read (105, *, iostat=iostat)
             if (iostat /= 0) exit
         end do
         do j = k, k
-			read (105, *, iostat=iostat) ( h(i), i = 1, n)
+			read (105, *, iostat=iostat) ( r(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(105)
 
-        open(106, file = Tfile, status='old')
+        open(106, file = Hfile, status='old')
         do j = 1, k-1
 			read (106, *, iostat=iostat)
             if (iostat /= 0) exit
         end do
         do j = k, k
-			read (106, *, iostat=iostat) ( theta(i), i = 1, n)
+			read (106, *, iostat=iostat) ( h(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(106)
 
-        open(107, file = Ofile, status='old')
+        open(107, file = Tfile, status='old')
         do j = 1, k-1
 			read (107, *, iostat=iostat)
             if (iostat /= 0) exit
-		end do
+        end do
         do j = k, k
-			read (107, *, iostat=iostat) ( omega(i), i = 1, n)
+			read (107, *, iostat=iostat) ( theta(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(107)
 
-        open(108, file = Ufile, status='old')
+        open(108, file = Ofile, status='old')
         do j = 1, k-1
 			read (108, *, iostat=iostat)
             if (iostat /= 0) exit
 		end do
         do j = k, k
-			read (108, *, iostat=iostat) ( u(i), i = 1, n)
+			read (108, *, iostat=iostat) ( omega(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(108)
 
-        open(109, file = Vfile, status='old')
+        open(109, file = Ufile, status='old')
         do j = 1, k-1
 			read (109, *, iostat=iostat)
             if (iostat /= 0) exit
 		end do
         do j = k, k
-			read (109, *, iostat=iostat) ( v(i), i = 1, n)
+			read (109, *, iostat=iostat) ( u(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(109)
 
-        open(110, file = Bfile, status='old')
-        do j = 1, (n + 1) * (k - 1)
-            read (110, *, iostat=iostat)
+        open(110, file = Vfile, status='old')
+        do j = 1, k-1
+			read (110, *, iostat=iostat)
             if (iostat /= 0) exit
-        end do
-        do j = (n + 1) * k - n, (n + 1) * k - 1
-            read (110, *, iostat=iostat) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
+		end do
+        do j = k, k
+			read (110, *, iostat=iostat) ( v(i), i = 1, n)
             if (iostat /= 0) exit
         end do
         close(110)
+
+        open(111, file = Bfile, status='old')
+        do j = 1, (n + 1) * (k - 1)
+            read (111, *, iostat=iostat)
+            if (iostat /= 0) exit
+        end do
+        do j = (n + 1) * k - n, (n + 1) * k - 1
+            read (111, *, iostat=iostat) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
+            if (iostat /= 0) exit
+        end do
+        close(111)
 
 	else
 
 		! position of particles: need a one column prepared text file
 		write(*,*) ('Reading prepared text files with given path')
 
-		open(102, file = Xfile, status='old')
-		open(103, file = Yfile, status='old')
-		open(104, file = Rfile, status='old')
-		open(105, file = Hfile, status='old')
-        open(106, file = Tfile, status='old')
-        open(107, file = Ofile, status='old')
+		open(103, file = Xfile, status='old')
+		open(104, file = Yfile, status='old')
+		open(105, file = Rfile, status='old')
+		open(106, file = Hfile, status='old')
+        open(107, file = Tfile, status='old')
+        open(108, file = Ofile, status='old')
 
 		do i = 1, n
 
-			read(102,*) x(i)
-			read(103,*) y(i)
-			read(104,*) r(i)
-			read(105,*) h(i)
-            read(106,*) theta(i)
-            read(107,*) omega(i)
+			read(103,*) x(i)
+			read(104,*) y(i)
+			read(105,*) r(i)
+			read(106,*) h(i)
+            read(107,*) theta(i)
+            read(108,*) omega(i)
 			
 		end do
 
-		do i = 102, 107
+		do i = 103, 108
 			close(i)
 		end do
 
