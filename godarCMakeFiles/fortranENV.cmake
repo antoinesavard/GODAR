@@ -65,8 +65,8 @@ find_package(coretran REQUIRED CONFIG)
 # --flibs is empty, in which case ¯\_(ツ)_/¯
 find_program(NF_CONFIG nf-config)
 if(NF_CONFIG)
-    execute_process(COMMAND ${NF_CONFIG} --includedir
-        OUTPUT_VARIABLE NETCDF_INCLUDE_DIR
+    execute_process(COMMAND ${NF_CONFIG} --fflags
+        OUTPUT_VARIABLE NETCDF_FFLAGS_STR
         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
 
@@ -76,9 +76,9 @@ if(NF_CONFIG)
         ERROR_QUIET
         )
 
-    # use --prefix if --flibs is empty
-    if (${NETCDF_FLIBS_STR} STREQUAL "")
-        message(STATUS "nf-config --flibs is empty! Using --prefix instead")
+    # use --prefix if --flibs or --fflags is empty
+    if (${NETCDF_FLIBS_STR} STREQUAL "" OR ${NETCDF_FLIBS_STR} STREQUAL "")
+        message(STATUS "nf-config --flibs or --fflags is empty! Using --prefix instead")
 
         execute_process(COMMAND ${NF_CONFIG} --prefix
         OUTPUT_VARIABLE NETCDF_PREFIX
@@ -96,6 +96,15 @@ if(NF_CONFIG)
         set(NETCDF_LIBRARY "")
         string(REGEX MATCHALL "(-L[^ ]+)" NETCDF_LIBRARY "${NETCDF_FLIBS_STR}")
         string(REGEX MATCHALL "(-l[^ ]+)" NETCDF_LINKS "${NETCDF_FLIBS_STR}")
+
+        # Extract -I tokens
+        set(NETCDF_STRIP "")
+        string(REGEX MATCHALL "(-I[^ ]+)" NETCDF_STRIP "${NETCDF_FFLAGS_STR}")
+        foreach(tok IN LISTS NETCDF_STRIP)
+            if(tok MATCHES "^-I(.+)")
+                string(REGEX REPLACE "^-I" "" NETCDF_INCLUDE_DIR "${tok}")
+            endif()
+        endforeach()
 
         # only keep "-lnetcdff"
         set(FILTERED_NETCDF_LINKS "")
