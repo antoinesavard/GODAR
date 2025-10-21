@@ -58,22 +58,65 @@ find_package(MPI REQUIRED Fortran)
 find_package(coretran REQUIRED CONFIG)
 
 # netcdf
+# in an ideal world, we would use nf-config --prefix then use
+# find_library(NETCDF_NAME NAMES netcdff) but it may be possible that 
+# prefix is too high in the tree and that we end up with a netcdff that
+# does not match the includedir. On the contrary, it is possible that 
+# --flibs is empty, in which case ¯\_(ツ)_/¯
 find_program(NF_CONFIG nf-config)
 if(NF_CONFIG)
-    execute_process(COMMAND ${NF_CONFIG} --prefix
+    execute_process(COMMAND ${NF_CONFIG} --includedir
+        OUTPUT_VARIABLE NETCDF_INCLUDE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+    execute_process(COMMAND ${NF_CONFIG} --flibs
+        OUTPUT_VARIABLE NETCDF_FLIBS_STR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        )
+
+    # use --prefix if --flibs is empty
+    if (${NETCDF_FLIBS_STR} STREQUAL "")
+        message(STATUS "nf-config --flibs is empty! Using --prefix instead")
+
+        execute_process(COMMAND ${NF_CONFIG} --prefix
         OUTPUT_VARIABLE NETCDF_PREFIX
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
 
-    set(NETCDF_INCLUDE_DIR "${NETCDF_PREFIX}/include")
-    set(NETCDF_LIB_DIR "${NETCDF_PREFIX}/lib")
+        set(NETCDF_INCLUDE_DIR "${NETCDF_PREFIX}/include")
+        set(NETCDF_LIB_DIR "${NETCDF_PREFIX}/lib")
 
-    find_library(NETCDF_LIBRARY NAMES netcdff
-        HINTS ${NETCDF_LIB_DIR}
-        REQUIRED)
+        find_library(NETCDF_LIBRARY NAMES netcdff
+                    HINTS ${NETCDF_LIB_DIR})
+
+    else()
+        # Extract -L and -l tokens
+        set(NETCDF_LIBRARY "")
+        string(REGEX MATCHALL "(-L[^ ]+)" NETCDF_LIBRARY "${NETCDF_FLIBS_STR}")
+        string(REGEX MATCHALL "(-l[^ ]+)" NETCDF_LINKS "${NETCDF_FLIBS_STR}")
+
+        # only keep "-lnetcdff"
+        set(FILTERED_NETCDF_LINKS "")
+        foreach(link IN LISTS NETCDF_LINKS)
+            string(STRIP "${link}" link_stripped)
+            if(NOT link_stripped STREQUAL "-lnetcdff")
+                message(STATUS "Removing link: ${link_stripped}")
+            else()
+                list(APPEND FILTERED_NETCDF_LINKS "${link_stripped}")
+            endif()
+        endforeach()
+
+        # combine both lists
+        foreach(p IN LISTS FILTERED_NETCDF_LINKS)
+            list(APPEND NETCDF_LIBRARY "${p}")
+        endforeach()
+    endif()
     
     message(STATUS "Found NetCDF-Fortran via nf-config:")
     message(STATUS "  Include:  ${NETCDF_INCLUDE_DIR}")
-    message(STATUS "  Library:  ${NETCDF_LIBRARY}")
+    message(STATUS "  Linking:  ${NETCDF_LIBRARY}")
 else()
     # Fallback to manual search
     find_path(NETCDF_INCLUDE_DIR netcdf.mod
