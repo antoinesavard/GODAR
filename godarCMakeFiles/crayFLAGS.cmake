@@ -1,8 +1,13 @@
-
+# =================================
+# Set cray compile flags
+# =================================
 message(STATUS "Getting ftn flags")
 
-if(${LINUX})
-  set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -fPIC -fbackslash -O3 -hfp3 -hvector3 -haggress -hcache3 -hconcurrent")
+# Set flags for all build type
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC -fbackslash")
 
-  set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} -Og -g -static -fbacktrace -fcheck=all")
+if(${LINUX})
+  set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -hfp3 -hvector3 -haggress -hcache3")
+
+  set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS} -O0 -g -hflex_mp=conservative -Rb -Rp")
 endif()

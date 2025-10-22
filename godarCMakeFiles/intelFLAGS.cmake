@@ -1,4 +1,6 @@
-
+# ================================
+# Set gfortran compile flags
+# ================================
 message(STATUS "Getting ifort flags")
 
 if(${LINUX})

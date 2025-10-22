@@ -77,7 +77,7 @@ if(NF_CONFIG)
         )
 
     # use --prefix if --flibs or --fflags is empty
-    if (${NETCDF_FLIBS_STR} STREQUAL "" OR ${NETCDF_FLIBS_STR} STREQUAL "")
+    if ("${NETCDF_FLIBS_STR}" STREQUAL "" OR "${NETCDF_FLIBS_STR}" STREQUAL "")
         message(STATUS "nf-config --flibs or --fflags is empty! Using --prefix instead")
 
         execute_process(COMMAND ${NF_CONFIG} --prefix
