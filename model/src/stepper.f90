@@ -1,6 +1,6 @@
 subroutine stepper (tstep)
 
-    use mpi
+    use mpi_f08
     use omp_lib
     use m_allocate, only: allocate
     use m_deallocate, only: deallocate

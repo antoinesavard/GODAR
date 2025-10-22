@@ -4,7 +4,7 @@ program godar
     use datetime, ONLY: datetime_delta_type, OPERATOR(+), OPERATOR(<), OPERATOR(==), OPERATOR(-)
     use datetime, ONLY: str2dt, datetime_str_6, now, delta_str
     use omp_lib
-    use mpi
+    use mpi_f08
 
     implicit none
 
@@ -221,12 +221,6 @@ program godar
         '|--------------------------------------------------------|',&
         '' 
     end if
-
-        !call execute_command_line("/aos/home/asavard/anaconda3/bin/python /storage/asavard/DEM/plots/video.py "//expno_str//' '//n_str)
-
-        !tic = now()
-
-        !print*, "Total video creation time: ", delta_str(tic - tac)
 
     call mpi_finalize(ierr)
     

@@ -22,12 +22,6 @@ subroutine forcing (i)
     shelter_coeff_a = minval(hsfa, dim=1)
     shelter_coeff_w = minval(hsfw, dim=1)
 
-    if (y(i) < ny / 2d0) then
-        ua = - ua
-    else
-        ua = ua
-    end if
-
     ! local variables to speed up the code
     atm_vel_norm = L2norm(ua - u(i), va - v(i))
     ocn_vel_norm = L2norm(uw - u(i), vw - v(i))

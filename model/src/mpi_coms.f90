@@ -1,6 +1,6 @@
 subroutine broadcasting_ini (num_threads)
 
-    use mpi
+    use mpi_f08
 
     implicit none
 
@@ -146,7 +146,7 @@ subroutine broadcast_total_forces
     ! at the end of each time step so that each process can compute 
     ! their own time stepping using the total forces
 
-    use mpi
+    use mpi_f08
 
     implicit none
 
@@ -205,7 +205,7 @@ subroutine force_reduction
     ! process combines their section into total forecs and moments.
     ! this is needed because the program uses Newton's third law.
 
-    use mpi
+    use mpi_f08
 
     implicit none
 

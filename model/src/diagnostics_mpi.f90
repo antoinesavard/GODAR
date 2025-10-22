@@ -1,6 +1,6 @@
 subroutine diag_reduction (diag)
 
-    use mpi
+    use mpi_f08
 
     implicit none
 
@@ -39,7 +39,7 @@ end subroutine diag_reduction
 
 subroutine diag_broadcast (diag)
 
-    use mpi
+    use mpi_f08
 
     implicit none
 
