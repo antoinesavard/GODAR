@@ -15,7 +15,7 @@ program godar
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, num_threads
-    type(datetime_type) :: tic, tac
+    double precision :: tic, tac
     character(len=4) :: expno_str, expno_str_r
     character(len=16) :: namelist_name
     character(10) :: n_str
@@ -186,7 +186,7 @@ program godar
     print*, "rank: ", rank, "particle id (start-stop): ", first_iter, last_iter
     
     if ( rank .eq. master ) then
-        tic = now()
+        tic = omp_get_wtime()
         print *, "Time step: ", 1, "/", int(nt)
     end if
 
@@ -208,9 +208,10 @@ program godar
     end do
 
     if ( rank .eq. master ) then
-        tac = now()
+        tac = omp_get_wtime()
 
-        print*, "Total simulation time: ", delta_str(tac - tic)
+        print '(A, F0.3, A)', &
+            " Total simulation time: ", tac - tic, ' s'
 
         print '(a)', &
         '',&

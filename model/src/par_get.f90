@@ -158,7 +158,7 @@ subroutine read_namelist (namelist_name)
         '',&
         '|--------------------------------------------------------|',&
         '|                                                        |',&
-        '|   Readind namelist values to update defaults.          |',&
+        '|   Reading namelist values to update defaults.          |',&
         '|                                                        |',&
         '|--------------------------------------------------------|',&
         ''  

@@ -8,4 +8,5 @@ set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall -Wno-tabs -fPIC -fbackslas
 
 set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -funroll-all-loops -finline-functions -ffast-math")
 
-set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS} -g -Og -fbacktrace -static -fcheck=all")
+# on APPLE, it is possible that -static doesn't work
+set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS} -g -Og -static -fbacktrace -fcheck=all")
