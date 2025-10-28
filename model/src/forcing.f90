@@ -14,13 +14,13 @@ subroutine forcing (i)
     double precision :: fdwx, fdwy, fswx, fswy
 
     double precision :: log_profile, L2norm
-    double precision :: shelter_coeff_a(n), shelter_coeff_w(n)
+    double precision :: shelter_coeff_a, shelter_coeff_w
 
     double precision :: atm_vel_norm, ocn_vel_norm, atm_log, ocn_log
 
     ! unitless minimum sheltering coefficient
-    shelter_coeff_a = minval(hsfa, dim=1)
-    shelter_coeff_w = minval(hsfw, dim=1)
+    shelter_coeff_a= minval(hsfa(:,i))
+    shelter_coeff_w= minval(hsfw(:,i))
 
     ! local variables to speed up the code
     atm_vel_norm = L2norm(ua - u(i), va - v(i))
@@ -37,11 +37,11 @@ subroutine forcing (i)
     else
         ! wind drag forcing
         fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *   &
-                    atm_vel_norm * atm_log * shelter_coeff_a(i) *   &
+                    atm_vel_norm * atm_log * shelter_coeff_a *   &
                     pi / 2d0
 
         fday     = rhoair * Cdair * hfa(i) * r(i) * (va - v(i)) *   &
-                    atm_vel_norm * atm_log * shelter_coeff_a(i) *   &
+                    atm_vel_norm * atm_log * shelter_coeff_a *   &
                     pi / 2d0
 
         ! wind skin forcing
@@ -65,11 +65,11 @@ subroutine forcing (i)
     else
         ! water drag forcing
         fdwx = rhowater * Cdwater * hfw(i) * r(i) * (uw - u(i)) *   &
-                ocn_vel_norm * ocn_log * shelter_coeff_w(i) *       &
+                ocn_vel_norm * ocn_log * shelter_coeff_w *       &
                 pi / 2d0
 
         fdwy = rhowater * Cdwater * hfw(i) * r(i) * (vw - v(i)) *   &
-                ocn_vel_norm * ocn_log * shelter_coeff_w(i) *       &
+                ocn_vel_norm * ocn_log * shelter_coeff_w *       &
                 pi / 2d0
 
         ! water skin forcing
