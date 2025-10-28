@@ -4,47 +4,15 @@
 
 ### What does GODAR do?
 
-GODAR is a discrete element model that solves Newton's equations for a given number of cylindrical floes of ice. The disks have a radius, a thickness initial positions and bonds specified by the user, from which the model advances time. The forces at play are contact forces computed from Hertzian mechanics, bond forces computed from a simple beam theory, coriolis, atmopheric and oceanic forces computed from a quadratic drag law. Sheltering is taken into account, meaning that small floes can hide behind large floes and receive less wind or currents because of that. In order to find all interactions, a nearest neighbor search algorithm has been implemented: we use a kd-tree to find interacting floes. Moreover, the code is parallelized using mpi and openmp, and therefore GODAR is suitable for large number of floes on the order of $\mathcal{O}(10^3)$ particles.
+GODAR is a discrete element model that solves Newton's equations for a given number of cylindrical floes of ice. The disks have a radius, a thickness initial positions and bonds specified by the user, from which the model advances time. The forces at play are contact forces computed from Hertzian mechanics, bond forces computed from a simple beam theory, coriolis, atmopheric and oceanic forces computed from a quadratic drag law. A simple ridging scheme is provided. Sheltering is taken into account, meaning that small floes can hide behind large floes and receive less wind or currents because of that. In order to find all interactions, a nearest neighbor search algorithm has been implemented: we use a kd-tree to find interacting floes. Moreover, the code is parallelized using mpi and openmp, and therefore GODAR is suitable for large number of floes on the order of $\mathcal{O}(10^3)$ particles.
 
 ### How to setup GODAR
 
-#### Creating the config files
+#### Installing basic dependencies
 
-The first step will be to execute `./init.sh` file in order to setup the folders. It will create an output folder and some default input files that you can edit. These files are actually in the `generic` folder, so that you can modify the ones created by the `init.sh` as you please (if you don't remember the syntax, you can go have a look at the ones in the `generic` directory).
-
-#### Intalling coretran
-
-Next you will need to install a few things. There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: <https://github.com/leonfoks/coretran>.
-
-I would suggest to follow the detailed instructions provided in coretran's readme as it well written and easy to use. I would recommend that coretran be installed in:
-
-OSX: /opt/coretran
-
-Linux: /usr/local/lib
-
-Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`, in which you will find the `.so` file (`.dylib` on OSX) and the modules respectively.
-We will need these in the SConstruct file; this is specific to your machine.
-
-##### Linux
-
-The following fix should work on all machines, although it is a bit of a work-around.
-
-1. Change the `LIBPATH` and `F90PATH` values in the SConstruct file to your `/mycoretran/lib` and `/mycoretran/include` respectively
-2. Next you will need to add the library path to your external environment variable. To do this we will edit the `~/.bashrc` file so that we only have to do this operation once, otherwise, you will have to do it everytime you open a new terminal. Open the terminal and run: `emacs ~/.bashrc`
-3. Add the following line to this file: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mycoretran/lib` If the line already exist, just append `:/mycoretran/lib` at the end of the line.
-4. `Crtl-x Crtl-s` to save and `Crtl-x Crtl-c` to exit emacs.
-5. Then enter the `exec bash` to reload your terminal with the changes.
+You will need cmake to compile the different libraries and source files.
 
 ##### OSX
-
-On mac, there is an extra step to be taken as well.
-
-1. Change the `LIBPATH` and `F90PATH` values in the SConstruct file to your `/mycoretran/lib` and `/mycoretran/include` respectively
-2. In the `start.sh` file, copy the following line above the `mpirun` command. This line will tell the executable where to look for the dynamically shared libraries.
-
-```bash
-install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib godar
-```
 
 You will also have to install a few things using brew. First, install brew as said on their website <https://brew.sh>.
 
@@ -66,25 +34,57 @@ This line is essentially just telling which flags to use when compiling the code
 
 After these steps, you should be good to go.
 
-#### Installing scons and creating a virtual environment
+#### Intalling coretran
 
-To install packages on a super computer, it is usually better to do that in a virtual environment. If you need a virtual environment, create one first. If not, skip to the installation of scons.
+Next you will need to install a few things. There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: <https://github.com/leonfoks/coretran>.
+
+I would suggest to follow the detailed instructions provided in coretran's readme as it well written and easy to use. I would recommend that coretran be installed close to where `GODAR/` is, e.g.: `GODAR/../coretran`. To do this, enter the following commands:
+
+```bash
+git clone git@github.com:leonfoks/coretran.git
+cd coretran
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/path/to/GODAR/../coretran ../src
+make install
+```
+
+Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`, in which you will find the `.so` file (`.dylib` on OSX) and the modules respectively.
+We will need these in the CMakeLists.txt file; this is specific to your machine, specifically the `/mycoretran/lib/cmake` directory. Cmake and the `CMakeLists.txt` file should deal with this automatically, but it is good for you to know.
+
+##### OSX
+
+On mac, there are extra step to be taken.
+
+1. In the `start.sh` file, note the following line above the `mpirun` command. This line will tell the executable where to look for the dynamically shared libraries.
+
+```bash
+install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib bin/godar
+```
+
+#### Creating a virtual environment
+
+To install packages on a super computer, it is usually better to do that in a virtual environment. If you need a virtual environment, create one first.
 
 ##### Optional virtual environment
 
 1. `python -m venv path/to/my/env` to create a virtual environment named `env`
 2. The there are two options, you either always run the command `source path/to/my/env/bin/activate` or you put this line in your `~/.bashrc` file so that everytime you open a session, this specific environment gets loaded. To deactivate the environment: `deactivate`.
 
-##### Install scons
+#### Creating the config files and installing GODAR
 
-Next, to compile this program, we use `scons`. You will have to install it prior to running this program. The proper way of doing this is by creating a virtual environment first in which we will be able to install scons. If you already have your own python environment, or do not need one, then you can proceed.
+The first step will be to execute `./utils/init.sh` file in order to setup the folders. It will create an output folder and some default input files that you can edit. These files are actually in the `generic` folder, so that you can modify the ones created by the `init.sh` as you please (if you don't remember the syntax, you can go have a look at the ones in the `generic` directory).
 
-You install scons via pip or conda if that's what you use: `python -m pip install scons`. Here are some useful commands of scons.
+##### Installation
 
-- To compile the code on n cores `scons -j n`
-- To clear the build: `scons -c`
-- Debug the code: `scons debug=1`
-- Run the executable in the background from GODAR/jobs/: `./start.sh`
+To install GODAR simply run the following commands, provided you installed coretran to `GODAR/../coretran`:
+
+```bash
+cmake -B build -DCMAKE_PREFIX_PATH=/path/to/coretran/lib/cmake
+cmake --build build
+```
+
+If you want to recompile the code because you made changes, it is recommended that you remove the `build/` directory by `rm -rf build/`.
 
 #### How to run godar
 
@@ -110,7 +110,7 @@ The input_file is a simple file to pass along to the main program when executing
 
 All physical and numerical parameters as well as options are contained in the namelist.nml file. Therefore, if you want to play with the physics, you can simply change the values in this file without recompiling the code; this permits the use of batch job using an appropriate bash script that modifies the parameters that you want. If you forget the default parameters, they are all set in the `get_default` subroutine in the par_get.f90 file. You can also opt to not use the namelist by setting the read namelist option to false in the input file.
 
-The only parameters that are set at compilation are the number of particles (because we use this value for setting the lenght of all arrays), the size of the domain (for future developement where we will superimpose a grid over the domain to have spatially varying forcings), and the rank of the master thread. We are curently worknig on a way to work around this issue. (Probably using the input files and allocatable arrays in modules.)
+The only parameters that are set at compilation are in the `model/inc/parameter.h` file. They are: the number of particles (because we use this value for setting the lenght of all arrays), the size of the domain (for future developement where we will superimpose a grid over the domain to have spatially varying forcings), and the rank of the master thread. We are curently working on a way to work around this issue. (Probably using the input files and allocatable arrays in modules.)
 
 The input files are setting the run informations: experiment number, whether to use the namelist or not, whether restarting from a previous experiement or not, etc. (This is why we think setting the particle number in there would be good.)
 
@@ -140,50 +140,64 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
 
 ```bash
 - godar/
-    - init.sh
-    - datetime/
-        - date_mod.f90
-        - datetime_mod.f90
-        - datetimedelta_mod.f90
-        - dateutils_mod.f90
-        - precision_mod.f90
-        - time_mod.f90
+    - CMakeLists.txt
     - files/
     - generic/
         - input_genreric
         - input_restart_genreric
         - namelist_genreric.nml
-        - SConstruct_genreric
         - start_genreric.sh
-    - inputs/
-    - jobs/
-    - namelist/
-    - output/
-    - plots/
-        - anim/
-        - plot/
-    - src/
-        - bonds.f90
-        - boundaries.f90
-        - compaction.f90
-        - contact_forces.f90
-        - forcing.f90
-        - ice.f90
-        - ini_get.f90
-        - integration.f90
-        - mpi_coms.f90
-        - par_get.f90
-        - physics.f90
-        - reset.f90
-        - sea_ice_post.f90
-        - stepper.f90
-        - CB_bond.h
-        - CB_const.h
-        - CB_forcings.h
-        - CB_variables.h
-        - CB_mpi.h
-        - CB_options
-        - parameter.h
+    - godarCMakesFiles
+        - crayFLAGS.cmake
+        - fortranENV.cmake
+        - gfortranFLAGS.cmake
+        - intelFLAGS.cmake
+    - model/
+        - inc/
+            - CB_bond.h
+            - CB_const.h
+            - CB_diagnostics.h
+            - CB_forcings.h
+            - CB_mpi.h
+            - CB_numerics.h
+            - CB_options.h
+            - CB_thermo_dym.h
+            - CB_thermo_forcing.h
+            - CB_thermo_var.h
+            - CB_variables.h
+            - parameter.h
+        - src/
+            - bonds.f90
+            - boundaries.f90
+            - compaction.f90
+            - contact_forces.f90
+            - diagnostics_calc.f90
+            - diagnostics_ini_io.f90
+            - diagnostics_mpi.f90
+            - diagnostics_outputs.f90
+            - diagnostics_utils.f90
+            - forcing.f90
+            - godar.f90
+            - ini_get.f90
+            - integration.f90
+            - mpi_coms.f90
+            - par_get.f90
+            - physics.f90
+            - reset.f90
+            - ridging.f90
+            - stepper.f90
+            - thermo.f90
+    - pkg
+        - datetime/
+            - date_mod.f90
+            - datetime_mod.f90
+            - datetimedelta_mod.f90
+            - dateutils_mod.f90
+            - precision_mod.f90
+            - time_mod.f90
+        - kdtree/
+            - global_kdtree.f90
+            - kdtree_utils.f90
     - tools/
         - analysis/
             - monte_carlo.py
@@ -202,6 +216,9 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
             - files.py
     - utils/
         - duplication.sh
+        - init.sh
         - run_init.sh
         - run_video.sh
+    - LICENSE
+    - README.md
 ```
