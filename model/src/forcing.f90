@@ -213,7 +213,7 @@ double precision function S_shelter (hfi, hfj, deltan, cosa, sina, uf, vf)
     ! wnorm: is the L2norm of the winds
     double precision :: D, G, costheta, wnorm
 
-    wnorm = L2norm(uf, vf)
+    wnorm = L2norm(uf, vf) + 1d-20
     costheta = (uf * cosa + vf * sina) / wnorm
 
     D = 1 -                                                 &
