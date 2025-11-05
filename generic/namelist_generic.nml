@@ -43,6 +43,7 @@
 	sigmacb_crit = 1d6
 	tau_crit	 = 1d6
 	gamma_d		 = 1d0
+    bond_lim     = 1d-2
     /
 
 &forcings_nml
