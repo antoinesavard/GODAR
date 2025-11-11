@@ -58,15 +58,20 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
 
         data = np.stack(data, axis=0)
 
-        return data[0] if data.shape[0] == 1 else data
-
     elif bond:
         print("Reading bonds...")
         for file in files:
             with open(output_dir + file) as fic:
-                data = np.loadtxt(fic).reshape(-1, n, n)
+                # data = np.loadtxt(fic).reshape(-1, n, n)
+                idx = np.loadtxt(fic, dtype=int)
+                __, num_per_tstep = np.unique(idx[:, 0], return_counts=True)
+                third_dim = len(num_per_tstep)
+                data = np.zeros((third_dim, n, n))
+                for i, num in enumerate(num_per_tstep):
+                    idx_2d = idx[i * num : (i + 1) * num, 1:] - 1
+                    data[i, idx_2d.T[0], idx_2d.T[1]] = 1
 
-        return data[0] if data.shape[0] == 1 else data
+    return data[0] if data.shape[0] == 1 else data
 
 
 def check_dim(arr, bond=0):
