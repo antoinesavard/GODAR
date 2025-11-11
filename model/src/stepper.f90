@@ -72,6 +72,7 @@ subroutine stepper (tstep)
 			if ( cohesion .eqv. .true. ) then
                 if ( tstep .eq. 1 ) then
                     if ( deltan(j, i) .ge. -bond_lim ) then ! can be fancier
+                        bond (j, i) = 1
                     end if
                 end if
 			end if
