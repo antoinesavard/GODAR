@@ -62,8 +62,17 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
         print("Reading bonds...")
         for file in files:
             with open(output_dir + file) as fic:
-                # data = np.loadtxt(fic).reshape(-1, n, n)
                 idx = np.loadtxt(fic, dtype=int)
+                if len(idx.shape) != 2:
+                    fic.seek(0)
+                    print("Bonds were turned off")
+                    empty_line = 0
+                    for line in fic:
+                        line = line.strip()
+                        if len(line) == 0:
+                            empty_line += 1
+                    data = np.zeros((empty_line, n, n))
+                    continue
                 __, num_per_tstep = np.unique(idx[:, 0], return_counts=True)
                 third_dim = len(num_per_tstep)
                 data = np.zeros((third_dim, n, n))
