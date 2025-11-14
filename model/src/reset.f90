@@ -154,7 +154,7 @@ subroutine reset_forces
         sigxx_bc_r(i)  = 0d0
         sigyy_bc_r(i)  = 0d0
         sigxy_bc_r(i)  = 0d0
-        sigyx_Bc_r(i)  = 0d0
+        sigyx_bc_r(i)  = 0d0
         ! pressure
         tac_r(i) = 0d0
         tab_r(i) = 0d0
