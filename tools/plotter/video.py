@@ -11,16 +11,16 @@ import sys
 
 # ----------------------------------------------------------------------
 # figures
-xaxis_limits = 30  # in km
-xoffset = 0
-yaxis_limits = 20  # in km
+xaxis_limits = 140  # in km
+xoffset = 20
+yaxis_limits = 50  # in km
 yoffset = 0
 trans = True  # transparent background or not
 clean = True  # removes the green/red bars
 
 # possible plots
 bond_num_plot = False  # plots number of bonds per particle
-thickness = True  # plots thickness fields
+thickness = False  # plots thickness fields
 stress = False  # plots the stress as facecolor rather than just white
 stress_invariant = 2  # J1 or J2 invariant
 
@@ -187,13 +187,14 @@ if stress:
 # --------------------------------------
 # compute some things for bonds
 # --------------------------------------
-print("Compute the length and orientation of the bonds...")
-for i in range(b.shape[-1] - 1):
-    for j in range(i + 1, b.shape[-2]):
-        lb[:, i, j] = tuf.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
-        angleb[:, i, j] = tuf.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
-for i in range(rb.shape[0] - 1):
-    rb[i] = tuf.rb_func(r[i], r[i])
+if not clean:
+    print("Compute the length and orientation of the bonds...")
+    for i in range(b.shape[-1] - 1):
+        for j in range(i + 1, b.shape[-2]):
+            lb[:, i, j] = tuf.lb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+            angleb[:, i, j] = tuf.angleb_func(x[:, i], y[:, i], x[:, j], y[:, j])
+    for i in range(rb.shape[0] - 1):
+        rb[i] = tuf.rb_func(r[i], r[i])
 
 os.chdir("../plots/anim/")
 
@@ -247,13 +248,12 @@ def init_figure_image(
 
     # anchor the colorbar to ax1
     if colors >= 1:
-        fig.subplots_adjust()  # leave space for colorbar
         cax = inset_axes(
             ax1,
             width="100%",  # colorbar width
             height="5%",  # match ax1 height
-            loc="lower left",
-            bbox_to_anchor=(-0.56, -0.35, 1, 1),
+            loc="lower center",
+            bbox_to_anchor=(-0.55, -0.3, 1, 1),
             bbox_transform=ax1.transAxes,
             borderpad=0,
         )
