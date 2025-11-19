@@ -135,7 +135,7 @@ program godar
         '',&
         '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',&
         '!                                                        !',&
-        "!    Watch out! MPI is not working properly :'(          !",&
+        "!   Watch out! MPI and OMP have similar error levels :'( !",&
         '!                                                        !',&
         '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',&
         '' 

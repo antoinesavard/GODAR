@@ -208,6 +208,23 @@ subroutine broadcast_shape
     include "CB_mpi.h"
     include "CB_variables.h"
 
+    ! local variables for allgatherv
+    double precision, allocatable :: local_h(:), local_r(:),   &
+                                    local_hfa(:), local_hfw(:)
+
+    ! allocations
+    allocate(local_h(local_n))
+    local_h = h(first_iter:last_iter)
+
+    allocate(local_r(local_n))
+    local_r = r(first_iter:last_iter)
+
+    allocate(local_hfa(local_n))
+    local_hfa = hfa(first_iter:last_iter)
+
+    allocate(local_hfw(local_n))
+    local_hfw = hfw(first_iter:last_iter)
+
     ! sheltering coefficient
     call mpi_allreduce( &
     hsfa, hsfa_r, n * n, mpi_double_precision, &
@@ -238,6 +255,12 @@ subroutine broadcast_shape
                         local_n, mpi_double_precision,    &
                         hfw, counts, displs, mpi_double_precision,  &
                         mpi_comm_world, ierr )
+
+    ! deallocation
+    deallocate(local_h)
+    deallocate(local_r)
+    deallocate(local_hfa)
+    deallocate(local_hfw)
 
 end subroutine broadcast_shape
 
