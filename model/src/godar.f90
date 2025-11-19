@@ -1,10 +1,11 @@
 program godar
 
-    use datetime, ONLY: datetime_init, datetime_str, datetime_type, delta_init
-    use datetime, ONLY: datetime_delta_type, OPERATOR(+), OPERATOR(<), OPERATOR(==), OPERATOR(-)
-    use datetime, ONLY: str2dt, datetime_str_6, now, delta_str
+    use datetime, only: datetime_init, datetime_str, datetime_type, delta_init
+    use datetime, only: datetime_delta_type, operator(+), operator(<), operator(==), operator(-)
+    use datetime, only: str2dt, datetime_str_6, now, delta_str
     use omp_lib
     use mpi_f08
+    use mpi_counts_mod, only: init_mpi_counts, counts, displs
 
     implicit none
 
@@ -166,24 +167,19 @@ program godar
     !-------------------------------------------------------------------
 
     ! set mpi variables
-    ! Compute the part of the array to loop over given rank
-    iter_per_rank = n / n_ranks
-    
-    if ( mod(n, n_ranks) > 0 ) then
-        iter_per_rank = iter_per_rank + 1
-    end if
+    ! initialize counts/displs
+    call init_mpi_counts(n, n_ranks, rank, local_n, local_disp)
 
-    first_iter = rank * iter_per_rank + 1
-    
-    last_iter  = first_iter + iter_per_rank - 1
+    first_iter = local_disp + 1
+    last_iter  = local_disp + local_n
 
-    !first_iter = int(n * ( 1 - &
-    !            sqrt(1. * (n_ranks - rank) / n_ranks) )) + 1
-
-    !last_iter = int(n * ( 1 - &
-    !            sqrt(1. * (n_ranks - rank - 1) / n_ranks) ))
+    ! safety
+    if (last_iter > n) last_iter = n
+    if (first_iter < 1) first_iter = 1
 
     print*, "rank: ", rank, "particle id (start-stop): ", first_iter, last_iter
+
+    call mpi_barrier(mpi_comm_world, ierr)
     
     if ( rank .eq. master ) then
         tic = omp_get_wtime()

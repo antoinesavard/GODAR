@@ -10,7 +10,8 @@ subroutine broadcasting_ini (num_threads)
     include "CB_variables.h"
     include "CB_bond.h"
     include "CB_options.h"
-
+    include "CB_forcings.h"
+    include "CB_diagnostics.h"
 
     integer, intent(inout) :: num_threads
     
@@ -54,7 +55,39 @@ subroutine broadcasting_ini (num_threads)
     call mpi_bcast(hfa, n, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(hfw, n, mpi_double_precision,        &
-                    master, mpi_comm_world, ierr)                
+                    master, mpi_comm_world, ierr)
+                    
+    !-------------------------------------------------------------------
+    ! 2D variables broadcast
+    !-------------------------------------------------------------------
+    call mpi_bcast(thetarelc, n * n, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(thetarelb, n * n, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(deltat, n * n, mpi_double_precision,           &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(deltanb, n * n, mpi_double_precision,          &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(deltatb, n * n, mpi_double_precision,          &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(hsfa, n * n, mpi_double_precision,             &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(hsfw, n * n, mpi_double_precision,             &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(ac, n * n, mpi_double_precision,               &
+                    master, mpi_comm_world, ierr)      
+
+    !-------------------------------------------------------------------
+    ! boundary variables broadcast
+    !-------------------------------------------------------------------
+    call mpi_bcast(theta_bc1, n, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(theta_bc2, n, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(deltat_bc1, n, mpi_double_precision,       &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(deltat_bc2, n, mpi_double_precision,       &
+                    master, mpi_comm_world, ierr)
 
     !-------------------------------------------------------------------
     ! namelist variables broadcast
@@ -62,15 +95,21 @@ subroutine broadcasting_ini (num_threads)
     ! options
     call mpi_bcast(dynamics, 1, mpi_logical,            &
                     master, mpi_comm_world, ierr)
+    call mpi_bcast(slipping, 1, mpi_logical,            &
+                    master, mpi_comm_world, ierr)
     call mpi_bcast(thermodyn, 1, mpi_logical,           &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(cohesion, 1, mpi_logical,            &
                     master, mpi_comm_world, ierr)   
     call mpi_bcast(ridging, 1, mpi_logical,             &
                     master, mpi_comm_world, ierr) 
+    call mpi_bcast(shelter, 1, mpi_logical,             &
+                    master, mpi_comm_world, ierr)
 
     ! numerical_param
     call mpi_bcast(rtree, 1, mpi_double_precision,      &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(ntree, 1, mpi_double_precision,      &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(dt, 1, mpi_double_precision,         &
                     master, mpi_comm_world, ierr)
@@ -126,6 +165,23 @@ subroutine broadcasting_ini (num_threads)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(gamma_d, 1, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
+    call mpi_bcast(bond_lim, 1, mpi_double_precision,       &
+                    master, mpi_comm_world, ierr)
+
+    ! forcings
+    call mpi_bcast(uw, 1, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(vw, 1, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(ua, 1, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(va, 1, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+
+    call mpi_bcast(pfn, 1, mpi_double_precision,       &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(pfs, 1, mpi_double_precision,       &
+                    master, mpi_comm_world, ierr)
 
     ! other variables computed from namelist values
     call mpi_bcast(t, 1, mpi_double_precision,              &
@@ -138,6 +194,52 @@ subroutine broadcasting_ini (num_threads)
                     master, mpi_comm_world, ierr)   
 
 end subroutine broadcasting_ini
+
+
+subroutine broadcast_shape
+
+    use mpi_f08
+    use mpi_counts_mod, only: counts, displs
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_forcings.h"
+    include "CB_mpi.h"
+    include "CB_variables.h"
+
+    ! sheltering coefficient
+    call mpi_allreduce( &
+    hsfa, hsfa_r, n * n, mpi_double_precision, &
+    mpi_prod, mpi_comm_world, ierr)
+
+    call mpi_allreduce( &
+    hsfw, hsfw_r, n * n, mpi_double_precision, &
+    mpi_prod, mpi_comm_world, ierr)
+
+    ! thickness and radius
+    call mpi_allgatherv(h(first_iter:last_iter),          &
+                        local_n, mpi_double_precision,    &
+                        h, counts, displs, mpi_double_precision,  &
+                        mpi_comm_world, ierr )
+
+    call mpi_allgatherv(r(first_iter:last_iter),          &
+                        local_n, mpi_double_precision,    &
+                        r, counts, displs, mpi_double_precision,  &
+                        mpi_comm_world, ierr )
+
+    ! freeboard heights
+    call mpi_allgatherv(hfa(first_iter:last_iter),        &
+                        local_n, mpi_double_precision,    &
+                        hfa, counts, displs, mpi_double_precision,  &
+                        mpi_comm_world, ierr )
+
+    call mpi_allgatherv(hfw(first_iter:last_iter),        &
+                        local_n, mpi_double_precision,    &
+                        hfw, counts, displs, mpi_double_precision,  &
+                        mpi_comm_world, ierr )
+
+end subroutine broadcast_shape
 
 
 subroutine broadcast_total_forces

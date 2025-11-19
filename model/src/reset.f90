@@ -192,5 +192,9 @@ subroutine reset_shelter
     ! reinitialize sheltering height
     hsfa = 1d0
     hsfw = 1d0
+    
+    ! mpi
+    hsfa_r = 1d0
+    hsfw_r = 1d0
 
 end subroutine reset_shelter

@@ -7,6 +7,7 @@ subroutine forcing (i)
     include "CB_const.h"
     include "CB_forcings.h"
     include "CB_diagnostics.h"
+    include "CB_mpi.h"
 
     integer, intent(in) :: i
 
@@ -19,8 +20,8 @@ subroutine forcing (i)
     double precision :: atm_vel_norm, ocn_vel_norm, atm_log, ocn_log
 
     ! unitless minimum sheltering coefficient
-    shelter_coeff_a= minval(hsfa(:,i))
-    shelter_coeff_w= minval(hsfw(:,i))
+    shelter_coeff_a= minval(hsfa_r(:,i))
+    shelter_coeff_w= minval(hsfw_r(:,i))
 
     ! local variables to speed up the code
     atm_vel_norm = L2norm(ua - u(i), va - v(i))

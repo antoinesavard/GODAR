@@ -241,13 +241,19 @@ subroutine stepper (tstep)
 
         end do
 
-        ! compute the total forcing from winds, currents and coriolis on particule i
-        call forcing (i)
-        call coriolis(i)
-
-         ! verify the bondary conditions for each particle
+        ! verify the bondary conditions for each particle
         call verify_bc (i)
 
+    end do
+    !$omp end parallel do
+
+    ! broadcast the updated shape and shelter coeff.
+    call broadcast_shape
+    !$omp parallel do schedule(static)
+    ! compute the total forcing from winds, currents and coriolis
+    do i = first_iter, last_iter
+        call forcing(i)
+        call coriolis(i)
     end do
     !$omp end parallel do
 

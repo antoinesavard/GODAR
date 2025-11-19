@@ -8,7 +8,8 @@
                 ierr                  ! error variable
 
     integer ::                      & ! variables that depend on rank
-                iter_per_rank  ,    & ! number of iteration per rank
+                local_n        ,    & ! number of particles on rank
+                local_disp     ,    & ! displacement in arrays on rank
                 first_iter     ,    & ! starting iter number 
                 last_iter             ! ending iter number
 
@@ -68,12 +69,16 @@
                 tsigyx_r    (n),    &
                 tp_r        (n)
 
+    double precision ::             & ! mpi receive buffers 
+                hsfa_r      (n, n), & ! for sheltering
+                hsfw_r      (n, n)     
 
     common/mpi_var/                 &
                 rank           ,    & ! rank of processes
                 n_ranks        ,    & ! number of processes
                 ierr           ,    & ! error variable
-                iter_per_rank  ,    & ! iteration per rank
+                local_n        ,    & ! number of particles on rank
+                local_disp     ,    & ! displacement in arrays on rank
                 first_iter     ,    & ! starting iter number 
                 last_iter             ! ending iter number
 
@@ -131,5 +136,9 @@
                 tsigyy_r       ,    & 
                 tsigxy_r       ,    & 
                 tsigyx_r       ,    &
-                tp_r        
+                tp_r  
+                          
+    common/mpi_shelt_reduc/         & ! mpi receive buffers
+                hsfa_r         ,    & ! for sheltering
+                hsfw_r         
     

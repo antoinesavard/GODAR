@@ -189,4 +189,4 @@ subroutine floe_properties(i)
     ! drag from water height
     hfw(i)   =  h(i) * rhoice / rhowater
 
-end subroutine
+end subroutine floe_properties
