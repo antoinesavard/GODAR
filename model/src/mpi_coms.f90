@@ -235,24 +235,24 @@ subroutine broadcast_shape
     mpi_prod, mpi_comm_world, ierr)
 
     ! thickness and radius
-    call mpi_allgatherv(h(first_iter:last_iter),          &
-                        local_n, mpi_double_precision,    &
+    call mpi_allgatherv(local_h,                                  &
+                        local_n, mpi_double_precision,            &
                         h, counts, displs, mpi_double_precision,  &
                         mpi_comm_world, ierr )
 
-    call mpi_allgatherv(r(first_iter:last_iter),          &
-                        local_n, mpi_double_precision,    &
+    call mpi_allgatherv(local_r,                                  &
+                        local_n, mpi_double_precision,            &
                         r, counts, displs, mpi_double_precision,  &
                         mpi_comm_world, ierr )
 
     ! freeboard heights
-    call mpi_allgatherv(hfa(first_iter:last_iter),        &
-                        local_n, mpi_double_precision,    &
+    call mpi_allgatherv(local_hfa,                                  &
+                        local_n, mpi_double_precision,              &
                         hfa, counts, displs, mpi_double_precision,  &
                         mpi_comm_world, ierr )
 
-    call mpi_allgatherv(hfw(first_iter:last_iter),        &
-                        local_n, mpi_double_precision,    &
+    call mpi_allgatherv(local_hfw,                                  &
+                        local_n, mpi_double_precision,              &
                         hfw, counts, displs, mpi_double_precision,  &
                         mpi_comm_world, ierr )
 
