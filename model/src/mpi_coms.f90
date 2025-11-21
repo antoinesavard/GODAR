@@ -208,31 +208,49 @@ subroutine broadcast_shape
     include "CB_mpi.h"
     include "CB_variables.h"
 
-    ! local variables for allgatherv
-    double precision, allocatable :: local_h(:), local_r(:),   &
-                                    local_hfa(:), local_hfw(:)
+    ! local variables
+    double precision, allocatable :: local_h(:), local_r(:)
+    double precision, allocatable :: local_hfa(:), local_hfw(:)
+    double precision, allocatable :: local_min_a(:), local_min_w(:)
+    
+    integer :: i
 
     ! allocations
     allocate(local_h(local_n))
-    local_h = h(first_iter:last_iter)
-
     allocate(local_r(local_n))
-    local_r = r(first_iter:last_iter)
 
     allocate(local_hfa(local_n))
+    allocate(local_hfw(local_n))
+
+    allocate(local_min_a(n))
+    allocate(local_min_w(n))
+
+    ! Initialize values
+    local_min_a = 1.0d0
+    local_min_w = 1.0d0
+
+    local_hfw = hfw(first_iter:last_iter)
     local_hfa = hfa(first_iter:last_iter)
 
-    allocate(local_hfw(local_n))
-    local_hfw = hfw(first_iter:last_iter)
+    local_r = r(first_iter:last_iter)
+    local_h = h(first_iter:last_iter)
+
+    !$omp parallel do
+    do i = 1, n
+        ! find minimum over j=1..n of hsfa(j,i)
+        local_min_a(i) = minval(hsfa(:, i))
+        local_min_w(i) = minval(hsfw(:, i))
+    end do
+    !$omp end parallel do
 
     ! sheltering coefficient
     call mpi_allreduce( &
-    hsfa, hsfa_r, n * n, mpi_double_precision, &
-    mpi_prod, mpi_comm_world, ierr)
+    local_min_a, hsfa_min_r, n, mpi_double_precision, &
+    mpi_min, mpi_comm_world, ierr)
 
     call mpi_allreduce( &
-    hsfw, hsfw_r, n * n, mpi_double_precision, &
-    mpi_prod, mpi_comm_world, ierr)
+    local_min_w, hsfw_min_r, n, mpi_double_precision, &
+    mpi_min, mpi_comm_world, ierr)
 
     ! thickness and radius
     call mpi_allgatherv(local_h,                                  &
@@ -259,8 +277,12 @@ subroutine broadcast_shape
     ! deallocation
     deallocate(local_h)
     deallocate(local_r)
+
     deallocate(local_hfa)
     deallocate(local_hfw)
+
+    deallocate(local_min_a)
+    deallocate(local_min_w)
 
 end subroutine broadcast_shape
 

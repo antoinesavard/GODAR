@@ -71,11 +71,11 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
                         line = line.strip()
                         if len(line) == 0:
                             empty_line += 1
-                    data = np.zeros((empty_line, n, n))
+                    data = np.zeros((empty_line, n, n), dtype=int)
                     continue
                 __, num_per_tstep = np.unique(idx[:, 0], return_counts=True)
                 third_dim = len(num_per_tstep)
-                data = np.zeros((third_dim, n, n))
+                data = np.zeros((third_dim, n, n), dtype=int)
                 for i, num in enumerate(num_per_tstep):
                     idx_2d = idx[i * num : (i + 1) * num, 1:] - 1
                     data[i, idx_2d.T[0], idx_2d.T[1]] = 1
@@ -130,7 +130,7 @@ def draw_bond(ax, r, lb, angleb, radius, lambda_rb=1, lambda_lb=1):
 def save_or_show_animation(anim, save, filename="collision.mp4"):
     if save:
         Writer = animation.writers["ffmpeg"]
-        writer = Writer(fps=60, bitrate=-1)
+        writer = Writer(fps=60, bitrate=5000)
         anim.save(filename, writer=writer)
     else:
         plt.show()

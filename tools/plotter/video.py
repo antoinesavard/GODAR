@@ -8,6 +8,7 @@ import cmocean as cm
 import tools.utils.files as tuf
 import os
 import sys
+import sparse
 
 # ----------------------------------------------------------------------
 # figures
@@ -104,9 +105,9 @@ b = tuf.check_dim(b, 1)
 # massaging
 t = np.degrees(t)
 edge = np.where(o >= 0, "g", "r")
-lb = np.zeros_like(b)
-rb = np.zeros_like(b)
-angleb = np.zeros_like(b)
+lb = sparse.COO.from_numpy(np.zeros_like(b))
+rb = sparse.COO.from_numpy(np.zeros_like(b))
+angleb = sparse.COO.from_numpy(np.zeros_like(b))
 
 # --------------------------------------
 # functions for colors

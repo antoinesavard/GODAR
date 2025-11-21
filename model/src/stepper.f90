@@ -249,7 +249,7 @@ subroutine stepper (tstep)
 
     ! broadcast the updated shape and shelter coeff.
     call broadcast_shape
-    !$omp parallel do schedule(static)
+    !$omp parallel do
     ! compute the total forcing from winds, currents and coriolis
     do i = first_iter, last_iter
         call forcing(i)

@@ -194,7 +194,7 @@ subroutine reset_shelter
     hsfw = 1d0
     
     ! mpi
-    hsfa_r = 1d0
-    hsfw_r = 1d0
+    hsfa_min_r = 1d0
+    hsfw_min_r = 1d0
 
 end subroutine reset_shelter

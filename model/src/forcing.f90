@@ -20,8 +20,8 @@ subroutine forcing (i)
     double precision :: atm_vel_norm, ocn_vel_norm, atm_log, ocn_log
 
     ! unitless minimum sheltering coefficient
-    shelter_coeff_a= minval(hsfa_r(:,i))
-    shelter_coeff_w= minval(hsfw_r(:,i))
+    shelter_coeff_a = hsfa_min_r(i)
+    shelter_coeff_w = hsfw_min_r(i)
 
     ! local variables to speed up the code
     atm_vel_norm = L2norm(ua - u(i), va - v(i))
@@ -144,7 +144,7 @@ subroutine sheltering (j, i)
                     -sina(j,i), ua, va)
     hsfw(j, i) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
                     -sina(j,i), uw, vw)
-end subroutine
+end subroutine sheltering
 
 
 subroutine coriolis (i)

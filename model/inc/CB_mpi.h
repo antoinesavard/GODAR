@@ -70,8 +70,8 @@
                 tp_r        (n)
 
     double precision ::             & ! mpi receive buffers 
-                hsfa_r      (n, n), & ! for sheltering
-                hsfw_r      (n, n)     
+                hsfa_min_r  (n),    & ! for sheltering
+                hsfw_min_r  (n)
 
     common/mpi_var/                 &
                 rank           ,    & ! rank of processes
@@ -139,6 +139,6 @@
                 tp_r  
                           
     common/mpi_shelt_reduc/         & ! mpi receive buffers
-                hsfa_r         ,    & ! for sheltering
-                hsfw_r         
+                hsfa_min_r     ,    & ! for sheltering
+                hsfw_min_r         
     
