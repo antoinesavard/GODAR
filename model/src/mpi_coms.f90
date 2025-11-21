@@ -198,6 +198,7 @@ end subroutine broadcasting_ini
 
 subroutine broadcast_shape
 
+    use omp_lib
     use mpi_f08
     use mpi_counts_mod, only: counts, displs
 
