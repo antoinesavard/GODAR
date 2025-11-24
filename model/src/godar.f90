@@ -5,7 +5,7 @@ program godar
     use datetime, only: str2dt, datetime_str_6, now, delta_str
     use omp_lib
     use mpi_f08
-    use mpi_counts_mod, only: init_mpi_counts, counts, displs
+    use mpi_counts_mod, only: init_mpi_counts_weighted, counts, displs
 
     implicit none
 
@@ -168,7 +168,7 @@ program godar
 
     ! set mpi variables
     ! initialize counts/displs
-    call init_mpi_counts(n, n_ranks, rank, local_n, local_disp)
+    call init_mpi_counts_weighted(n, n_ranks, rank, local_n, local_disp)
 
     first_iter = local_disp + 1
     last_iter  = local_disp + local_n
