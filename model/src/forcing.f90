@@ -144,6 +144,7 @@ subroutine sheltering (j, i)
                     -sina(j,i), ua, va)
     hsfw(j, i) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
                     -sina(j,i), uw, vw)
+
 end subroutine sheltering
 
 

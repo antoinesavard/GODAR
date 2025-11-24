@@ -15,7 +15,7 @@ program godar
 
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
-    integer :: proc_num, thread_num, num_threads
+    integer :: proc_num, thread_num, thread_requested
     double precision :: tic, tac
     character(len=4) :: expno_str, expno_str_r
     character(len=16) :: namelist_name
@@ -117,17 +117,17 @@ program godar
         print *, 'Number of threads to use?'
         
         ! number of threads to use per rank
-        read  *, num_threads
-        print *, num_threads
+        read  *, thread_requested
+        print *, thread_requested
 
-        if (num_threads .gt. thread_num) then
+        if (thread_requested .gt. thread_num) then
             print*, "Your requested thread number is going to be set to max value of available thread, which is: ", thread_num
-            num_threads = thread_num
+            thread_requested = thread_num
         end if
 
 
 
-        print *, 'Total number of threads: ', n_ranks * num_threads
+        print *, 'Total number of threads: ', n_ranks * thread_requested
 
         if (n_ranks > 1) then
 
@@ -156,11 +156,11 @@ program godar
     end if
 
     ! broadcast the data to all the other ranks
-    call broadcasting_ini (num_threads)
+    call broadcasting_ini (thread_requested)
     
     ! set openmp in all ranks
     call mpi_barrier (mpi_comm_world, ierr)
-    call omp_set_num_threads (num_threads)
+    call omp_set_num_threads (thread_requested)
     
     !-------------------------------------------------------------------
     ! Main (time) loop of the program
