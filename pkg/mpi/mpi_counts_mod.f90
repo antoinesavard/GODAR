@@ -124,9 +124,6 @@ contains
             end do
         end if
 
-        print*,'w', w
-        print*,'weights', weights
-
         ! total work and target per rank
         total_work = sum(w)
         if (n_ranks > 0) then
@@ -134,9 +131,6 @@ contains
         else
             target = total_work
         end if
-
-        print*, 'target',target
-        print*, 'n_ranks',n_ranks
 
         ! Greedy contiguous partitioning: assign until cum >= target
         current_rank = 1
@@ -185,9 +179,6 @@ contains
         end if
 
         deallocate(w)
-
-        print*, 'local_n',local_n
-        print*, 'local_disp',local_disp
         
     end subroutine init_mpi_counts_weighted
 
