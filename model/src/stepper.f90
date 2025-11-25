@@ -300,7 +300,7 @@ subroutine stepper (tstep)
     call tree_cleanup(tstep)
 
     ! reduce all the force variables
-    call force_reduction
+    call force_reduction_fast
 
     ! sum all forces together on particule i
     do i = first_iter, last_iter

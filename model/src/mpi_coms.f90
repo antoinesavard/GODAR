@@ -198,7 +198,6 @@ end subroutine broadcasting_ini
 
 subroutine broadcast_shape
 
-    use omp_lib
     use mpi_f08
     use mpi_counts_mod, only: counts, displs
 
@@ -212,6 +211,7 @@ subroutine broadcast_shape
     ! local variables
     double precision, allocatable :: local_h(:), local_r(:)
     double precision, allocatable :: local_hfa(:), local_hfw(:)
+    double precision, allocatable :: recv_min_a(:), recv_min_w(:)
 
     ! allocations
     allocate(local_h(local_n))
@@ -220,20 +220,26 @@ subroutine broadcast_shape
     allocate(local_hfa(local_n))
     allocate(local_hfw(local_n))
 
+    ! allocate recv buffers
+    allocate(recv_min_a(local_n))
+    allocate(recv_min_w(local_n))
+
     local_hfw = hfw(first_iter:last_iter)
     local_hfa = hfa(first_iter:last_iter)
 
     local_r = r(first_iter:last_iter)
     local_h = h(first_iter:last_iter)
 
-    ! sheltering coefficient
-    call mpi_allreduce( &
-    local_hsfa_min, hsfa_min_r, n, mpi_double_precision, &
-    mpi_min, mpi_comm_world, ierr)
+    ! sendbuf: local_hsfa_min (n), recvbuf: recv_min_a (local_n)
+    call mpi_reduce_scatter(local_hsfa_min, recv_min_a, counts, &
+            mpi_double_precision, mpi_min, mpi_comm_world, ierr)
 
-    call mpi_allreduce( &
-    local_hsfw_min, hsfw_min_r, n, mpi_double_precision, &
-    mpi_min, mpi_comm_world, ierr)
+    call mpi_reduce_scatter(local_hsfw_min, recv_min_w, counts, &
+            mpi_double_precision, mpi_min, mpi_comm_world, ierr)
+
+    ! place received minima into hsfX_min_r at the local positions
+    hsfa_min_r(local_disp+1 : local_disp + local_n) = recv_min_a
+    hsfw_min_r(local_disp+1 : local_disp + local_n) = recv_min_w
 
     ! thickness and radius
     call mpi_allgatherv(local_h,                                  &
@@ -263,6 +269,10 @@ subroutine broadcast_shape
 
     deallocate(local_hfa)
     deallocate(local_hfw)
+
+    ! deallocate recv buffers
+    deallocate(recv_min_a)
+    deallocate(recv_min_w)
 
 end subroutine broadcast_shape
 
