@@ -212,9 +212,6 @@ subroutine broadcast_shape
     ! local variables
     double precision, allocatable :: local_h(:), local_r(:)
     double precision, allocatable :: local_hfa(:), local_hfw(:)
-    double precision, allocatable :: local_min_a(:), local_min_w(:)
-    
-    integer :: i
 
     ! allocations
     allocate(local_h(local_n))
@@ -223,34 +220,19 @@ subroutine broadcast_shape
     allocate(local_hfa(local_n))
     allocate(local_hfw(local_n))
 
-    allocate(local_min_a(n))
-    allocate(local_min_w(n))
-
-    ! Initialize values
-    local_min_a = 1.0d0
-    local_min_w = 1.0d0
-
     local_hfw = hfw(first_iter:last_iter)
     local_hfa = hfa(first_iter:last_iter)
 
     local_r = r(first_iter:last_iter)
     local_h = h(first_iter:last_iter)
 
-    !$omp parallel do
-    do i = 1, n
-        ! find minimum over j=1..n of hsfa(j,i)
-        local_min_a(i) = minval(hsfa(:, i))
-        local_min_w(i) = minval(hsfw(:, i))
-    end do
-    !$omp end parallel do
-
     ! sheltering coefficient
     call mpi_allreduce( &
-    local_min_a, hsfa_min_r, n, mpi_double_precision, &
+    local_hsfa_min, hsfa_min_r, n, mpi_double_precision, &
     mpi_min, mpi_comm_world, ierr)
 
     call mpi_allreduce( &
-    local_min_w, hsfw_min_r, n, mpi_double_precision, &
+    local_hsfw_min, hsfw_min_r, n, mpi_double_precision, &
     mpi_min, mpi_comm_world, ierr)
 
     ! thickness and radius
@@ -281,9 +263,6 @@ subroutine broadcast_shape
 
     deallocate(local_hfa)
     deallocate(local_hfw)
-
-    deallocate(local_min_a)
-    deallocate(local_min_w)
 
 end subroutine broadcast_shape
 
@@ -518,3 +497,155 @@ subroutine force_reduction
 
 end subroutine force_reduction
 
+subroutine force_reduction_fast
+    
+    use mpi_f08
+    use mpi_counts_mod
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_forcings.h"
+    include "CB_options.h"
+    include "CB_mpi.h"
+    include "CB_diagnostics.h"
+
+    integer :: i, a, k, idx
+    integer :: total_elems, my_recvcount
+    integer, parameter :: field_num = 35
+    integer, allocatable :: recvcounts(:)
+    double precision, allocatable :: sendbuf(:), recvbuf(:)
+
+    total_elems = field_num * n
+
+    ! allocate buffers
+    allocate(sendbuf(total_elems))
+    allocate(recvcounts(n_ranks))
+
+    do i = 1, n_ranks
+        recvcounts(i) = counts(i) * field_num
+    end do
+
+    ! recvbuf size for this rank (only receive its local portion)
+    my_recvcount = recvcounts(rank+1)
+    allocate(recvbuf(my_recvcount))
+
+    ! put all the fields one after the other
+    !
+    ! sendbuf = [fcx(1), fcy(1), ..., fcx(2), fcy(2), ..., fcx(n), ...]
+    !            -------------------  -------------------  -----------
+    !                particle 1           particle 2       particle n
+    !
+    do i = 1, n
+        idx = (i - 1) * field_num
+        a = 1    ; sendbuf(idx + a) = fcx(i)
+        a = a + 1; sendbuf(idx + a) = fcy(i)
+        a = a + 1; sendbuf(idx + a) = mc(i)
+
+        a = a + 1; sendbuf(idx + a) = fbx(i)
+        a = a + 1; sendbuf(idx + a) = fby(i)
+        a = a + 1; sendbuf(idx + a) = mb(i)
+
+        a = a + 1; sendbuf(idx + a) = fwx(i)
+        a = a + 1; sendbuf(idx + a) = fwy(i)
+        a = a + 1; sendbuf(idx + a) = mw(i)
+        a = a + 1; sendbuf(idx + a) = fax(i)
+        a = a + 1; sendbuf(idx + a) = fay(i)
+        a = a + 1; sendbuf(idx + a) = ma(i)
+        a = a + 1; sendbuf(idx + a) = fcorx(i)
+        a = a + 1; sendbuf(idx + a) = fcory(i)
+
+        a = a + 1; sendbuf(idx + a) = fx_bc(i)
+        a = a + 1; sendbuf(idx + a) = fy_bc(i)
+        a = a + 1; sendbuf(idx + a) = m_bc(i)
+
+        a = a + 1; sendbuf(idx + a) = sigxx(i)
+        a = a + 1; sendbuf(idx + a) = sigyy(i)
+        a = a + 1; sendbuf(idx + a) = sigxy(i)
+        a = a + 1; sendbuf(idx + a) = sigyx(i)
+
+        a = a + 1; sendbuf(idx + a) = sigxx_bc(i)
+        a = a + 1; sendbuf(idx + a) = sigyy_bc(i)
+        a = a + 1; sendbuf(idx + a) = sigxy_bc(i)
+        a = a + 1; sendbuf(idx + a) = sigyx_bc(i)
+
+        a = a + 1; sendbuf(idx + a) = sigxx_aw(i)
+        a = a + 1; sendbuf(idx + a) = sigyy_aw(i)
+        a = a + 1; sendbuf(idx + a) = sigxy_aw(i)
+        a = a + 1; sendbuf(idx + a) = sigyx_aw(i)
+
+        a = a + 1; sendbuf(idx + a) = tac(i)
+        a = a + 1; sendbuf(idx + a) = tab(i)
+        a = a + 1; sendbuf(idx + a) = pc(i)
+        a = a + 1; sendbuf(idx + a) = pb(i)
+
+        a = a + 1; sendbuf(idx + a) = ta_bc(i)
+        a = a + 1; sendbuf(idx + a) = p_bc(i)
+    end do
+
+    ! each rank provides full sendbuf of size total_elems
+    ! recvbuf gets only recvcounts(rank) elements
+    call mpi_reduce_scatter( sendbuf, recvbuf, recvcounts, mpi_double_precision, mpi_sum, mpi_comm_world, ierr )
+
+    ! unpack recvbuf into local *_r arrays for indices 
+    ! first_iter:last_iter 
+    ! recvbuf is in the same per-particle block order 
+    ! only for the local indices in this rank.
+    do i = 1, local_n
+        idx = (i - 1) * field_num
+        ! global particle index
+        k = local_disp + i
+
+        a = 1    ; fcx_r(k) = recvbuf(idx + a)
+        a = a + 1; fcy_r(k) = recvbuf(idx + a)
+        a = a + 1; mc_r(k)  = recvbuf(idx + a)
+
+        a = a + 1; fbx_r(k) = recvbuf(idx + a)
+        a = a + 1; fby_r(k) = recvbuf(idx + a)
+        a = a + 1; mb_r(k)  = recvbuf(idx + a)
+
+        a = a + 1; fwx_r(k) = recvbuf(idx + a)
+        a = a + 1; fwy_r(k) = recvbuf(idx + a)
+        a = a + 1; mw_r(k)  = recvbuf(idx + a)
+        a = a + 1; fax_r(k) = recvbuf(idx + a)
+        a = a + 1; fay_r(k) = recvbuf(idx + a)
+        a = a + 1; ma_r(k)  = recvbuf(idx + a)
+        a = a + 1; fcorx_r(k) = recvbuf(idx + a)
+        a = a + 1; fcory_r(k) = recvbuf(idx + a)
+
+        a = a + 1; fx_bc_r(k) = recvbuf(idx + a)
+        a = a + 1; fy_bc_r(k) = recvbuf(idx + a)
+        a = a + 1; m_bc_r(k)  = recvbuf(idx + a)
+
+        a = a + 1; sigxx_r(k) = recvbuf(idx + a)
+        a = a + 1; sigyy_r(k) = recvbuf(idx + a)
+        a = a + 1; sigxy_r(k) = recvbuf(idx + a)
+        a = a + 1; sigyx_r(k) = recvbuf(idx + a)
+
+        a = a + 1; sigxx_bc_r(k) = recvbuf(idx + a)
+        a = a + 1; sigyy_bc_r(k) = recvbuf(idx + a)
+        a = a + 1; sigxy_bc_r(k) = recvbuf(idx + a)
+        a = a + 1; sigyx_bc_r(k) = recvbuf(idx + a)
+
+        a = a + 1; sigxx_aw_r(k) = recvbuf(idx + a)
+        a = a + 1; sigyy_aw_r(k) = recvbuf(idx + a)
+        a = a + 1; sigxy_aw_r(k) = recvbuf(idx + a)
+        a = a + 1; sigyx_aw_r(k) = recvbuf(idx + a)
+
+        a = a + 1; tac_r(k) = recvbuf(idx + a)
+        a = a + 1; tab_r(k) = recvbuf(idx + a)
+        a = a + 1; pc_r(k)  = recvbuf(idx + a)
+        a = a + 1; pb_r(k)  = recvbuf(idx + a)
+
+        a = a + 1; ta_bc_r(k) = recvbuf(idx + a)
+        a = a + 1; p_bc_r(k)  = recvbuf(idx + a)
+    end do
+
+    deallocate(sendbuf)
+    deallocate(recvbuf)
+    deallocate(recvcounts)
+
+end subroutine force_reduction_fast

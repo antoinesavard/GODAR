@@ -5,7 +5,7 @@ program godar
     use datetime, only: str2dt, datetime_str_6, now, delta_str
     use omp_lib
     use mpi_f08
-    use mpi_counts_mod, only: init_mpi_counts, counts, displs
+    use mpi_counts_mod, only: init_mpi_counts
 
     implicit none
 

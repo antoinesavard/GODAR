@@ -26,7 +26,21 @@ subroutine stepper (tstep)
     type(KdTreeSearch) :: search
     type(dArgDynamicArray) :: da
 
+    ! sheltering coeff per thread arrays
+    integer :: thread_num, thread_id
+    double precision, allocatable :: local_hsfa_min_thread(:,:)
+    double precision, allocatable :: local_hsfw_min_thread(:,:)
 
+    ! allocate local sheltering reduction arrays
+    thread_num = omp_get_num_threads()
+
+    allocate(local_hsfa_min_thread(thread_num, n))
+    allocate(local_hsfw_min_thread(thread_num, n))
+
+    local_hsfa_min_thread = 1.0d0
+    local_hsfw_min_thread = 1.0d0
+
+    ! Check whether tree parameters needs update or not
     if ( tstep == 1 .or. mod(tstep, int(ntree)) == 0 ) then
         xtree = x
         ytree = y
@@ -45,13 +59,15 @@ subroutine stepper (tstep)
     ! put yourself in the referential of the ith particle
 	! loop through all j particles and compute interactions
 
-    !$omp parallel do schedule(dynamic, 1) &
-    !$omp private(i,j,da) &
+    !$omp parallel &
+    !$omp private(i,j,da, thread_id) &
     !$omp reduction(+:fcx,fcy,mc,fbx,fby,mb) &
     !&&#ifdef DIAG
     !$omp reduction(+:sigxx,sigyy,sigxy,sigyx) &
     !$omp reduction(+:tac,tab,pc,pb)
     !&&#endif
+    thread_id = omp_get_thread_num() + 1
+    !$omp do schedule(dynamic, 1)
     do i = first_iter, last_iter
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), &
@@ -188,6 +204,17 @@ subroutine stepper (tstep)
             ! you have to check both sides of the matrix because it is not symmetric
             if ( shelter .eqv. .true. ) then
                 call sheltering(j, i)
+
+                ! update local minimum value here because of reduction
+                local_hsfa_min_thread(thread_id, i) = min( &
+                    local_hsfa_min_thread(thread_id, i), hsfa(j,i) )
+                local_hsfa_min_thread(thread_id, j) = min( &
+                    local_hsfa_min_thread(thread_id, j), hsfa(i,j) )
+
+                local_hsfw_min_thread(thread_id, i) = min( &
+                    local_hsfw_min_thread(thread_id, i), hsfw(j,i) )
+                local_hsfw_min_thread(thread_id, j) = min( &
+                    local_hsfw_min_thread(thread_id, j), hsfw(i,j) )
             end if
 
             !-------------------------------------------------------
@@ -245,7 +272,19 @@ subroutine stepper (tstep)
         call verify_bc (i)
 
     end do
-    !$omp end parallel do
+    !$omp end do
+    !$omp end parallel
+
+    ! reduce the sheltering coefficient arrays
+    do thread_id = 1, thread_num
+        do i = 1, n
+            local_hsfa_min(i) = min(local_hsfa_min(i), local_hsfa_min_thread(thread_id, i))
+            local_hsfw_min(i) = min(local_hsfw_min(i), local_hsfw_min_thread(thread_id, i))
+        end do
+    end do
+
+    deallocate(local_hsfa_min_thread)
+    deallocate(local_hsfw_min_thread)
 
     ! broadcast the updated shape and shelter coeff.
     call broadcast_shape

@@ -70,8 +70,10 @@
                 tp_r        (n)
 
     double precision ::             & ! mpi receive buffers 
-                hsfa_min_r  (n),    & ! for sheltering
-                hsfw_min_r  (n)
+                hsfa_min_r  (n),    & ! global buffers
+                hsfw_min_r  (n),    &
+                local_hsfa_min (n), & ! local buffers
+                local_hsfw_min (n)
 
     common/mpi_var/                 &
                 rank           ,    & ! rank of processes
@@ -138,7 +140,9 @@
                 tsigyx_r       ,    &
                 tp_r  
                           
-    common/mpi_shelt_reduc/         & ! mpi receive buffers
+    common/mpi_shelt_min/           & ! mpi receive buffers
                 hsfa_min_r     ,    & ! for sheltering
-                hsfw_min_r         
+                hsfw_min_r     ,    &
+                local_hsfa_min ,    &
+                local_hsfw_min   
     
