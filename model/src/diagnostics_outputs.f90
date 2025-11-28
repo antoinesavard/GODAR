@@ -151,7 +151,7 @@ subroutine sea_ice_post (tstep, expno_str)
 	do i = 1, n
         do j = 1, n
             if (bond(j, i) == 1) then
-                write(18,*) tstep, j, i
+                write(18,*) int(tstep / comp), j, i
             end if
         end do
 	end do
