@@ -3,6 +3,7 @@ import netCDF4 as nc
 from matplotlib.patches import Circle, Rectangle
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import sparse
 
 
 def list_files(directory: str, datatype: str, expno: str) -> list:
@@ -71,14 +72,15 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
                         line = line.strip()
                         if len(line) == 0:
                             empty_line += 1
-                    data = np.zeros((empty_line, n, n), dtype=int)
+                    data = sparse.COO.from_numpy(
+                        np.zeros((empty_line, n, n), dtype=int)
+                    )
                     continue
                 __, num_per_tstep = np.unique(idx[:, 0], return_counts=True)
                 third_dim = len(num_per_tstep)
-                data = np.zeros((third_dim, n, n), dtype=int)
-                for i, num in enumerate(num_per_tstep):
-                    idx_2d = idx[i * num : (i + 1) * num, 1:] - 1
-                    data[i, idx_2d.T[0], idx_2d.T[1]] = 1
+                idx = idx.T - 1
+                value = np.ones(idx.shape[1])
+                data = sparse.COO(idx, value, shape=(third_dim, n, n))
 
     return data[0] if data.shape[0] == 1 else data
 
