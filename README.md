@@ -52,16 +52,6 @@ make install
 Once this is done, here are the steps you have to do. Let's call the path where you installed coretran: `/mycoretran`. There should be two subdirectories in your install folder: `/mycoretran/lib` and `/mycoretran/include`, in which you will find the `.so` file (`.dylib` on OSX) and the modules respectively.
 We will need these in the CMakeLists.txt file; this is specific to your machine, specifically the `/mycoretran/lib/cmake` directory. Cmake and the `CMakeLists.txt` file should deal with this automatically, but it is good for you to know.
 
-##### OSX
-
-On mac, there are extra step to be taken.
-
-1. In the `start.sh` file, note the following line above the `mpirun` command. This line will tell the executable where to look for the dynamically shared libraries.
-
-```bash
-install_name_tool -change @rpath/libcoretran.dylib /mycoretran/libcoretran.dylib bin/godar
-```
-
 #### Creating a virtual environment
 
 To install packages on a super computer, it is usually better to do that in a virtual environment. If you need a virtual environment, create one first.
