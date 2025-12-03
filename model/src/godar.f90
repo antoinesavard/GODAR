@@ -190,15 +190,20 @@ program godar
 
         call stepper (tstep)
 
-        if ( rank .eq. master ) then
-            if (MODULO(tstep, int(comp)) .eq. 0) then
+        if (MODULO(tstep, int(comp)) .eq. 0) then
+            
+            ! gather the bond locations
+            call gather_bonds_to_master
+           
+            if ( rank .eq. master ) then
 
+                ! print various outputs
                 call sea_ice_post (tstep, expno_str)
                 if (MODULO(tstep, int(comp*10)) .eq. 0) then
                     print *, "Time step: ", tstep, "/", int(nt)
                 end if
 
-            endif
+            end if
         end if
 
     end do

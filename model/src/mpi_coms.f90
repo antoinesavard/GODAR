@@ -659,3 +659,111 @@ subroutine force_reduction_fast
     deallocate(recvcounts)
 
 end subroutine force_reduction_fast
+
+
+subroutine gather_bonds_to_master()
+
+    use mpi_f08
+    use mpi_counts_mod
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_mpi.h"
+    include "CB_bond.h"
+
+    integer :: i, j, k, idx
+    integer :: num_local_bonds, num_total_bonds
+    integer, allocatable :: local_i(:), local_j(:)
+    integer, allocatable :: bond_recvcounts(:), bond_displs(:)
+    integer, allocatable :: all_i(:), all_j(:)
+    integer, allocatable :: all_bond_counts(:)
+
+    !------------------------------------------------------------
+    ! Count local bonds
+    !------------------------------------------------------------
+    num_local_bonds = 0
+    do i = first_iter, last_iter
+        do j = 1, n
+            if (bond(j, i) == 1) then
+                num_local_bonds = num_local_bonds + 1
+            end if
+        end do
+    end do
+
+    !------------------------------------------------------------
+    ! Store local bond pairs
+    !------------------------------------------------------------
+    allocate(local_i(num_local_bonds), local_j(num_local_bonds))
+
+    idx = 0
+    do i = first_iter, last_iter
+        do j = 1, n
+            if (bond(j, i) == 1) then
+                idx = idx + 1
+                local_i(idx) = i
+                local_j(idx) = j
+            end if
+        end do
+    end do
+
+    !------------------------------------------------------------
+    ! Gather counts on master
+    !------------------------------------------------------------
+    allocate(all_bond_counts(n_ranks))
+
+    call mpi_gather(num_local_bonds, 1, mpi_integer,          &
+                    all_bond_counts, 1, mpi_integer, 0,       &
+                    mpi_comm_world, ierr)
+
+    !------------------------------------------------------------
+    ! Master prepares recvcounts & displs for Gatherv
+    !------------------------------------------------------------
+    if (rank .eq. master) then
+        allocate(bond_recvcounts(n_ranks))
+        allocate(bond_displs(n_ranks))
+
+        bond_recvcounts = all_bond_counts
+        bond_displs(1)  = 0
+
+        do k = 2, n_ranks
+            bond_displs(k) = bond_displs(k-1) + bond_recvcounts(k-1)
+        end do
+
+        num_total_bonds = bond_displs(n_ranks) + bond_recvcounts(n_ranks)
+
+        allocate(all_i(num_total_bonds))
+        allocate(all_j(num_total_bonds))
+    end if
+
+    !------------------------------------------------------------
+    ! Gatherv the i-indices
+    !------------------------------------------------------------
+    call mpi_gatherv(local_i, num_local_bonds, mpi_integer,           &
+                     all_i, bond_recvcounts, bond_displs, mpi_integer,&
+                     0, mpi_comm_world, ierr)
+
+    !------------------------------------------------------------
+    ! Gatherv the j-indices
+    !------------------------------------------------------------
+    call mpi_gatherv(local_j, num_local_bonds, mpi_integer,           &
+                     all_j, bond_recvcounts, bond_displs, mpi_integer,&
+                     0, mpi_comm_world, ierr)
+
+    !------------------------------------------------------------
+    ! Master rank now has all_i(k), all_j(k) for k=1..num_total_bonds
+    !------------------------------------------------------------
+    if (rank .eq. master) then
+        do k = 1, num_total_bonds
+            bond(all_j(k), all_i(k)) = 1
+        end do
+    end if
+
+    ! deallocate
+    deallocate(local_i, local_j)
+    if (rank .eq. master) then
+        deallocate(bond_recvcounts, bond_displs)
+        deallocate(all_i, all_j)
+    end if
+
+end subroutine gather_bonds_to_master
