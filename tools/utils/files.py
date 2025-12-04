@@ -72,9 +72,7 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
                         line = line.strip()
                         if len(line) == 0:
                             empty_line += 1
-                    data = sparse.COO.from_numpy(
-                        np.zeros((empty_line, n, n), dtype=int)
-                    )
+                    data = sparse.COO(np.array([]), np.array([]), (empty_line, n, n))
                     continue
                 __, num_per_tstep = np.unique(idx[:, 0], return_counts=True)
                 third_dim = len(num_per_tstep)
