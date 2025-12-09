@@ -190,7 +190,7 @@ program godar
 
         call stepper (tstep)
 
-        if (MODULO(tstep, int(comp)) .eq. 0 .or. tstep .eq. 1) then
+        if (MODULO(tstep, int(comp)) .eq. 0 .or. tstep+restart .eq. 1) then
             
             ! gather the bond locations
             call gather_bonds_to_master
