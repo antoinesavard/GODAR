@@ -36,9 +36,9 @@ program godar
         '',&
         '|========================================================|',&
         '|                                                        |',&
-        '|   Welcome in GODAR (Granular flOes for Discrete        |',&
-        '|   Arctic Representation). Please use the input file    |',&
-        '|   as arguments to this program. If not, please provide |',&
+        '|   Welcome in GODAR (Granular flOe Dynamics for seA     |',&
+        '|   ice Rheology). Please use the input file as          |',&
+        '|   arguments to this program. If not, please provide    |',&
         '|   the following:                                       |',&
         '|                                                        |',&
         '|========================================================|',&
@@ -183,14 +183,13 @@ program godar
     
     if ( rank .eq. master ) then
         tic = omp_get_wtime()
-        print *, "Time step: ", 1, "/", int(nt)
     end if
 
-    do tstep = 1, int(nt) + 1
+    do tstep = 1, int(nt)
 
-        call stepper (tstep)
+        call stepper (tstep, restart)
 
-        if (MODULO(tstep, int(comp)) .eq. 0 .or. tstep+restart .eq. 1) then
+        if (modulo(tstep, int(comp)) .eq. 0 .or. tstep + restart == 1) then
             
             ! gather the bond locations
             call gather_bonds_to_master
@@ -199,10 +198,8 @@ program godar
 
                 ! print various outputs
                 call sea_ice_post (tstep, expno_str)
-                if (MODULO(tstep, int(comp*10)) .eq. 0) then
-                    print *, "Time step: ", tstep, "/", int(nt)
-                end if
-
+                print *, "Time step: ", tstep, "/", int(nt)
+            
             end if
         end if
 

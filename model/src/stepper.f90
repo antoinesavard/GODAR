@@ -1,4 +1,4 @@
-subroutine stepper (tstep)
+subroutine stepper (tstep, restart)
 
     use mpi_f08
     use omp_lib
@@ -21,7 +21,7 @@ subroutine stepper (tstep)
     include "CB_diagnostics.h"
 
     integer :: i, j, k
-    integer, intent(in) :: tstep
+    integer, intent(in) :: tstep, restart
     double precision, dimension(n) :: xtree, ytree
     type(KdTreeSearch) :: search
     type(dArgDynamicArray) :: da
@@ -85,8 +85,8 @@ subroutine stepper (tstep)
             call rel_pos_vel (j, i)
 
 			! bond initialization
-			if ( cohesion .eqv. .true. ) then
-                if ( tstep .eq. 1 ) then
+            if ( tstep .eq. 1 .and. restart .ne. 1 ) then
+                if ( cohesion .eqv. .true. ) then
                     if ( deltan(j, i) .ge. -bond_lim ) then ! can be fancier
                         bond (j, i) = 1
                     end if

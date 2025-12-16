@@ -30,8 +30,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         Vfile = 'output/v.' // trim(adjustl(expno_str_r))
         Bfile = 'output/bond.' // trim(adjustl(expno_str_r))
 		
+        ! last timestep data index
 		k = int(nt_r)
 
+        ! read particle data at timestep k
+        ! x, y, r, h, theta, omega, u, v, bond
+        ! TODO: deltas to remember the stress state
         open(103, file = Xfile, status='old')
 		do j = 1, k-1
 			read (103, *, iostat=iostat)
@@ -120,16 +124,19 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         end do
         close(110)
 
-        open(111, file = Bfile, status='old')
-        do j = 1, (n + 1) * (k - 1)
-            read (111, *, iostat=iostat)
-            if (iostat /= 0) exit
-        end do
-        do j = (n + 1) * k - n, (n + 1) * k - 1
-            read (111, *, iostat=iostat) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
-            if (iostat /= 0) exit
-        end do
-        close(111)
+        ! read sparse bond data at timestep k
+        call read_sparse_restart(Bfile, k)
+
+        ! open(111, file = Bfile, status='old')
+        ! do j = 1, (n + 1) * (k - 1)
+        !     read (111, *, iostat=iostat)
+        !     if (iostat /= 0) exit
+        ! end do
+        ! do j = (n + 1) * k - n, (n + 1) * k - 1
+        !     read (111, *, iostat=iostat) ( bond(i, j - (n + 1) * (k - 1)),  i = 1, n )
+        !     if (iostat /= 0) exit
+        ! end do
+        ! close(111)
 
 	else
 
@@ -232,3 +239,40 @@ subroutine ini_get (restart, expno_str_r, nt_r)
     end do
 
 end subroutine ini_get
+
+
+subroutine read_sparse_restart(filename, last_tstep)
+    
+    implicit none
+
+    include "parameter.h"
+    include "CB_bond.h"
+
+    character, intent(in) :: filename*32
+    integer, intent(in) :: last_tstep
+
+    integer :: i, j, tstep
+    integer :: iostat
+    integer :: current_tstep
+
+    current_tstep = -1
+
+    open(unit=111, file=filename, status='old', action='read')
+
+    do
+        read(111, *, iostat=iostat) tstep, j, i
+        if (iostat /= 0) exit
+        if (tstep == last_tstep + 1) exit
+
+        ! New timestep detected
+        if (tstep /= current_tstep) then
+            bond = 0
+            current_tstep = tstep
+        end if
+
+        bond(j, i) = 1
+
+    end do
+
+    close(111)
+end subroutine read_sparse_restart
