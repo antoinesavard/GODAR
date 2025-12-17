@@ -18,9 +18,9 @@ subroutine normal_forces (side, tstep)
     tau = 50 / dt
 
     if ( side == "top" ) then
-        do i = n, n, -1
-            if ( t/tau < pi ) then
-                tfy(i) = tfy(i) + pfn/2 * sin( tstep/tau + pi/2 ) + pfn/2
+        do i = n, n-9, -1
+            if ( tstep < tau ) then
+                tfy(i) = tfy(i) + pfn/2 * sin( pi*tstep/tau - pi/2 ) + pfn/2
             else
                 tfy(i) = tfy(i) + pfn
             end if
