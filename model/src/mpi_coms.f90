@@ -1,5 +1,8 @@
 subroutine broadcasting_ini (num_threads)
 
+    ! this routine broadcasts the initialization variables
+    ! to all the other mpi ranks
+
     use mpi_f08
 
     implicit none
@@ -197,6 +200,11 @@ end subroutine broadcasting_ini
 
 
 subroutine broadcast_shape
+
+    ! this routine broadcasts the shape variables (h, r, hfa, hfw)
+    ! and reduce the minimum freeboard heights across all processes
+    ! so that each process has the global minima for ridging calculation
+    ! at each time step
 
     use mpi_f08
     use mpi_counts_mod, only: counts, displs
