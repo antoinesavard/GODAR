@@ -1,4 +1,4 @@
-subroutine normal_forces (side, tstep)
+subroutine normal_forces (setup, tstep)
 
     implicit none
 
@@ -8,16 +8,18 @@ subroutine normal_forces (side, tstep)
     include "CB_bond.h"
     include "CB_forcings.h"
 
-    character (*), intent(in) :: side
+    character (*), intent(in) :: setup
     integer, intent(in) :: tstep
 
-    double precision :: tau
+    double precision :: tau, taux, tauy
     integer :: i
     
     ! ~12 seconds is required to resolve the elastic wave travelling 30km
     tau = 50 / dt
+    taux = 1d3 / dt
+    tauy = 50 / dt 
 
-    if ( side == "top" ) then
+    if ( setup == "elastic_wave" ) then
         do i = n, n-9, -1
             if ( tstep < tau ) then
                 tfy(i) = tfy(i) + pfn/2 * sin( pi*tstep/tau - pi/2 ) + pfn/2
@@ -27,9 +29,10 @@ subroutine normal_forces (side, tstep)
         end do
     end if 
     
-    if ( side == "side" ) then
-        do i = n, n, -1
-            tfx(i) = tfx(i) + pfs * tanh( tstep / tau )
+    if ( setup == "ridging" ) then
+        do i = n, n-29, -1
+            tfy(i) = tfy(i) + pfn * tanh( tstep / tauy )
+            tfx(i) = tfx(i) + pfs * tanh( tstep / taux )
         end do
     end if
 

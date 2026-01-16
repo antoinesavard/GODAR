@@ -328,12 +328,9 @@ subroutine stepper (tstep, restart)
     ! broadcast forces to all so that the nodes can each update their x and u
     call broadcast_total_forces
 
-    ! forces on right side plate
-!    call normal_forces("top", tstep)
-
+    ! forces for experiments
+!    call normal_forces("ridging", tstep)
 !    call gravity
-    ! forces on left side plate
-!    call normal_forces("side", tstep)
 
     ! integration in time
     call velocity
