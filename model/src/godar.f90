@@ -156,7 +156,7 @@ program godar
     end if
 
     ! broadcast the data to all the other ranks
-    call broadcasting_ini (thread_requested)
+    call broadcasting_ini (thread_requested, restart)
     
     ! set openmp in all ranks
     call mpi_barrier (mpi_comm_world, ierr)
