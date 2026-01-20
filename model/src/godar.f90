@@ -16,7 +16,7 @@ program godar
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, thread_requested
-    double precision :: tic, tac
+    double precision :: tic, tac, toc
     character(len=4) :: expno_str, expno_str_r
     character(len=16) :: namelist_name
     character(10) :: n_str
@@ -183,6 +183,7 @@ program godar
     
     if ( rank .eq. master ) then
         tic = omp_get_wtime()
+        toc = omp_get_wtime()
     end if
 
     do tstep = 1, int(nt)
@@ -199,6 +200,10 @@ program godar
                 ! print various outputs
                 call sea_ice_post (tstep, expno_str)
                 print *, "Time step: ", tstep, "/", int(nt)
+                tac = omp_get_wtime()
+                print '(A, ES10.3, A)', &
+                    " Time for last output: ", tac - toc, ' s'
+                toc = omp_get_wtime()
             
             end if
         end if
@@ -206,8 +211,6 @@ program godar
     end do
 
     if ( rank .eq. master ) then
-        tac = omp_get_wtime()
-
         print '(A, F0.3, A)', &
             " Total simulation time: ", tac - tic, ' s'
 

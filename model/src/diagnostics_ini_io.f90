@@ -108,9 +108,9 @@ subroutine info (expno_str, restart)
     integer, intent(in) :: restart
     character(len=30) :: fileinfo, ffmt, lfmt, ifmt
 
-    ffmt = "(e25.2e2)"
-    lfmt = "(l25)"
-    ifmt = "(i25)"
+    ffmt = "(ES10.3)"
+    lfmt = "(L25)"
+    ifmt = "(I25)"
 
     fileinfo = 'output/info.' // trim(adjustl(expno_str))
 
