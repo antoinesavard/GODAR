@@ -1,4 +1,4 @@
-subroutine broadcasting_ini (num_threads)
+subroutine broadcasting_ini (num_threads, restart)
 
     ! this routine broadcasts the initialization variables
     ! to all the other mpi ranks
@@ -16,12 +16,16 @@ subroutine broadcasting_ini (num_threads)
     include "CB_forcings.h"
     include "CB_diagnostics.h"
 
-    integer, intent(inout) :: num_threads
+    integer, intent(inout) :: num_threads, restart
     
     !-------------------------------------------------------------------
     ! openmp variable
     !-------------------------------------------------------------------
     call mpi_bcast(num_threads, 1, mpi_integer,         &
+                    master, mpi_comm_world, ierr)
+    
+    ! set the restart variable
+    call mpi_bcast(restart, 1, mpi_integer,             &
                     master, mpi_comm_world, ierr)
 
     !-------------------------------------------------------------------
