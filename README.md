@@ -76,6 +76,16 @@ cmake --build build
 
 If you want to recompile the code because you made changes, it is recommended that you remove the `build/` directory by `rm -rf build/`.
 
+Something that might streamline the compilation process is to create a file `compile.sh` and add `chmod +x compile.sh` to it. Therefore you can recompile the code with a single command.
+
+```bash
+#!/bin/bash
+echo 'Removing build files in build/'
+rm -rf build/
+cmake -B build -DCMAKE_PREFIX_PATH=/path/to/coretran/lib/cmake
+cmake --build build
+```
+
 #### How to run godar
 
 After compilation, you can use the `start.sh` file if you are working on your own machine. It contains the following line:
@@ -188,6 +198,8 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
         - kdtree/
             - global_kdtree.f90
             - kdtree_utils.f90
+        - mpi/
+            - mpi_counts_mod.f90
     - tools/
         - analysis/
             - monte_carlo.py
