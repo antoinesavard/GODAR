@@ -16,7 +16,7 @@ subroutine sea_ice_post (tstep, expno_str)
     character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
                          filefby, filem, filemc, filemb
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
-    character(len=20) :: filetp
+    character(len=20) :: filetp, fileangle
 
 	! position and state files
     filex = "output/x." // trim(adjustl(expno_str))
@@ -48,6 +48,7 @@ subroutine sea_ice_post (tstep, expno_str)
 
     ! pressure file
     filetp = "output/tp." // trim(adjustl(expno_str))
+    fileangle = "output/angle." // trim(adjustl(expno_str))
 
     ! ! writing in the files
     ! ! physical properties
@@ -137,6 +138,8 @@ subroutine sea_ice_post (tstep, expno_str)
     open (31, file = filetsigyx, position = 'append', status = 'unknown')
     ! pressure
     open (32, file = filetp, position = 'append', status = 'unknown')
+    ! angle
+    open (33, file = fileangle, position = 'append', status = 'unknown')
 
 
     ! write on the files
@@ -149,9 +152,12 @@ subroutine sea_ice_post (tstep, expno_str)
 	write(16,*) ( theta(i),	i=1, n )
 	write(17,*) ( omega(i),	i=1, n )
 	do i = 1, n
-        do j = 1, n
+        do j = 1, i-1
             if (bond(j, i) == 1) then
                 write(18,*) int(tstep / comp), j, i
+            end if
+            if ( deltan(j,i) .gt. 0 ) then
+                write(33,*) int(tstep / comp), j, i, atan2( y(j) - y(i), x(j) - x(i) ) * 180d0 / pi
             end if
         end do
 	end do
@@ -171,7 +177,7 @@ subroutine sea_ice_post (tstep, expno_str)
     write(31,*) ( tsigyx(i),	i=1, n )
     write(32,*) ( tp(i),	i=1, n )
 
-    do i = 10, 32
+    do i = 10, 33
         close(i)
     end do
 

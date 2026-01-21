@@ -13,7 +13,7 @@ subroutine clear_posts (expno_str)
     character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
                          filefby, filem, filemc, filemb
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
-    character(len=20) :: filetp
+    character(len=20) :: filetp, fileangle
     character(len=20) :: fileinfo
 
     ! position and state files
@@ -46,6 +46,7 @@ subroutine clear_posts (expno_str)
 
     ! pressure file
     filetp = "output/tp." // trim(adjustl(expno_str))
+    fileangle = "output/angle." // trim(adjustl(expno_str))
 
     ! info file
     fileinfo = "output/info." // trim(adjustl(expno_str))
@@ -79,11 +80,13 @@ subroutine clear_posts (expno_str)
     open (31, file = filetsigyx, iostat = stat(22), status = 'old')
     ! pressure
     open (32, file = filetp, iostat = stat(23), status = 'old')
+    ! angle
+    open (33, file = fileangle, iostat = stat(24), status = 'old')
     ! info
-    open (33, file = fileinfo, iostat = stat(24), status = 'old')
+    open (34, file = fileinfo, iostat = stat(25), status = 'old')
 
     ! delete them
-    do i = 10, 33
+    do i = 10, 34
         if (stat(i-9) .eq. 0) then
 			close(i, status = 'delete') 
 		else 
@@ -106,11 +109,12 @@ subroutine info (expno_str, restart)
 
     character(len=4), intent(in) :: expno_str
     integer, intent(in) :: restart
-    character(len=30) :: fileinfo, ffmt, lfmt, ifmt
+    character(len=30) :: fileinfo, ffmt, lfmt, ifmt, cfmt
 
-    ffmt = "(ES10.3)"
-    lfmt = "(L25)"
-    ifmt = "(I25)"
+    ffmt = "(A, ES10.3)"
+    lfmt = "(A, L10)"
+    ifmt = "(A, I10)"
+    cfmt = "(A, A)"
 
     fileinfo = 'output/info.' // trim(adjustl(expno_str))
 
@@ -119,124 +123,87 @@ subroutine info (expno_str, restart)
     ! options of the model
     write(10,*) ('OPTIONS')
     write(10,*) ('')
-    write(10,*) ('dynamics =')
-    write(10,lfmt) (dynamics)
-    write(10,*) ('slipping =')
-    write(10,lfmt) (slipping)
-    write(10,*) ('thermodyn =')
-    write(10,lfmt) (thermodyn)
-    write(10,*) ('cohesion =') 
-    write(10,lfmt) (cohesion)
-    write(10,*) ('ridging =') 
-    write(10,lfmt) (ridging)
-    write(10,*) ('shelter =')
-    write(10,lfmt) (shelter)
-
+    write(10,lfmt) 'dynamics  =', dynamics
+    write(10,lfmt) 'slipping  =', slipping
+    write(10,lfmt) 'thermodyn =', thermodyn
+    write(10,lfmt) 'cohesion  =', cohesion
+    write(10,lfmt) 'ridging   =', ridging
+    write(10,lfmt) 'shelter   =', shelter
     ! numerical parameters
     write(10,*) ('')
     write(10,*) ('NUMERICAL PARAMETERS')
     write(10,*) ('')
-    write(10,*) ('rtree =')
-    write(10,ffmt) (rtree)
-    write(10,*) ('ntree =')
-    write(10,ifmt) (int(ntree))
-    write(10,*) ('dt =')
-    write(10,ffmt) (dt)
-    write(10,*) ('nt =') 
-    write(10,ffmt) (nt)
-    write(10,*) ('comp =') 
-    write(10,ffmt) (comp)
-    write(10,*) ('n =')
-    write(10,ifmt) (n)
-    write(10,*) ('nx =')
-    write(10,ffmt) (nx)
-    write(10,*) ('ny =')
-    write(10,ffmt) (ny)
+    write(10,ffmt) 'rtree =', rtree
+    write(10,ifmt) 'ntree =', int(ntree)
+    write(10,ffmt) 'dt    =', dt
+    write(10,ffmt) 'nt    =', nt
+    write(10,ffmt) 'comp  =', comp
+    write(10,ifmt) 'n     =', n
+    write(10,ffmt) 'nx    =', nx
+    write(10,ffmt) 'ny    =', ny
 
     ! physical parameters
     write(10,*) ('')
     write(10,*) ('PHYSICAL PARAMETERS')
     write(10,*) ('')
-    write(10,*) ('Cdair =')
-    write(10,ffmt) (Cdair)
-    write(10,*) ('Csair =')
-    write(10,ffmt) (Csair)
-    write(10,*) ('Cdwater =')
-    write(10,ffmt) (Cdwater)
-    write(10,*) ('Cswater =')
-    write(10,ffmt) (Cswater)
-    write(10,*) ('z0w =')
-    write(10,ffmt) (z0w)
-    write(10,*) ('lat =')
-    write(10,ffmt) (lat)
-    write(10,*) ('rhoair =')
-    write(10,ffmt) (rhoair)
-    write(10,*) ('rhoice =')
-    write(10,ffmt) (rhoice)
-    write(10,*) ('rhowater =')
-    write(10,ffmt) (rhowater)
+    write(10,ffmt) 'Cdair    =', Cdair
+    write(10,ffmt) 'Csair    =', Csair
+    write(10,ffmt) 'Cdwater  =', Cdwater
+    write(10,ffmt) 'Cswater  =', Cswater
+    write(10,ffmt) 'z0w      =', z0w
+    write(10,ffmt) 'lat      =', lat
+    write(10,ffmt) 'rhoair   =', rhoair
+    write(10,ffmt) 'rhoice   =', rhoice
+    write(10,ffmt) 'rhowater =', rhowater
 
     ! disk parameters
     write(10,*) ('')
     write(10,*) ('DISK PARAMETERS')
     write(10,*) ('')
-    write(10,*) ('e_modul = ')
-    write(10,ffmt) (e_modul)
-    write(10,*) ('poiss_ratio =')
-    write(10,ffmt) (poiss_ratio)
-    write(10,*) ('friction_coeff =')
-    write(10,ffmt) (friction_coeff)
-    write(10,*) ('rest_coeff =')
-    write(10,ffmt) (rest_coeff)
-    write(10,*) ('sigmanc_crit =')
-    write(10,ffmt) (sigmanc_crit)
-
+    write(10,ffmt) 'e_modul        =', e_modul
+    write(10,ffmt) 'poiss_ratio    =', poiss_ratio
+    write(10,ffmt) 'friction_coeff =', friction_coeff
+    write(10,ffmt) 'rest_coeff     =', rest_coeff
+    write(10,ffmt) 'sigmanc_crit   =', sigmanc_crit
     ! bond parameters
     write(10,*) ('')
     write(10,*) ('BOND PARAMETERS')
     write(10,*) ('')
-    write(10,*) ('eb = ')
-    write(10,ffmt) (eb)
-    write(10,*) ('lambda_rb =')
-    write(10,ffmt) (lambda_rb)
-    write(10,*) ('lambda_lb =')
-    write(10,ffmt) (lambda_lb)
-    write(10,*) ('sigmatb_crit =')
-    write(10,ffmt) (sigmatb_crit)
-    write(10,*) ('sigmacb_crit =')
-    write(10,ffmt) (sigmacb_crit)
-    write(10,*) ('tau_crit =')
-    write(10,ffmt) (tau_crit)
-    write(10,*) ('gamma_d =')
-    write(10,ffmt) (gamma_d)
+    write(10,ffmt) 'eb           =', eb
+    write(10,ffmt) 'lambda_rb    =', lambda_rb
+    write(10,ffmt) 'lambda_lb    =', lambda_lb
+    write(10,ffmt) 'sigmatb_crit =', sigmatb_crit
+    write(10,ffmt) 'sigmacb_crit =', sigmacb_crit
+    write(10,ffmt) 'tau_crit     =', tau_crit
+    write(10,ffmt) 'gamma_d      =', gamma_d
+    write(10,ffmt) 'bond_lim     =', bond_lim
 
     ! forcings
     write(10,*) ('')
     write(10,*) ('FORCINGS')
     write(10,*) ('')
-    write(10,*) ('uw = ')
-    write(10,ffmt) (uw)
-    write(10,*) ('vw =')
-    write(10,ffmt) (vw)
-    write(10,*) ('ua =')
-    write(10,ffmt) (ua)
-    write(10,*) ('va =')
-    write(10,ffmt) (va)
+    write(10,ffmt) 'uw =', uw
+    write(10,ffmt) 'vw =', vw
+    write(10,ffmt) 'ua =', ua
+    write(10,ffmt) 'va =', va
 
     ! plate forcigns
     write(10,*) ('')
     write(10,*) ('PLATES')
     write(10,*) ('')
-    write(10,*) ('pfn =')
-    write(10,ffmt) (pfn)
-    write(10,*) ('pfs =')
-    write(10,ffmt) (pfs)
+    write(10,ffmt) 'pfn =', pfn
+    write(10,ffmt) 'pfs =', pfs
 
     ! input files
     write(10,*) ('')
     write(10,*) ('INPUT FILES')
     write(10,*) ('')
-    write(10,*) ('restart =')
-    write(10,ifmt) (restart)
+    write(10,ifmt) 'restart =', restart
+    write(10,cfmt) 'Xfile   =', Xfile
+    write(10,cfmt) 'Yfile   =', Yfile
+    write(10,cfmt) 'Rfile   =', Rfile
+    write(10,cfmt) 'Hfile   =', Hfile
+    write(10,cfmt) 'Tfile   =', Tfile
+    write(10,cfmt) 'Ofile   =', Ofile
 
 end subroutine info
