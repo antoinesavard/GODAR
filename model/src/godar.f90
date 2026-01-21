@@ -184,10 +184,9 @@ program godar
     if ( rank .eq. master ) then
         tic = omp_get_wtime()
         toc = omp_get_wtime()
+        write(*, *) ''
+        write(*, *) 'Starting time-stepping loop'
     end if
-
-    write(*, *) ''
-    write(*, *) 'Starting time-stepping loop'
 
     do tstep = 1, int(nt)
 
