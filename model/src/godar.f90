@@ -186,6 +186,9 @@ program godar
         toc = omp_get_wtime()
     end if
 
+    write(*, 'A') ''
+    write(*, 'A') 'Starting time-stepping loop'
+
     do tstep = 1, int(nt)
 
         call stepper (tstep, restart)
