@@ -152,7 +152,7 @@ subroutine sea_ice_post (tstep, expno_str)
 	write(16,*) ( theta(i),	i=1, n )
 	write(17,*) ( omega(i),	i=1, n )
 	do i = 1, n
-        do j = 1, i-1
+        do j = 1, n
             if (bond(j, i) == 1) then
                 write(18,*) int(tstep / comp), j, i
             end if
