@@ -230,6 +230,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         deltat_bc1(i) = 0d0
         deltat_bc2(i) = 0d0
 
+        ! initial winds and currents
+        ua_i(i) = 0d0
+        va_i(i) = 0d0
+        uw_i(i) = 0d0
+        vw_i(i) = 0d0
+
         !---------------------------------------------------------------
         !           Disks physical properties
         !---------------------------------------------------------------

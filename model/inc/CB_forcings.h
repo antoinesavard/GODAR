@@ -3,10 +3,14 @@
 !=======================================================================
 
     double precision ::         & ! wind and current forcings
-                ua        ,     & 
-                va        ,     &
-                uw        ,     &
-                vw
+                ua        ,     & ! base wind in x                 [m/s]
+                va        ,     & ! base wind in y                 [m/s]
+                uw        ,     & ! base currents in x             [m/s]
+                vw        ,     & ! base currents in y             [m/s]
+                ua_i (n)  ,     & ! individual wind in x           [m/s]
+                va_i (n)  ,     & ! individual wind in y           [m/s]
+                uw_i (n)  ,     & ! individual currents in x       [m/s]
+                vw_i (n)          ! individual currents in y       [m/s]
 
     double precision ::         & ! sheltering height
                 hsfa (n,n),     & ! of the atm
@@ -21,14 +25,18 @@
                 ma      (n)
 
     double precision ::         & ! plate variable
-		            pfn       ,	&
-		            pfs
+		        pfn       ,	&
+		        pfs
 									  
     common/forcings_const/      & ! wind and current forcings
                 ua        ,     & ! wind in x                      [m/s]
                 va        ,     & ! wind in y                      [m/s]
                 uw        ,     & ! currents in x                  [m/s]
-                vw                ! currents in y                  [m/s]
+                vw        ,     & ! currents in y                  [m/s]
+                ua_i      ,     & ! individual wind in x           [m/s]
+                va_i      ,     & ! individual wind in y           [m/s]
+                uw_i      ,     & ! individual currents in x       [m/s]
+                vw_i              ! individual currents in y       [m/s]
 
     common/forcings_var/        & ! sheltering height
                 hsfa      ,     & ! of the atm                  [hfa(i)]

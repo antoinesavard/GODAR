@@ -69,9 +69,14 @@ subroutine stepper (tstep, restart)
     thread_id = omp_get_thread_num() + 1
     !$omp do schedule(dynamic, 1)
     do i = first_iter, last_iter
+
+        ! calculate the winds and currents applied on particle i
+        call winds_currents(i)
+
         ! Find all the particles j near i
         da = search%kNearest(tree, x, y, xQuery = x(i), &
                             yQuery = y(i), radius = r(i) + rtree)
+                            
         ! loop over the nearest neighbors except the first because this is the particle i
         do k = 1, size(da%i%values) - 1
             j = da%i%values(k + 1)

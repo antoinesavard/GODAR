@@ -1,4 +1,41 @@
+subroutine winds_currents (i)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This routine computes the winds and currents at the location of 
+! particle i. When the winds and currents will be provided on a grid,
+! we will integrate over the area covered by the particles to get the 
+! average winds and currents applied on said particle, such that 
+! the winds and currents will vary spatiotemporally.
+! For now, we just apply the same winds and currents everywhere.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_forcings.h"
+    include "CB_diagnostics.h"
+    include "CB_mpi.h"
+
+    integer, intent(in) :: i
+
+    ua_i(i) = ua
+    va_i(i) = va
+    uw_i(i) = uw
+    vw_i(i) = vw
+
+end subroutine winds_currents
+
+
 subroutine forcing (i)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This routine computes the forcing applied on particle i. It includes
+! the drag and skin forces from the winds and currents, as well as the
+! torque induced drag due to the rotation of the floes. It also computes
+! the stress on the floes due to the winds and currents using the cauchy
+! stress formula. The sheltering coefficients are also applied here.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     implicit none
 
@@ -24,8 +61,8 @@ subroutine forcing (i)
     shelter_coeff_w = hsfw_min_r(i)
 
     ! local variables to speed up the code
-    atm_vel_norm = L2norm(ua - u(i), va - v(i))
-    ocn_vel_norm = L2norm(uw - u(i), vw - v(i))
+    atm_vel_norm = L2norm(ua_i(i) - u(i), va_i(i) - v(i))
+    ocn_vel_norm = L2norm(uw_i(i) - u(i), vw_i(i) - v(i))
     atm_log = log_profile(hfa(i), z0w)
     ocn_log = log_profile(hfw(i), z0w)
 
@@ -37,22 +74,22 @@ subroutine forcing (i)
         fsay = 0d0
     else
         ! wind drag forcing
-        fdax     = rhoair * Cdair * hfa(i) * r(i) * (ua - u(i)) *   &
+        fdax = rhoair * Cdair * hfa(i) * r(i) * (ua_i(i) - u(i)) *   &
                     atm_vel_norm * atm_log * shelter_coeff_a *   &
                     pi / 2d0
 
-        fday     = rhoair * Cdair * hfa(i) * r(i) * (va - v(i)) *   &
+        fday = rhoair * Cdair * hfa(i) * r(i) * (va_i(i) - v(i)) *   &
                     atm_vel_norm * atm_log * shelter_coeff_a *   &
                     pi / 2d0
 
         ! wind skin forcing
-        fsax     = rhoair * pi * r(i) ** 2 * Csair *    &
-                    (ua - u(i)) / atm_vel_norm * (      &
+        fsax    = rhoair * pi * r(i) ** 2 * Csair *     &
+                    (ua_i(i) - u(i)) / atm_vel_norm * ( &
                     atm_vel_norm ** 2 + r(i) ** 2       &
                     * ABS(omega(i)) ** 2 / 4d0)
 
         fsay     = rhoair * pi * r(i) ** 2 * Csair *    &
-                    (va - v(i)) / atm_vel_norm * (      &
+                    (va_i(i) - v(i)) / atm_vel_norm * ( &
                     atm_vel_norm ** 2 + r(i) ** 2       &
                     * ABS(omega(i)) ** 2 / 4d0)
     end if
@@ -65,22 +102,22 @@ subroutine forcing (i)
         fswy = 0d0
     else
         ! water drag forcing
-        fdwx = rhowater * Cdwater * hfw(i) * r(i) * (uw - u(i)) *   &
-                ocn_vel_norm * ocn_log * shelter_coeff_w *       &
-                pi / 2d0
+        fdwx =  rhowater * Cdwater * hfw(i) * r(i) * &
+                (uw_i(i) - u(i)) * ocn_vel_norm * ocn_log * &
+                shelter_coeff_w * pi / 2d0
 
-        fdwy = rhowater * Cdwater * hfw(i) * r(i) * (vw - v(i)) *   &
-                ocn_vel_norm * ocn_log * shelter_coeff_w *       &
-                pi / 2d0
+        fdwy =  rhowater * Cdwater * hfw(i) * r(i) * &
+                (vw_i(i) - v(i)) * ocn_vel_norm * ocn_log * &
+                shelter_coeff_w * pi / 2d0
 
         ! water skin forcing
         fswx = rhowater * pi * r(i) ** 2 * Cswater *    &
-                (uw - u(i)) / ocn_vel_norm * (          &
+                (uw_i(i) - u(i)) / ocn_vel_norm * (     &
                 ocn_vel_norm ** 2 + r(i) ** 2           &
                 * ABS(omega(i)) ** 2 / 4d0)
 
         fswy = rhowater * pi * r(i) ** 2 * Cswater *    &
-                (vw - v(i)) / ocn_vel_norm * (          &
+                (vw_i(i) - v(i)) / ocn_vel_norm * (     &
                 ocn_vel_norm ** 2 + r(i) ** 2           &
                 * ABS(omega(i)) ** 2 / 4d0)
     end if
@@ -100,15 +137,15 @@ subroutine forcing (i)
                 omega(i) * ABS(omega(i))
 	else
 		ma(i) = - 3d0 / 4d0 * pi * rhoair * Csair * &
-				sqrt( ua ** 2 + va ** 2) * omega(i) * r(i) ** 4
+				atm_vel_norm * omega(i) * r(i) ** 4
 	end if
 
-	if ( ocn_vel_norm < 1d-2 ) then
+	if ( ocn_vel_norm < 1d-3 ) then
     	mw(i) = - 2d0 * pi / 5d0 * r(i) ** 5 * rhowater * Cswater * &
 				omega(i) * ABS(omega(i))
 	else
 		mw(i) = - 3d0 / 4d0 * pi * rhowater * Cswater * &
-				sqrt( uw ** 2 + vw ** 2) * omega(i) * r(i) ** 4
+				ocn_vel_norm * omega(i) * r(i) ** 4
 	end if
 
     ! compute the stress using cauchy stress formula due to the winds and currents
@@ -135,15 +172,15 @@ subroutine sheltering (j, i)
 
     ! sheltering height from air and water
     hsfa(i, j) = S_shelter(hfa(i), hfa(j), deltan(j,i), cosa(j,i), &
-                    sina(j,i), ua, va)
+                    sina(j,i), ua_i(i), va_i(i))
     hsfw(i, j) = S_shelter(hfw(i), hfw(j), deltan(j,i), cosa(j,i), &
-                    sina(j,i), uw, vw)
+                    sina(j,i), uw_i(i), vw_i(i))
 
     ! sheltering for the reverse direction
     hsfa(j, i) = S_shelter(hfa(j), hfa(i), deltan(j,i), -cosa(j,i), &
-                    -sina(j,i), ua, va)
+                    -sina(j,i), ua_i(i), va_i(i))
     hsfw(j, i) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
-                    -sina(j,i), uw, vw)
+                    -sina(j,i), uw_i(i), vw_i(i))
 
 end subroutine sheltering
 

@@ -1,7 +1,6 @@
-subroutine broadcasting_ini (num_threads, restart)
-
-    ! this routine broadcasts the initialization variables
-    ! to all the other mpi ranks
+subroutine broadcasting_ini (thread_requested, restart)
+! this routine broadcasts the initialization variables
+! to all the other mpi ranks
 
     use mpi_f08
 
@@ -16,12 +15,12 @@ subroutine broadcasting_ini (num_threads, restart)
     include "CB_forcings.h"
     include "CB_diagnostics.h"
 
-    integer, intent(inout) :: num_threads, restart
+    integer, intent(inout) :: thread_requested, restart
     
     !-------------------------------------------------------------------
     ! openmp variable
     !-------------------------------------------------------------------
-    call mpi_bcast(num_threads, 1, mpi_integer,         &
+    call mpi_bcast(thread_requested, 1, mpi_integer,         &
                     master, mpi_comm_world, ierr)
     
     ! set the restart variable
@@ -94,6 +93,18 @@ subroutine broadcasting_ini (num_threads, restart)
     call mpi_bcast(deltat_bc1, n, mpi_double_precision,       &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(deltat_bc2, n, mpi_double_precision,       &
+                    master, mpi_comm_world, ierr)
+
+    !-------------------------------------------------------------------
+    ! individual wind and currents variables broadcast
+    !-------------------------------------------------------------------
+    call mpi_bcast(ua_i, n, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(va_i, n, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(uw_i, n, mpi_double_precision,        &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(vw_i, n, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
 
     !-------------------------------------------------------------------
