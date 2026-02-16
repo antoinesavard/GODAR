@@ -12,7 +12,7 @@ subroutine bond_forces (j, i)
     double precision :: mbending, mrolling
     double precision :: krb, gamrb
     double precision :: m_redu, r_redu, hmin
-    double precision :: knb_eff, ktb_eff
+    double precision :: knb_eff, ktb_eff, gamma_d_eff
 
     thetarelb(j,i) = -omegarel(j,i) * dt + thetarelb(j,i)
 
@@ -29,10 +29,13 @@ subroutine bond_forces (j, i)
     ! effective stiffnesses for the bond forces
     knb_eff = (1d0 - damageb(j, i)) * knb(j, i)
     ktb_eff = (1d0 - damageb(j, i)) * ktb(j, i)
+
+    ! effective viscosity
+    gamma_d_eff = (1d0 - damageb(j, i)) * gamma_d
     
     ! rolling stiffness coefficient
     krb    =  knb_eff * rb(j,i) ** 2 / 3
-    gamrb  = gamma_d * rb(j,i) ** 2 / 3
+    gamrb  = gamma_d_eff * rb(j,i) ** 2 / 3
 
     ! forces are computed from linear elastic material law
     ! F = -kx-cu but x>0 is elongation so the force is supposed
@@ -42,14 +45,14 @@ subroutine bond_forces (j, i)
     ! particle j (F<0). But we had a sign in stepper so that
     ! the signs are all gucci (F=kx+cu).
     fbn(j, i) = knb_eff * sb(j, i) * deltanb(j, i) &
-                - gamma_d * veln(j,i)
+                - gamma_d_eff * veln(j,i)
     fbt(j, i) = ktb_eff * sb(j, i) * deltatb(j, i) &
-                - gamma_d * velt(j,i)
+                - gamma_d_eff * velt(j,i)
 
 	! moments for bending and twisting motion
     mbending = ktb_eff * ib(j, i) * thetarelb(j,i) &
-                - gamma_d * omegarel(j,i)
-
+                - gamma_d_eff * omegarel(j,i)
+                
     ! moments due to rolling
     mrolling = krb * thetarelb(j, i) - gamrb * omegarel(j, i)
 
