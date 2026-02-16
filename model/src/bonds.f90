@@ -114,9 +114,6 @@ subroutine bond_breaking (j, i)
 
     end if
 
-    print*, "phi = ", phi, "sigmacb = ", sigmacb(j, i), "damage = ", damageb(j, i)
-
-
 end subroutine bond_breaking
 
 
