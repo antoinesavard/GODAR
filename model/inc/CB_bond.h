@@ -22,7 +22,8 @@
 				ib		(n,n),  & ! bond moment of inertia
                 thetarelb(n,n), & ! bond relative angle
                 deltanb (n,n),  & ! elongation
-                deltatb (n,n)     ! deflection
+                deltatb (n,n),  & ! deflection
+				damageb (n,n)     ! damage variable for bond i-j
 
 	double precision ::			& ! forces in bonds
 				fbn		(n,n),	& ! force due to floes sliding
@@ -63,7 +64,8 @@
 				ib		     ,  & ! bond moment of inertia
                 thetarelb    ,  & ! bond relative angle
                 deltanb      ,  & ! elongation
-                deltatb           ! deflection
+                deltatb      ,  & ! deflection
+                damageb           ! damage variable for bond i-j
 
 	common/bond_var/			& ! forces in bonds
 				fbn			 ,	& ! force due to floes sliding

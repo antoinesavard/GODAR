@@ -6,6 +6,7 @@ subroutine winds_currents (i)
 ! average winds and currents applied on said particle, such that 
 ! the winds and currents will vary spatiotemporally.
 ! For now, we just apply the same winds and currents everywhere.
+! By changing this you can change the wind/current pattern.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
