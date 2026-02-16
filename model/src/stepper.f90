@@ -94,6 +94,7 @@ subroutine stepper (tstep, restart)
                 if ( cohesion .eqv. .true. ) then
                     if ( deltan(j, i) .ge. -bond_lim ) then ! can be fancier
                         bond (j, i) = 1
+                        damageb(j, i) = 0d0
                     end if
                 end if
 			end if
