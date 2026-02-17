@@ -185,6 +185,12 @@ subroutine broadcasting_ini (thread_requested, restart)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(bond_lim, 1, mpi_double_precision,       &
                     master, mpi_comm_world, ierr)
+    call mpi_bcast(dmax, 1, mpi_double_precision,           &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(dtd, 1, mpi_double_precision,            &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(dth, 1, mpi_double_precision,            &
+                    master, mpi_comm_world, ierr)
 
     ! forcings
     call mpi_bcast(uw, 1, mpi_double_precision,        &

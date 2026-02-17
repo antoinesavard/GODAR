@@ -52,7 +52,7 @@ subroutine bond_forces (j, i)
 	! moments for bending and twisting motion
     mbending = ktb_eff * ib(j, i) * thetarelb(j,i) &
                 - gamma_d_eff * omegarel(j,i)
-                
+
     ! moments due to rolling
     mrolling = krb * thetarelb(j, i) - gamrb * omegarel(j, i)
 
@@ -82,7 +82,7 @@ subroutine bond_breaking (j, i)
 	include "CB_bond.h"
 
 	integer, intent(in) :: i, j
-    double precision :: phi
+    double precision :: phi, psi
 
     ! compute stresses in the bond
 	taub(j, i) = abs(fbt(j, i)) / sb(j, i)
@@ -102,17 +102,20 @@ subroutine bond_breaking (j, i)
         phi = phi + (sigmatb(j, i) / (sigmatb_crit * hb(j,i))) ** 2d0
 	end if
 
+    psi = min( 1d0, 1d0 / sqrt( phi ) )
+
     ! compute damage in the bond
-    if (phi > 1d0) then
-        damageb(j,i) = max(damageb(j,i), 1d0 - 1d0/phi)
-    end if
+    damageb(j,i) = damageb(j,i) &
+                    + (1d0 - psi) * (1d0 - damageb(j,i)) * dt / dtd &
+                    - damageb(j,i) * dt / dth
 
     ! breaking of the bonds
-    if ( damageb(j,i) .ge. 0.9d0 ) then
+    if ( damageb(j,i) .ge. dmax ) then
 
         bond(j, i) = 0
         fbn(j, i) = 0d0
         fbt(j, i) = 0d0
+        mbb(j, i) = 0d0
         damageb(j, i) = 1d0
 
     end if

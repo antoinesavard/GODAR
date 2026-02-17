@@ -14,7 +14,7 @@
 
     double precision :: pi
 
-    character :: Xfile*32, Yfile*32, Rfile*32, Hfile*32, Tfile*32, Ofile*32, Ufile*32, Vfile*32, Bfile*32
+    character :: Xfile*32, Yfile*32, Rfile*32, Hfile*32, Tfile*32, Ofile*32, Ufile*32, Vfile*32, Bfile*32, Damfile*32
 
 
     common/const/                & ! time variables
@@ -58,4 +58,5 @@
             Ofile           ,    &
             Ufile           ,    &
             Vfile           ,    &
-            Bfile
+            Bfile           ,    &
+            Damfile

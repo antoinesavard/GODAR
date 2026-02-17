@@ -10,7 +10,10 @@
 				sigmacb_crit ,	&
 				tau_crit	 ,	&
 				gamma_d		 ,  & ! prevents spurious oscillations
-				bond_lim          ! dist lim between part. for bond
+				bond_lim     ,  & ! dist lim between part. for bond
+				dmax		 ,  & ! max damage for bond breaking
+				dtd		 	 ,  & ! time step for damage evolution
+				dth		 	      ! time step for damage evolution
 
 	double precision ::			& ! individual physical properties
 				knb 	(n,n), 	& ! bond normal stiffness
@@ -52,7 +55,10 @@
 				sigmacb_crit ,	&
 				tau_crit	 ,	&
 				gamma_d		 ,  &
-				bond_lim
+				bond_lim	 ,  &
+				dmax		 ,  & ! max damage for bond breaking
+				dtd		     ,  & ! time step for damage evolution
+				dth		 	      ! time step for damage evolution
 
 	common/bond_var/			& ! individual physical properties
 				knb 		 , 	& ! bond normal stiffness

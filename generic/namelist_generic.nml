@@ -28,34 +28,37 @@
     /
 
 &disk_param_nml
-    e_modul         =  6d9         ! elastic moduli
+    e_modul         =  1d9         ! elastic moduli
     poiss_ratio     =  33d-2       ! poisson ratio nu
     friction_coeff  =  7d-1        ! friction coefficient mu
-    rest_coeff      =  88d-2       ! coefficient of restitution
-    sigmanc_crit    =  1d6         ! critical normal stress
+    rest_coeff      =  1d-2        ! coefficient of restitution
+    sigmanc_crit    =  27.5d3      ! critical normal stress
     /
 
 &bond_param_nml
-    eb			 = 6d9
-	lambda_rb	 = 1d0
-	lambda_lb	 = 1d0
-	sigmatb_crit = 1d5
-	sigmacb_crit = 1d6
-	tau_crit	 = 1d6
-	gamma_d		 = 1d0
-    bond_lim     = 1d-2
+    eb			 = 1d9             ! bond elastic moduli
+	lambda_rb	 = 1d0             ! width scale factor
+	lambda_lb	 = 1d0             ! lenght scale factor
+	sigmatb_crit = 1d3             ! critical tensile strenght
+	sigmacb_crit = 27.5d3          ! critical compressive strenght
+	tau_crit	 = 6.9d3           ! critical shear strenght
+	gamma_d		 = 1d10            ! damping coefficient
+    bond_lim     = 1d-2            ! max bond distance [m]
+    dmax         = 9d-1            ! max damage
+    dtd          = 1d0             ! damage timescale [s]
+    dth          = 1d5             ! healing timescale [s]
     /
 
 &forcings_nml
-    uw = 0d0
-    vw = 0d0
-    ua = 0d0
-    va = 0d0
+    uw = 0d0                       ! x current
+    vw = 0d0                       ! y current
+    ua = 0d0                       ! x wind
+    va = 0d0                       ! y wind
     /
 
 &plates_nml
-    pfn = 5d7
-    pfs = 5d7
+    pfn = 5d7                      ! y force
+    pfs = 5d7                      ! x force
     /
 
 &input_files_nml

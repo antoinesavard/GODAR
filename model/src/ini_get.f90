@@ -29,6 +29,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         Ufile = 'output/u.' // trim(adjustl(expno_str_r))
         Vfile = 'output/v.' // trim(adjustl(expno_str_r))
         Bfile = 'output/bond.' // trim(adjustl(expno_str_r))
+        Damfile = 'output/damage.' // trim(adjustl(expno_str_r))
 		
         ! last timestep data index
 		k = int(nt_r)
@@ -125,7 +126,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         close(110)
 
         ! read sparse bond data at timestep k
-        call read_sparse_restart(Bfile, k)
+        call read_sparse_restart(Bfile, k, 3)
+        call read_sparse_restart(Damfile, k, 4)
 
         ! open(111, file = Bfile, status='old')
         ! do j = 1, (n + 1) * (k - 1)
@@ -247,7 +249,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 end subroutine ini_get
 
 
-subroutine read_sparse_restart(filename, last_tstep)
+subroutine read_sparse_restart(filename, last_tstep, var_type)
     
     implicit none
 
@@ -256,6 +258,7 @@ subroutine read_sparse_restart(filename, last_tstep)
 
     character, intent(in) :: filename*32
     integer, intent(in) :: last_tstep
+    integer, intent(in) :: var_type ! number of variables per line
 
     integer :: i, j, tstep
     integer :: iostat
@@ -265,20 +268,45 @@ subroutine read_sparse_restart(filename, last_tstep)
 
     open(unit=111, file=filename, status='old', action='read')
 
-    do
-        read(111, *, iostat=iostat) tstep, j, i
-        if (iostat /= 0) exit
-        if (tstep == last_tstep + 1) exit
+    if ( var_type == 3 )then
+    
+        do
+            read(111, *, iostat=iostat) tstep, j, i
+            if (iostat /= 0) exit
+            if (tstep == last_tstep + 1) exit
 
-        ! New timestep detected
-        if (tstep /= current_tstep) then
-            bond = 0
-            current_tstep = tstep
-        end if
+            ! New timestep detected
+            if (tstep /= current_tstep) then
+                bond = 0
+                current_tstep = tstep
+            end if
 
-        bond(j, i) = 1
+            bond(j, i) = 1
 
-    end do
+        end do
+
+    else if ( var_type == 4 ) then
+
+        do
+            read(111, *, iostat=iostat) tstep, j, i, damageb(j,i)
+            if (iostat /= 0) exit
+            if (tstep == last_tstep + 1) exit
+
+            ! New timestep detected
+            if (tstep /= current_tstep) then
+                damageb = 0d0
+                current_tstep = tstep
+            end if
+
+        end do
+
+    else 
+
+        write(*,*) "Error: var_type should be 3 or 4 in read_sparse_restart subroutine"
+        stop
+        
+    end if
 
     close(111)
+    
 end subroutine read_sparse_restart
