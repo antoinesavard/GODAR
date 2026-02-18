@@ -6,7 +6,7 @@ subroutine clear_posts (expno_str)
     include "CB_variables.h"
     include "CB_const.h"
 
-    integer :: i, stat(24)
+    integer :: i, stat(26)
 	character(len=2), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
                          filet, fileo, fileb 
