@@ -13,7 +13,7 @@ subroutine clear_posts (expno_str)
     character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
                          filefby, filem, filemc, filemb
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
-    character(len=20) :: filetp, fileangle
+    character(len=20) :: filetp, fileangle, filedamage
     character(len=20) :: fileinfo
 
     ! position and state files
@@ -47,6 +47,7 @@ subroutine clear_posts (expno_str)
     ! pressure file
     filetp = "output/tp." // trim(adjustl(expno_str))
     fileangle = "output/angle." // trim(adjustl(expno_str))
+    filedamage = "output/damage." // trim(adjustl(expno_str))
 
     ! info file
     fileinfo = "output/info." // trim(adjustl(expno_str))
@@ -82,11 +83,13 @@ subroutine clear_posts (expno_str)
     open (32, file = filetp, iostat = stat(23), status = 'old')
     ! angle
     open (33, file = fileangle, iostat = stat(24), status = 'old')
+    ! damage
+    open (34, file = filedamage, iostat = stat(25), status = 'old')
     ! info
-    open (34, file = fileinfo, iostat = stat(25), status = 'old')
+    open (35, file = fileinfo, iostat = stat(26), status = 'old')
 
     ! delete them
-    do i = 10, 34
+    do i = 10, 35
         if (stat(i-9) .eq. 0) then
 			close(i, status = 'delete') 
 		else 
