@@ -9,6 +9,7 @@ subroutine bond_forces (j, i)
 
 	integer, intent(in) :: i, j
 
+    double precision :: deltanb, deltatb
     double precision :: mbending, mrolling
     double precision :: krb, gamrb
     double precision :: m_redu, r_redu, hmin
@@ -17,8 +18,11 @@ subroutine bond_forces (j, i)
     thetarelb(j,i) = -omegarel(j,i) * dt + thetarelb(j,i)
 
     ! compression has delta>0
-    deltanb(j,i) = -veln(j,i) * dt + deltanb(j,i)
-    deltatb(j,i) = -velt(j,i) * dt + deltatb(j,i)
+    deltaxb(j,i) = -( (u(j) - u(i)) - (omega(j) * r(j) + omega(i) * r(i)) * sina(j,i) ) * dt + deltaxb(j,i)
+    deltayb(j,i) = -( (v(j) - v(i)) + (omega(j) * r(j) + omega(i) * r(i)) * cosa(j,i) ) * dt + deltayb(j,i)
+
+    deltanb = deltaxb(j,i) * cosa(j,i) + deltayb(j,i) * sina(j,i)
+    deltatb = -deltaxb(j,i) * sina(j,i) + deltayb(j,i) * cosa(j,i)
 
     ! rolling stiffness due to bond
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
@@ -32,6 +36,8 @@ subroutine bond_forces (j, i)
 
     ! effective viscosity
     gamma_d_eff = (1d0 - damageb(j, i)) * gamma_d
+    ! gamnb = (1d0 - damageb(j, i)) * sqrt( 4d0 * knb(j,i) * m_redu )
+    ! gamnt = (1d0 - damageb(j, i)) * sqrt( 4d0 * ktb(j,i) * m_redu )
     
     ! rolling stiffness coefficient
     krb    =  knb_eff * rb(j,i) ** 2 / 3
@@ -44,9 +50,9 @@ subroutine bond_forces (j, i)
     ! is the one on which we are centered. And the reverse for
     ! particle j (F<0). But we had a sign in stepper so that
     ! the signs are all gucci (F=kx+cu).
-    fbn(j, i) = knb_eff * sb(j, i) * deltanb(j, i) &
+    fbn(j, i) = knb_eff * sb(j, i) * deltanb &
                 - gamma_d_eff * veln(j,i)
-    fbt(j, i) = ktb_eff * sb(j, i) * deltatb(j, i) &
+    fbt(j, i) = ktb_eff * sb(j, i) * deltatb &
                 - gamma_d_eff * velt(j,i)
 
 	! moments for bending and twisting motion

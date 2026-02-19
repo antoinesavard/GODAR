@@ -24,8 +24,8 @@
 				sb		(n,n),	& ! bond cross sectionnal area
 				ib		(n,n),  & ! bond moment of inertia
                 thetarelb(n,n), & ! bond relative angle
-                deltanb (n,n),  & ! elongation
-                deltatb (n,n),  & ! deflection
+                deltaxb (n,n),  & ! elongation
+                deltayb (n,n),  & ! deflection
 				damageb (n,n)     ! damage variable for bond i-j
 
 	double precision ::			& ! forces in bonds
@@ -69,8 +69,8 @@
 				sb			 ,	& ! bond cross sectionnal area
 				ib		     ,  & ! bond moment of inertia
                 thetarelb    ,  & ! bond relative angle
-                deltanb      ,  & ! elongation
-                deltatb      ,  & ! deflection
+                deltaxb      ,  & ! elongation
+                deltayb      ,  & ! deflection
                 damageb           ! damage variable for bond i-j
 
 	common/bond_var/			& ! forces in bonds
