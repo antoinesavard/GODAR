@@ -138,6 +138,7 @@ subroutine bond_creation (j, i)
 		
 		bond(j, i) = 1
         damageb(j, i) = 0d0
+        call bond_properties (j ,i)
 
 	end if   
 

@@ -95,6 +95,7 @@ subroutine stepper (tstep, restart)
                     if ( deltan(j, i) .ge. -bond_lim ) then ! can be fancier
                         bond (j, i) = 1
                         damageb(j, i) = 0d0
+                        call bond_properties (j ,i)
                     end if
                 end if
 			end if
@@ -154,7 +155,6 @@ subroutine stepper (tstep, restart)
 			! compute forces from bonds between particle i and j
 			if ( bond (j, i) .eq. 1 ) then
 
-                call bond_properties (j ,i)
 				call bond_forces (j, i)
 				call bond_breaking (j, i)
 
@@ -298,7 +298,7 @@ subroutine stepper (tstep, restart)
     ! compute the total forcing from winds, currents and coriolis
     do i = first_iter, last_iter
         call forcing(i)
-        call coriolis(i)
+!        call coriolis(i)
     end do
     !$omp end parallel do
 
