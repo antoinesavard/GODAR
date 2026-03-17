@@ -92,6 +92,9 @@ subroutine rel_pos_vel (j, i)
 	
 	sina(j,i) = ( y(j) - y(i) ) / dist(j,i)
 
+    ! angle between particle pair and reference axis (x-axis)
+    alpha(j,i) = atan2( sina(j,i), cosa(j,i) )
+
 	! relative angular velocity
 	omegarel(j,i) = ( omega(j) - omega(i) )
 
@@ -100,9 +103,10 @@ subroutine rel_pos_vel (j, i)
 				( v(j) - v(i) ) * sina(j,i)
 
 	! Tangential components of the relative velocities:
-	velt(j,i) = -( u(j) - u(i) ) * sina(j,i) +   &
-				( v(j) - v(i) ) * cosa(j,i) -    &
-				( omega(i) * r(i) + omega(j) * r(j) )
+    veltb(j,i) = -( u(j) - u(i) ) * sina(j,i) +   &
+                 ( v(j) - v(i) ) * cosa(j,i)
+
+    velt(j,i) = veltb(j,i) - ( omega(i) * r(i) + omega(j) * r(j) )
 
 	! normal overlap (displacement) deltan >=0
 	deltan(j,i)  =  r(i) + r(j) - dist(j,i)
@@ -184,6 +188,8 @@ subroutine floe_properties(i)
 
     ! mass of disk
     mass(i)  =  rhoice * pi * h(i) * r(i) ** 2
+    ! moment of inertia of disk
+    inertia(i) = 0.5 * mass(i) * r(i) ** 2
     ! freeboard height
     hfa(i)   =  h(i) * (rhowater - rhoice) / rhowater
     ! drag from water height

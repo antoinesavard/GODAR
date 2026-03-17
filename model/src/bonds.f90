@@ -1,4 +1,4 @@
-subroutine bond_forces (j, i)
+subroutine bond_forces_surface (j, i)
 
     implicit none
 
@@ -9,25 +9,22 @@ subroutine bond_forces (j, i)
 
 	integer, intent(in) :: i, j
 
-    double precision :: deltanb, deltatb
+    double precision :: gamnb, gamtb, gambb
     double precision :: mbending, mrolling
     double precision :: krb, gamrb
-    double precision :: m_redu, r_redu, hmin
-    double precision :: knb_eff, ktb_eff, gamma_d_eff
+    double precision :: m_redu, i_redu, hmin
+    double precision :: knb_eff, ktb_eff
 
-    thetarelb(j,i) = -omegarel(j,i) * dt + thetarelb(j,i)
+    ! Relative displacements in bond frame
+    deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
+    deltatb(j,i) = velt(j,i) * dt + deltatb(j,i)
 
-    ! compression has delta>0
-    deltaxb(j,i) = -( (u(j) - u(i)) - (omega(j) * r(j) + omega(i) * r(i)) * sina(j,i) ) * dt + deltaxb(j,i)
-    deltayb(j,i) = -( (v(j) - v(i)) + (omega(j) * r(j) + omega(i) * r(i)) * cosa(j,i) ) * dt + deltayb(j,i)
-
-    deltanb = deltaxb(j,i) * cosa(j,i) + deltayb(j,i) * sina(j,i)
-    deltatb = -deltaxb(j,i) * sina(j,i) + deltayb(j,i) * cosa(j,i)
+    ! relative angle for bending and twisting
+    thetarelb(j,i) = omegarel(j,i) * dt + thetarelb(j,i)
 
     ! rolling stiffness due to bond
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
-    r_redu =  r(i) * r(j) / ( r(i) + r(j) )
-
+    i_redu =  inertia(i) * inertia(j) / ( inertia(i) + inertia(j) )
     hmin   =  min(h(i), h(j))
 
     ! effective stiffnesses for the bond forces
@@ -35,13 +32,9 @@ subroutine bond_forces (j, i)
     ktb_eff = (1d0 - damageb(j, i)) * ktb(j, i)
 
     ! effective viscosity
-    gamma_d_eff = (1d0 - damageb(j, i)) * gamma_d
-    ! gamnb = (1d0 - damageb(j, i)) * sqrt( 4d0 * knb(j,i) * m_redu )
-    ! gamnt = (1d0 - damageb(j, i)) * sqrt( 4d0 * ktb(j,i) * m_redu )
-    
-    ! rolling stiffness coefficient
-    krb    =  knb_eff * rb(j,i) ** 2 / 3
-    gamrb  = gamma_d_eff * rb(j,i) ** 2 / 3
+    gamnb = sqrt( 4d0 * knb_eff * sb(j,i) * m_redu )
+    gamtb = sqrt( 4d0 * ktb_eff * sb(j,i) * m_redu )
+    gambb = sqrt( 4d0 * ktb_eff * ib(j,i) * i_redu )
 
     ! forces are computed from linear elastic material law
     ! F = -kx-cu but x>0 is elongation so the force is supposed
@@ -50,17 +43,17 @@ subroutine bond_forces (j, i)
     ! is the one on which we are centered. And the reverse for
     ! particle j (F<0). But we had a sign in stepper so that
     ! the signs are all gucci (F=kx+cu).
-    fbn(j, i) = knb_eff * sb(j, i) * deltanb &
-                - gamma_d_eff * veln(j,i)
-    fbt(j, i) = ktb_eff * sb(j, i) * deltatb &
-                - gamma_d_eff * velt(j,i)
+    fbn(j, i) = knb_eff * sb(j, i) * deltanb(j,i) &
+                + gamnb * veln(j,i)
+    fbt(j, i) = ktb_eff * sb(j, i) * deltatb(j,i) &
+                + gamtb * velt(j,i)
 
 	! moments for bending and twisting motion
     mbending = ktb_eff * ib(j, i) * thetarelb(j,i) &
-                - gamma_d_eff * omegarel(j,i)
+                + gambb * omegarel(j,i)
 
     ! moments due to rolling
-    mrolling = krb * thetarelb(j, i) - gamrb * omegarel(j, i)
+    mrolling = krb * thetarelb(j, i) + gamrb * omegarel(j, i)
 
     ! ensures no rolling if moment is too big
     if ( abs(thetarelb(j, i)) > (sqrt(3d0) * sigmacb_crit * &
@@ -75,7 +68,97 @@ subroutine bond_forces (j, i)
     ! total moment due to bonds
     mbb(j, i) = mbending + mrolling
 
-end subroutine bond_forces
+end subroutine bond_forces_surface
+
+
+subroutine bond_forces_euler (j, i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+
+    integer, intent(in) :: i, j
+
+    double precision :: EA, EI, L
+    double precision :: eta_i, eta_a
+    double precision :: k_axial, k_shear1, k_shear2, &
+                        k_rot1, k_rot2
+    double precision :: gam_axial, gam_shear1, gam_shear2, &
+                        gam_rot1, gam_rot2
+    double precision :: m_redu, i_redu
+
+    ! Relative displacements in bond frame
+    deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
+    deltatb(j,i) = veltb(j,i) * dt + deltatb(j,i)
+
+    ! angle relative to beam axis for bending and twisting
+    thetarelb(j,i) = omega(i) * dt + thetarelb(j,i)
+    thetarelb(i,j) = omega(j) * dt + thetarelb(i,j)
+
+    ! reduced variables for the viscosity
+    m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
+    i_redu =  inertia(i) * inertia(j) / ( inertia(i) + inertia(j) )
+
+    ! Beam length
+    L = lb(j,i)
+
+    ! Axial and bending rigidities with damage
+    EA = (1d0 - damageb(j,i)) * eb * sb(j,i)
+    EI = (1d0 - damageb(j,i)) * eb * ib(j,i)
+
+    ! Euler–Bernoulli stiffness coefficients
+    k_axial  = EA / L
+    k_shear1 = 12d0 * EI / L**3
+    k_shear2 = 6d0  * EI / L**2
+    k_rot1   = 4d0  * EI / L
+    k_rot2   = 2d0  * EI / L
+
+    ! Euler–Bernoulli viscosity coefficients
+    ! There is a choice to be made about where to put damage in the 
+    ! viscosity, we choose to put it outside the square root so that 
+    ! the relaxation time is preserved for all damage levels (E/\eta), 
+    ! but it could be inside too.
+    ! If the viscosity is outside the square root, then we preserve the 
+    ! ratio between the stiffness and viscosity as the bond is damaged
+    ! (the relaxation time is preserved for all damage levels), but if 
+    ! the viscosity is inside the square root, then the viscosity 
+    ! decreases faster than the stiffness as the bond is damaged, and 
+    ! the relaxation time decreases with damage, which may be more 
+    ! physical, but may lead to more instability in the numerical 
+    ! scheme.
+    eta_i = 2d0 * sqrt( EI * i_redu / L )
+    eta_a = 2d0 * sqrt( EA * m_redu * L )
+    gam_axial  = eta_a / L
+    gam_shear1 = 12d0 * eta_i / L**3
+    gam_shear2 = 6d0  * eta_i / L**2
+    gam_rot1   = 4d0  * eta_i / L
+    gam_rot2   = 2d0  * eta_i / L
+
+    ! Axial force
+    fbn(j,i) = k_axial * deltanb(j,i) + gam_axial * veln(j,i)
+
+    ! Transverse shear force
+    fbt(j,i) = k_shear1 * deltatb(j,i) &
+                + k_shear2 * (thetarelb(j,i) + thetarelb(i,j)) &
+                + gam_shear1 * veltb(j,i) &
+                + gam_shear2 * (omega(i) + omega(j))
+
+    ! Moments (Euler–Bernoulli)
+    mbb(j,i) =  k_rot1 * thetarelb(j,i) + k_rot2 * thetarelb(i,j) &
+                - k_shear2 * deltatb(j,i) &
+                + gam_rot1 * omega(i) + gam_rot2 * omega(j) &
+                - gam_shear2 * veltb(j,i)
+                
+    ! Newton's 3rd law for moments            
+    mbb(i,j) =  k_rot2 * thetarelb(j,i) + k_rot1 * thetarelb(i,j) &
+                - k_shear2 * deltatb(j,i) &
+                + gam_rot2 * omega(i) + gam_rot1 * omega(j) &
+                - gam_shear2 * veltb(j,i)
+
+end subroutine bond_forces_euler
 
 
 subroutine bond_breaking (j, i)
@@ -171,7 +254,7 @@ subroutine bond_properties (j, i)
     ! lb is the lenght
 	rb  (j, i) = lambda_rb * min(r(i), r(j))
 	hb  (j, i) = (h(i) + h(j)) / 2d0
-	lb  (j, i) = lambda_lb * dist(j, i)
+    lb  (j, i) = dist(j, i)
 
     ! sb is the cross section area
     ! ib is the inertia
@@ -180,7 +263,7 @@ subroutine bond_properties (j, i)
 
     ! knb is the normal k in Hooke's
     ! ktb is the tangent k in Hooke's
-	knb (j, i) = eb / lb (j, i)
-	ktb (j, i) = 5d0 / 6d0 * gb / lb (j, i)
+	! knb (j, i) = eb / lb (j, i)
+	! ktb (j, i) = 5d0 / 6d0 * gb / lb (j, i)
 
 end subroutine bond_properties

@@ -49,7 +49,7 @@ subroutine verify_bc (i)
     ! but we also need the regular version for the cases where 
     ! particles are just left-right boundaries, but not in corners
     ! note that we do not need the nested ifs here, because it has
-    ! been dealed with above.
+    ! been dealt with above.
     if ( x(i) - r(i) < 0 ) then
 
         tracker2 = 1

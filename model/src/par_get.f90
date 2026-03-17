@@ -77,7 +77,6 @@ subroutine get_default
 	sigmatb_crit = 1d5
 	sigmacb_crit = 1d6
 	tau_crit	 = 1d6
-	gamma_d		 = 1d0
     bond_lim     = 1d-2
     dmax         = 9d-1
     dtd          = 1d0
@@ -143,7 +142,7 @@ subroutine read_namelist (namelist_name)
 
     namelist /bond_param_nml/ &
         eb, lambda_rb, lambda_lb, sigmatb_crit, &
-        sigmacb_crit, tau_crit, gamma_d, bond_lim, &
+        sigmacb_crit, tau_crit, bond_lim, &
         dmax, dtd, dth
 
     namelist /forcings_nml/ &

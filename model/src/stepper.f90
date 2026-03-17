@@ -95,7 +95,7 @@ subroutine stepper (tstep, restart)
                     if ( deltan(j, i) .ge. -bond_lim ) then ! can be fancier
                         bond (j, i) = 1
                         damageb(j, i) = 0d0
-                        call bond_properties (j ,i)
+                        call bond_properties (j, i)
                     end if
                 end if
 			end if
@@ -155,31 +155,31 @@ subroutine stepper (tstep, restart)
 			! compute forces from bonds between particle i and j
 			if ( bond (j, i) .eq. 1 ) then
 
-				call bond_forces (j, i)
+				call bond_forces_euler (j, i)
 				call bond_breaking (j, i)
 
                 if ( bond (j, i) .eq. 1 ) then
 
                     ! change coordinate system
                     ! update force on particle i by j due to bond
-                    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i) +    &
+                    fbx(i) = fbx(i) + fbn(j,i) * cosa(j,i) -    &
                                         fbt(j,i) * sina(j,i)
-                    fby(i) = fby(i) - fbn(j,i) * sina(j,i) -    &
+                    fby(i) = fby(i) + fbn(j,i) * sina(j,i) +    &
                                         fbt(j,i) * cosa(j,i)
 
                     ! update moment on particule i by j to to bond
-                    mb(i) = mb(i) - r(i) * fbt(j,i) - mbb(j, i)
+                    mb(i) = mb(i) - lambda_lb * r(i) * fbt(j,i) - mbb(j, i)
 
                     ! Newton's third law
                     ! update force on particle j by i due to bond
-                    fbx(j) = fbx(j) + fbn(j,i) * cosa(j,i) -    &
+                    fbx(j) = fbx(j) - fbn(j,i) * cosa(j,i) +    &
                                         fbt(j,i) * sina(j,i)
-                    fby(j) = fby(j) + fbn(j,i) * sina(j,i) +    &
+                    fby(j) = fby(j) - fbn(j,i) * sina(j,i) -    &
                                         fbt(j,i) * cosa(j,i)
 
 
                     ! update moment on particule j by i due to bond
-                    mb(j) = mb(j) - r(j) * fbt(j,i) + mbb(j, i)
+                    mb(j) = mb(j) - lambda_lb * r(j) * fbt(j,i) - mbb(i, j)
 
                     ! if ( flag_diag_pressure .eqv. .true. ) then
                     ! compute the average pressure inside particle i
@@ -298,7 +298,7 @@ subroutine stepper (tstep, restart)
     ! compute the total forcing from winds, currents and coriolis
     do i = first_iter, last_iter
         call forcing(i)
-!        call coriolis(i)
+        call coriolis(i)
     end do
     !$omp end parallel do
 

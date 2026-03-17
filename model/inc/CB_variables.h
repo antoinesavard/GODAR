@@ -10,6 +10,7 @@
                 hfa         (n),    &
                 hfw         (n),    &
                 mass        (n),    &
+                inertia     (n),    &
                 u           (n),    &
                 v           (n),    &
                 theta       (n),    &
@@ -32,8 +33,10 @@
     double precision ::             & ! decomposition variables
                 cosa        (n,n),  &
                 sina        (n,n),  &
+                alpha       (n,n),  &
                 veln        (n,n),  &
                 velt        (n,n),  &
+                veltb       (n,n),  &
                 deltan      (n,n),	&
                 deltat      (n,n),  &
                 delt_ridge  (n,n),  &
@@ -64,6 +67,7 @@
                 hfa     ,    & ! freeboard                           [m]
                 hfw     ,    & ! drag                                [m]
                 mass    ,    & ! mass                               [kg]
+                inertia ,    & ! moment of inertia              [kg*m^2]
                 u       ,    & ! u velocity in x axis              [m/s]
                 v       ,    & ! v velocity in y axis              [m/s]
                 theta   ,    & ! angular position                  [rad]
@@ -91,8 +95,10 @@
     common/variables/      	 & ! decomposition variables
                 cosa    ,  	 & ! cos of angle between particles
                 sina    , 	 & ! sin of angle between particles
+                alpha   ,    & ! angle between particle pairs/ref  [rad]
                 veln    ,    & ! normal velocity                   [m/s]
                 velt    ,  	 & ! tangential velocity               [m/s]
+                veltb   ,    & ! tangential velocity without rot   [m/s]
                 deltan  ,  	 & ! normal distance between borders     [m]
                 deltat  ,    & ! accumulated tangent overlap         [m]
                 delt_ridge,  & ! tangent overlap for ridging         [m]

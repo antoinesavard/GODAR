@@ -27,8 +27,9 @@ subroutine reset_bond (j, i)
     integer, intent(in) :: j, i
 
     thetarelb(j,i) = 0d0
-    deltaxb(j,i)   = 0d0
-    deltayb(j,i)   = 0d0
+    thetarelb(i,j) = 0d0
+    deltanb(j,i)   = 0d0
+    deltatb(j,i)   = 0d0
 
 end subroutine reset_bond
 

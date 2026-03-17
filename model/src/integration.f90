@@ -11,7 +11,7 @@ subroutine velocity
     ! u_f = u_i + F/m * dt
     u      =  u + ( tfx / mass ) * dt
     v      =  v + ( tfy / mass ) * dt
-    omega  =  omega + m / ( 5d-1 * mass * r ** 2 ) * dt
+    omega  =  omega + ( m / inertia ) * dt
 
 end subroutine velocity
 

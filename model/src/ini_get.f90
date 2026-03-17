@@ -217,8 +217,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             ! tangential compression at contact
             deltat(j,i) = 0d0
             ! bond elongation et deflection
-            deltaxb(j,i) = 0d0
-            deltayb(j,i) = 0d0
+            deltanb(j,i) = 0d0
+            deltatb(j,i) = 0d0
             ! sheltering coefficient
             hsfa(j, i) = 1d0
             hsfw(j, i) = 1d0

@@ -72,9 +72,9 @@ subroutine broadcasting_ini (thread_requested, restart)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(deltat, n * n, mpi_double_precision,           &
                     master, mpi_comm_world, ierr)
-    call mpi_bcast(deltaxb, n * n, mpi_double_precision,          &
+    call mpi_bcast(deltanb, n * n, mpi_double_precision,          &
                     master, mpi_comm_world, ierr)
-    call mpi_bcast(deltayb, n * n, mpi_double_precision,          &
+    call mpi_bcast(deltatb, n * n, mpi_double_precision,          &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(hsfa, n * n, mpi_double_precision,             &
                     master, mpi_comm_world, ierr)
@@ -180,8 +180,6 @@ subroutine broadcasting_ini (thread_requested, restart)
     call mpi_bcast(sigmacb_crit, 1, mpi_double_precision,   &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(tau_crit, 1, mpi_double_precision,       &
-                    master, mpi_comm_world, ierr)
-    call mpi_bcast(gamma_d, 1, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(bond_lim, 1, mpi_double_precision,       &
                     master, mpi_comm_world, ierr)

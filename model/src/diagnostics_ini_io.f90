@@ -179,7 +179,6 @@ subroutine info (expno_str, restart)
     write(10,ffmt) 'sigmatb_crit = ', sigmatb_crit
     write(10,ffmt) 'sigmacb_crit = ', sigmacb_crit
     write(10,ffmt) 'tau_crit     = ', tau_crit
-    write(10,ffmt) 'gamma_d      = ', gamma_d
     write(10,ffmt) 'bond_lim     = ', bond_lim
     write(10,ffmt) 'dmax         = ', dmax
     write(10,ffmt) 'dtd          = ', dtd

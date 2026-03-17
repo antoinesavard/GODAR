@@ -9,7 +9,6 @@
 				sigmatb_crit , 	&
 				sigmacb_crit ,	&
 				tau_crit	 ,	&
-				gamma_d		 ,  & ! prevents spurious oscillations
 				bond_lim     ,  & ! dist lim between part. for bond
 				dmax		 ,  & ! max damage for bond breaking
 				dtd		 	 ,  & ! time step for damage evolution
@@ -23,9 +22,9 @@
 				lb		(n,n),	& ! bond lenght
 				sb		(n,n),	& ! bond cross sectionnal area
 				ib		(n,n),  & ! bond moment of inertia
-                thetarelb(n,n), & ! bond relative angle
-                deltaxb (n,n),  & ! elongation
-                deltayb (n,n),  & ! deflection
+				thetarelb(n,n), & ! particle relative angle to bond
+                deltanb (n,n),  & ! elongation
+                deltatb (n,n),  & ! deflection
 				damageb (n,n)     ! damage variable for bond i-j
 
 	double precision ::			& ! forces in bonds
@@ -54,7 +53,6 @@
 				sigmatb_crit , 	&
 				sigmacb_crit ,	&
 				tau_crit	 ,	&
-				gamma_d		 ,  &
 				bond_lim	 ,  &
 				dmax		 ,  & ! max damage for bond breaking
 				dtd		     ,  & ! time step for damage evolution
@@ -69,8 +67,8 @@
 				sb			 ,	& ! bond cross sectionnal area
 				ib		     ,  & ! bond moment of inertia
                 thetarelb    ,  & ! bond relative angle
-                deltaxb      ,  & ! elongation
-                deltayb      ,  & ! deflection
+                deltanb      ,  & ! elongation
+                deltatb      ,  & ! deflection
                 damageb           ! damage variable for bond i-j
 
 	common/bond_var/			& ! forces in bonds
