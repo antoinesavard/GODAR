@@ -211,10 +211,10 @@ subroutine bond_forces_timoshenko (j, i)
     k_axial  = EA / L
     k_shear1 = 12d0 * EI / L**3 / ( 1d0 + phi )
     k_shear2 = 6d0  * EI / L**2 / ( 1d0 + phi )
-    k_rot1   = 4d0  * EI / L * ( 4d0 + phi ) / ( 1d0 + phi )
-    k_rot2   = 2d0  * EI / L * ( 2d0 - phi ) / ( 1d0 + phi )
+    k_rot1   = (4d0 + phi) * EI / L / ( 1d0 + phi )
+    k_rot2   = (2d0 - phi) * EI / L / ( 1d0 + phi )
 
-    ! Euler–Bernoulli viscosity coefficients
+    ! Timoshenko damping coefficients
     ! There is a choice to be made about where to put damage in the 
     ! viscosity, we choose to put it outside the square root so that 
     ! the relaxation time is preserved for all damage levels (E/\eta), 
@@ -238,8 +238,8 @@ subroutine bond_forces_timoshenko (j, i)
     gam_axial  = eta_a / L
     gam_shear1 = 12d0 * eta_i / L**3 / ( 1d0 + phid )
     gam_shear2 = 6d0  * eta_i / L**2 / ( 1d0 + phid )
-    gam_rot1   = 4d0  * eta_i / L * ( 4d0 + phid ) / ( 1d0 + phid )
-    gam_rot2   = 2d0  * eta_i / L * ( 2d0 - phid ) / ( 1d0 + phid )
+    gam_rot1   = (4d0 + phid) * eta_i / L / ( 1d0 + phid )
+    gam_rot2   = (2d0 - phid) * eta_i / L / ( 1d0 + phid )
 
     ! Axial force
     fbn(j,i) = k_axial * deltanb(j,i) + gam_axial * veln(j,i)
