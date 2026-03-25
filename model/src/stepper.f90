@@ -155,7 +155,7 @@ subroutine stepper (tstep, restart)
 			! compute forces from bonds between particle i and j
 			if ( bond (j, i) .eq. 1 ) then
 
-				call bond_forces_euler (j, i)
+				call bond_forces_timoshenko (j, i)
 				call bond_breaking (j, i)
 
                 if ( bond (j, i) .eq. 1 ) then

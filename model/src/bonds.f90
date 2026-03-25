@@ -14,6 +14,7 @@ subroutine bond_forces_surface (j, i)
     double precision :: krb, gamrb
     double precision :: m_redu, i_redu, hmin
     double precision :: knb_eff, ktb_eff
+    double precision :: gb
 
     ! Relative displacements in bond frame
     deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
@@ -88,15 +89,14 @@ subroutine bond_forces_euler (j, i)
                         k_rot1, k_rot2
     double precision :: gam_axial, gam_shear1, gam_shear2, &
                         gam_rot1, gam_rot2
-    double precision :: m_redu, i_redu
+    double precision :: m_redu, i_redu, theta_beam
 
     ! Relative displacements in bond frame
     deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
     deltatb(j,i) = veltb(j,i) * dt + deltatb(j,i)
 
     ! angle relative to beam axis for bending and twisting
-    thetarelb(j,i) = omega(i) * dt + thetarelb(j,i)
-    thetarelb(i,j) = omega(j) * dt + thetarelb(i,j)
+    theta_beam = deltatb(j,i) / lb(j,i)
 
     ! reduced variables for the viscosity
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
@@ -142,11 +142,115 @@ subroutine bond_forces_euler (j, i)
 
     ! Transverse shear force
     fbt(j,i) = k_shear1 * deltatb(j,i) &
+                + k_shear2 * 2 * theta_beam &
+                + gam_shear1 * veltb(j,i) &
+                + gam_shear2 * 2 * veltb(j,i) / L
+
+    ! Moments (Euler–Bernoulli)
+    mbb(j,i) =  (k_rot1 + k_rot2) * theta_beam &
+                - k_shear2 * deltatb(j,i) &
+                + (gam_rot1 + gam_rot2) * veltb(j,i) / L &
+                - gam_shear2 * veltb(j,i)
+                
+    ! Newton's 3rd law for moments            
+    mbb(i,j) =  (k_rot2 + k_rot1) * theta_beam &
+                - k_shear2 * deltatb(j,i) &
+                + (gam_rot2 + gam_rot1) * veltb(i,j) / L &
+                - gam_shear2 * veltb(j,i)
+
+end subroutine bond_forces_euler
+
+
+subroutine bond_forces_timoshenko (j, i)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+
+    integer, intent(in) :: i, j
+
+    double precision :: EA, EI, GA, L, kappa
+    double precision :: phi, phid
+    double precision :: eta_i, eta_a, eta_s
+    double precision :: k_axial, k_shear1, k_shear2, &
+                        k_rot1, k_rot2
+    double precision :: gam_axial, gam_shear1, gam_shear2, &
+                        gam_rot1, gam_rot2
+    double precision :: m_redu, i_redu
+
+    ! Timoshenko shear coefficient, depends on the geometry, k~5/6
+    ! for a rectangular section
+    kappa = 5d0 / 6d0
+
+    ! Relative displacements in bond frame
+    deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
+    deltatb(j,i) = veltb(j,i) * dt + deltatb(j,i)
+
+    ! angle relative to beam axis for bending and twisting
+    thetarelb(j,i) = omega(i) * dt + thetarelb(j,i)
+    thetarelb(i,j) = omega(j) * dt + thetarelb(i,j)
+
+    ! reduced variables for the viscosity
+    m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
+    i_redu =  inertia(i) * inertia(j) / ( inertia(i) + inertia(j) )
+
+    ! Beam length
+    L = lb(j,i)
+
+    ! Axial and bending rigidities with damage
+    EA = (1d0 - damageb(j,i)) * eb * sb(j,i)
+    EI = (1d0 - damageb(j,i)) * eb * ib(j,i)
+    GA = (1d0 - damageb(j,i)) * eb * sb(j,i) &
+            / ( 2d0 * (1d0 + poiss_ratio) )
+    phi = 12d0 * EI / ( kappa * GA * sb(j,i) * L**2 )
+
+    ! Timoshenko stiffness coefficients
+    k_axial  = EA / L
+    k_shear1 = 12d0 * EI / L**3 / ( 1d0 + phi )
+    k_shear2 = 6d0  * EI / L**2 / ( 1d0 + phi )
+    k_rot1   = 4d0  * EI / L * ( 4d0 + phi ) / ( 1d0 + phi )
+    k_rot2   = 2d0  * EI / L * ( 2d0 - phi ) / ( 1d0 + phi )
+
+    ! Euler–Bernoulli viscosity coefficients
+    ! There is a choice to be made about where to put damage in the 
+    ! viscosity, we choose to put it outside the square root so that 
+    ! the relaxation time is preserved for all damage levels (E/\eta), 
+    ! but it could be inside too.
+    ! If the viscosity is outside the square root, then we preserve the 
+    ! ratio between the stiffness and viscosity as the bond is damaged
+    ! (the relaxation time is preserved for all damage levels), but if 
+    ! the viscosity is inside the square root, then the viscosity 
+    ! decreases faster than the stiffness as the bond is damaged, and 
+    ! the relaxation time decreases with damage, which may be more 
+    ! physical, but may lead to more instability in the numerical 
+    ! scheme.
+
+    ! viscosities
+    eta_i = 2d0 * sqrt( EI * i_redu / L )
+    eta_s = 2d0 * sqrt( kappa * GA * m_redu * L )
+    eta_a = 2d0 * sqrt( EA * m_redu * L )
+    phid = 12d0 * eta_i / ( eta_s * L**2 )
+
+    ! Timoshenko damping coefficients
+    gam_axial  = eta_a / L
+    gam_shear1 = 12d0 * eta_i / L**3 / ( 1d0 + phid )
+    gam_shear2 = 6d0  * eta_i / L**2 / ( 1d0 + phid )
+    gam_rot1   = 4d0  * eta_i / L * ( 4d0 + phid ) / ( 1d0 + phid )
+    gam_rot2   = 2d0  * eta_i / L * ( 2d0 - phid ) / ( 1d0 + phid )
+
+    ! Axial force
+    fbn(j,i) = k_axial * deltanb(j,i) + gam_axial * veln(j,i)
+
+    ! Transverse shear force
+    fbt(j,i) = k_shear1 * deltatb(j,i) &
                 + k_shear2 * (thetarelb(j,i) + thetarelb(i,j)) &
                 + gam_shear1 * veltb(j,i) &
                 + gam_shear2 * (omega(i) + omega(j))
 
-    ! Moments (Euler–Bernoulli)
+    ! Moments (Timoshenko)
     mbb(j,i) =  k_rot1 * thetarelb(j,i) + k_rot2 * thetarelb(i,j) &
                 - k_shear2 * deltatb(j,i) &
                 + gam_rot1 * omega(i) + gam_rot2 * omega(j) &
@@ -158,7 +262,7 @@ subroutine bond_forces_euler (j, i)
                 + gam_rot2 * omega(i) + gam_rot1 * omega(j) &
                 - gam_shear2 * veltb(j,i)
 
-end subroutine bond_forces_euler
+end subroutine bond_forces_timoshenko
 
 
 subroutine bond_breaking (j, i)
@@ -244,9 +348,6 @@ subroutine bond_properties (j, i)
 	include "CB_bond.h"
 
 	integer, intent(in) :: i, j
-    double precision :: gb
-
-    gb = eb / 2d0 / (1 + poiss_ratio)
 
     ! bond properties
     ! rb is "radius" such that 2rb is the width
