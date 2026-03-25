@@ -205,7 +205,7 @@ subroutine bond_forces_timoshenko (j, i)
     EI = (1d0 - damageb(j,i)) * eb * ib(j,i)
     GA = (1d0 - damageb(j,i)) * eb * sb(j,i) &
             / ( 2d0 * (1d0 + poiss_ratio) )
-    phi = 12d0 * EI / ( kappa * GA * sb(j,i) * L**2 )
+    phi = 12d0 * EI / ( kappa * GA * L**2 )
 
     ! Timoshenko stiffness coefficients
     k_axial  = EA / L
