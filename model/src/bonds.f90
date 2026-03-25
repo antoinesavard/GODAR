@@ -279,10 +279,12 @@ subroutine bond_breaking (j, i)
 
     ! compute stresses in the bond
 	taub(j, i) = abs(fbt(j, i)) / sb(j, i)
-	sigmatb(j, i) = - fbn(j, i) / sb(j, i) + abs(mbb(j, i)) * 	&
-					rb(j, i) / ib(j, i)
-	sigmacb(j, i) = fbn(j, i) / sb(j, i) + abs(mbb(j, i)) * 	&
-					rb(j, i) / ib(j, i)
+	sigmatb(j, i) = - fbn(j, i) / sb(j, i) &
+                    + max(abs(mbb(j, i)), abs(mbb(i, j))) &
+					* rb(j, i) / ib(j, i)
+	sigmacb(j, i) = fbn(j, i) / sb(j, i) &
+                    + max(abs(mbb(j, i)), abs(mbb(i, j))) &
+                    * rb(j, i) / ib(j, i)
 
     ! compute the failure criteria for the bond
 	phi = (taub(j, i) / (tau_crit * hb(j,i))) ** 2d0
