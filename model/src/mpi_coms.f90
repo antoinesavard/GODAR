@@ -52,11 +52,15 @@ subroutine broadcasting_ini (thread_requested, restart)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(v, n, mpi_double_precision,          &
                     master, mpi_comm_world, ierr)
+    call mpi_bcast(damageb, n * n, mpi_double_precision,&
+                    master, mpi_comm_world, ierr)
 
     !-------------------------------------------------------------------
     ! constants broadcast
     !-------------------------------------------------------------------
     call mpi_bcast(mass, n, mpi_double_precision,       &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(inertia, n, mpi_double_precision,    &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(hfa, n, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
@@ -705,6 +709,7 @@ subroutine gather_bonds_to_master()
     integer, allocatable :: bond_recvcounts(:), bond_displs(:)
     integer, allocatable :: all_i(:), all_j(:)
     integer, allocatable :: all_bond_counts(:)
+    double precision, allocatable :: local_damage(:), all_damage(:)
 
     !------------------------------------------------------------
     ! Count local bonds
@@ -722,6 +727,7 @@ subroutine gather_bonds_to_master()
     ! Store local bond pairs
     !------------------------------------------------------------
     allocate(local_i(num_local_bonds), local_j(num_local_bonds))
+    allocate(local_damage(num_local_bonds))
 
     idx = 0
     do i = first_iter, last_iter
@@ -730,6 +736,7 @@ subroutine gather_bonds_to_master()
                 idx = idx + 1
                 local_i(idx) = i
                 local_j(idx) = j
+                local_damage(idx) = damageb(j, i)
             end if
         end do
     end do
@@ -761,6 +768,7 @@ subroutine gather_bonds_to_master()
 
         allocate(all_i(num_total_bonds))
         allocate(all_j(num_total_bonds))
+        allocate(all_damage(num_total_bonds))
     end if
 
     !------------------------------------------------------------
@@ -778,11 +786,21 @@ subroutine gather_bonds_to_master()
                      0, mpi_comm_world, ierr)
 
     !------------------------------------------------------------
+    ! Gatherv the damage values
+    !------------------------------------------------------------
+    call mpi_gatherv(local_damage, num_local_bonds,                   &
+                     mpi_double_precision, all_damage,                &
+                     bond_recvcounts, bond_displs,                    &
+                     mpi_double_precision, 0, mpi_comm_world, ierr)
+
+    !------------------------------------------------------------
     ! Master rank now has all_i(k), all_j(k) for k=1..num_total_bonds
+    ! and can reconstruct the full bond and damageb arrays
     !------------------------------------------------------------
     if (rank .eq. master) then
         do k = 1, num_total_bonds
             bond(all_j(k), all_i(k)) = 1
+            damageb(all_j(k), all_i(k)) = all_damage(k)
         end do
     end if
 

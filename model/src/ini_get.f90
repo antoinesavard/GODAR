@@ -224,6 +224,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             hsfw(j, i) = 1d0
             ! contact area
             ac(j, i) = 0d0
+            ! bond damage
+            damageb(j, i) = 1d0
         end do
 
         ! boundary
