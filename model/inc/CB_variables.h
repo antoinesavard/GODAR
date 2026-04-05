@@ -58,7 +58,12 @@
                 theta_bc2   (n),    & ! angle for rolling on bd 2
                 delt_ridge_bc(n)      ! tangent overlap for ridging bd
 
-        
+    double precision ::             & ! Verlet acceleration history
+                ax_nm1      (n),    & ! x acceleration at previous step
+                ay_nm1      (n),    & ! y acceleration at previous step
+                atheta_nm1  (n)       ! angular accel  at previous step
+
+
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
                 y       ,    & ! y positions                         [m]
@@ -119,3 +124,8 @@
                 theta_bc1,   & ! angle for rolling on boundary 1   [rad]
                 theta_bc2,   & ! angle for rolling on boundary 2   [rad]
                 delt_ridge_bc  ! tangent overlap ridging bd          [m]
+
+    common/verlet_var/       & ! Velocity Verlet stored acceleration
+                ax_nm1   ,   & ! x acceleration at n-1           [m/s^2]
+                ay_nm1   ,   & ! y acceleration at n-1           [m/s^2]
+                atheta_nm1     ! angular accel  at n-1         [rad/s^2]

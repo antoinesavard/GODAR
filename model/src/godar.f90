@@ -188,11 +188,11 @@ program godar
         write(*, *) 'Starting time-stepping loop'
     end if
 
-    do tstep = 1, int(nt)
+    do tstep = 0, int(nt)
 
         call stepper (tstep, restart)
 
-        if (modulo(tstep, int(comp)) .eq. 0 .or. tstep + restart == 1) then
+        if (modulo(tstep, int(comp)) .eq. 0) then
             
             ! gather the bond locations
             call gather_bonds_to_master

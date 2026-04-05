@@ -18,7 +18,7 @@ subroutine tree_building(tstep, xtree, ytree)
 
     ! Build the tree
     ! you can skip any timesteps using a copied array of the positions as the tree building process does not make a copy of the data and changing the data on which the tree is based will throw a seg fault.
-    if ( tstep == 1 .or. mod(tstep, int(ntree)) == 0 ) then
+    if ( mod(tstep, int(ntree)) == 0 ) then
         tree = KdTree(xtree, ytree)
         is_built = .true.
     end if

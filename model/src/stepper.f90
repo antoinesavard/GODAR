@@ -40,8 +40,14 @@ subroutine stepper (tstep, restart)
     local_hsfa_min_thread = 1.0d0
     local_hsfw_min_thread = 1.0d0
 
+    ! Velocity Verlet: advance positions before force computation
+    ! (tree and contacts will be evaluated at x^{n+1})
+    if ( tstep .ge. 1 ) then
+        call position
+    end if
+
     ! Check whether tree parameters needs update or not
-    if ( tstep == 1 .or. mod(tstep, int(ntree)) == 0 ) then
+    if ( mod(tstep, int(ntree)) == 0 ) then
         xtree = x
         ytree = y
     end if
@@ -90,7 +96,7 @@ subroutine stepper (tstep, restart)
             call rel_pos_vel (j, i)
 
 			! bond initialization
-            if ( tstep .eq. 1 .and. restart .ne. 1 ) then
+            if ( tstep .eq. 0 .and. restart .ne. 1 ) then
                 if ( cohesion .eqv. .true. ) then
                     if ( deltan(j, i) .ge. -bond_lim ) then ! can be fancier
                         bond (j, i) = 1
@@ -338,8 +344,11 @@ subroutine stepper (tstep, restart)
 !    call normal_forces("ridging", tstep)
 !    call gravity
 
-    ! integration in time
-    call velocity
-    call position
+    ! Velocity Verlet: update velocities after force computation
+    ! (tstep=1 is Euler initialization; tstep>=2 is Verlet)
+    if ( tstep .ge. 1 ) then
+        call velocity
+    end if
+    call verlet_history
 
 end subroutine stepper
