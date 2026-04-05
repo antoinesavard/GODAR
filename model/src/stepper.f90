@@ -32,7 +32,7 @@ subroutine stepper (tstep, restart)
     double precision, allocatable :: local_hsfw_min_thread(:,:)
 
     ! allocate local sheltering reduction arrays
-    thread_num = omp_get_num_threads()
+    thread_num = omp_get_max_threads()
 
     allocate(local_hsfa_min_thread(thread_num, n))
     allocate(local_hsfw_min_thread(thread_num, n))
@@ -256,19 +256,19 @@ subroutine stepper (tstep, restart)
             sigxx(j) = sigxx(j) - (                            &
                         sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
                         sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * cosa(j,i)
+                        cosa(j,i) * r(j) * cosa(j,i)
             sigyy(j) = sigyy(j) - (                            &
                         sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
                         sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * sina(j,i)
+                        sina(j,i) * r(j) * sina(j,i)
             sigxy(j) = sigxy(j) - (                            &
                         sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
                         sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * cosa(j,i)
+                        sina(j,i) * r(j) * cosa(j,i)
             sigyx(j) = sigyx(j) - (                            &
                         sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
                         sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * sina(j,i)
+                        cosa(j,i) * r(j) * sina(j,i)
 
             ! end if
 

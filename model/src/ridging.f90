@@ -45,7 +45,7 @@ subroutine update_shape (j, i)
     integer, intent(in) :: j, i
 
     double precision :: hmin, dh, Vol, Area
-    double precision :: delta_ij, delta_ji
+    double precision :: delta_ij, delta_ji, arg_ij, arg_ji
 
     hmin = min(h(i), h(j))
     delta_ij = (dist(j,i) ** 2 - r(j) ** 2 + r(i) ** 2) / &
@@ -53,8 +53,12 @@ subroutine update_shape (j, i)
     delta_ji = (dist(j,i) ** 2 - r(i) ** 2 + r(j) ** 2) / &
                 (2 * dist(j,i))
 
-    Area = r(i) ** 2 * acos(delta_ij / r(i)) - delta_ij * &
-            delt_ridge(j, i) / 2d0 + r(j) ** 2 * acos(delta_ji / r(j)) - delta_ji * delt_ridge(j,i) / 2d0
+    ! clamp arguments to [-1,1] to prevent NaN from -ffast-math
+    arg_ij = max(min(delta_ij / r(i), 1d0), -1d0)
+    arg_ji = max(min(delta_ji / r(j), 1d0), -1d0)
+
+    Area = r(i) ** 2 * acos(arg_ij) - delta_ij * &
+            delt_ridge(j, i) / 2d0 + r(j) ** 2 * acos(arg_ji) - delta_ji * delt_ridge(j,i) / 2d0
 
     ! take the max value to make sure we don't get negatives
     ! this is purely a compilation/numerical trick
@@ -149,9 +153,12 @@ subroutine update_shape_bc (i, deltan_bc)
     double precision, intent(in) :: deltan_bc
 
     double precision :: dh, Vol, Area
+    double precision :: arg
 
-    Area = r(i) ** 2 * asin(delt_ridge_bc(i) / 2 / r(i)) &
-            - delt_ridge_bc(i) * ( r(i) - deltan_bc ) / 2
+    ! clamp argument to [-1,1] to prevent NaN from -ffast-math
+    arg = max(min(delt_ridge_bc(i) / 2d0 / r(i), 1d0), -1d0)
+
+    Area = r(i) ** 2 * asin(arg) - delt_ridge_bc(i) * ( r(i) - deltan_bc ) / 2
 
     ! take the max value to make sure we don't get negatives
     ! this is purely a compilation/numerical trick

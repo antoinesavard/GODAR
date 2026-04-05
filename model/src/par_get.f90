@@ -259,6 +259,13 @@ subroutine read_namelist (namelist_name)
     ''
     end if
 
+    ! validate rest_coeff before computing beta             
+    if ( rest_coeff .le. 0d0 .or. rest_coeff .ge. 1d0 ) then
+        print *, 'ERROR: rest_coeff must be in (0, 1), got:', rest_coeff
+        print *, 'Aborting.'
+        stop 1
+    end if
+
     ! recompute compound variables with updated values of parameters
     t = nt * dt
     ec = e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
