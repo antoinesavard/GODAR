@@ -38,11 +38,10 @@
 &bond_param_nml
     eb			 = 1d9             ! bond elastic moduli
 	lambda_rb	 = 1d0             ! width scale factor
-	lambda_lb	 = 1d0             ! lenght scale factor
+	lambda_lb	 = 0d0             ! lenght scale factor
 	sigmatb_crit = 1d3             ! critical tensile strenght
 	sigmacb_crit = 27.5d3          ! critical compressive strenght
 	tau_crit	 = 6.9d3           ! critical shear strenght
-	gamma_d		 = 1d10            ! damping coefficient
     bond_lim     = 1d-2            ! max bond distance [m]
     dmax         = 9d-1            ! max damage
     dtd          = 1d0             ! damage timescale [s]
