@@ -41,9 +41,9 @@ subroutine contact_forces (j, i)
     krc    = knc * delt_ridge(j,i) ** 2 / 12
 
     ! damping
-    gamn   = -beta * sqrt( 4d0 * knc * m_redu )
+    gamn   = 2d0 * beta * sqrt( knc * m_redu )
 
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
+    gamt   = 2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
 
     gamr   = gamn * delt_ridge(j,i) ** 2 / 12
 
@@ -170,9 +170,9 @@ subroutine contact_bc (i, dir1, dir2, bd)
     ! compute the dashpots constant
     ! note the 1/2 factor in gamn and gamt: this is a choice.
     ! same reason as above for consistency
-    gamn   = -beta * sqrt( 4d0 * knc * mass(i) / 1d0 )
+    gamn   = 2d0 * beta * sqrt( knc * mass(i) / 1d0 )
 
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) / 1d0 )
+    gamt   = 2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) / 1d0 )
 
     gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
 

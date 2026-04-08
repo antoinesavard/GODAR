@@ -61,11 +61,11 @@ subroutine get_default
     sigmanc_crit    =  1d6         ! critical normal stress
 
     ! effective contact modulus
-    ec    =  e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
+    ec   =  e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
     ! effective shear modulus
-    gc    =  e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
+    gc   =  e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
     ! damping ratio
-    beta =  1d1 * log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
+    beta = -1d1 * log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
 
 	!-------------------------------------------------------------------
     !           Bonds physical parameters
@@ -270,6 +270,6 @@ subroutine read_namelist (namelist_name)
     t = nt * dt
     ec = e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
     gc = e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
-    beta =  1d1 * log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
+    beta = -1d1 * log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
 
 end subroutine read_namelist

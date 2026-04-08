@@ -200,8 +200,9 @@ program godar
             if ( rank .eq. master ) then
 
                 ! print various outputs
-                call sea_ice_post (tstep, expno_str)
+                print *, "--------------------------------------------------"
                 print *, "Time step: ", tstep, "/", int(nt)
+                call sea_ice_post (tstep, expno_str)
                 tac = omp_get_wtime()
                 print '(A, ES10.3, A)', &
                     " Time for last output: ", tac - toc, ' s'
@@ -215,7 +216,8 @@ program godar
     if ( rank .eq. master ) then
         tac = omp_get_wtime()
 
-        print '(A, F0.3, A)', &
+        print '(A, A, F0.3, A)', &
+            "--------------------------------------------------",&
             " Total simulation time: ", tac - tic, ' s'
 
         print '(a)', &
