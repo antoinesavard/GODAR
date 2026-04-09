@@ -102,10 +102,11 @@ subroutine rel_pos_vel (j, i)
 	veln(j,i) = ( u(j) - u(i) ) * cosa(j,i) +     &
 				( v(j) - v(i) ) * sina(j,i)
 
-	! Tangential components of the relative velocities:
+	! Center components of the relative velocities:
     veltb(j,i) = -( u(j) - u(i) ) * sina(j,i) +   &
                  ( v(j) - v(i) ) * cosa(j,i)
 
+    ! Tangential components of the relative velocities:
     velt(j,i) = veltb(j,i) - ( omega(i) * r(i) + omega(j) * r(j) )
 
 	! normal overlap (displacement) deltan >=0

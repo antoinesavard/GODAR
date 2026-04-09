@@ -18,6 +18,9 @@ subroutine sea_ice_post (tstep, expno_str)
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
     character(len=20) :: filetp, fileangle, filedamage
 
+    ! diagnostics variables
+    num_bonds = 0
+
 	! position and state files
     filex = "output/x." // trim(adjustl(expno_str))
 	filey = "output/y." // trim(adjustl(expno_str))
@@ -159,6 +162,7 @@ subroutine sea_ice_post (tstep, expno_str)
             if (bond(j, i) == 1) then
                 write(18,*) int(tstep / comp), j, i
                 write(34,*) int(tstep / comp), j, i, damageb(j,i)
+                num_bonds = num_bonds + 1
             end if
             if ( deltan(j,i) .gt. 0 ) then
                 write(33,*) int(tstep / comp), j, i, atan2( y(j) - y(i), x(j) - x(i) ) * 180d0 / pi
@@ -185,6 +189,18 @@ subroutine sea_ice_post (tstep, expno_str)
         close(i)
     end do
 
+    ! diagnostics stdout
+    if (tstep .eq. 0) then
+        num_bonds_nm1 = num_bonds
+    end if
+    print *, "Mean velocity: ", &
+    sqrt((sum(u) / n) ** 2 + (sum(v) / n)** 2), "m/s at", &
+    atan2(sum(v) / n, sum(u) / n) * 180d0 / pi, "deg"
+    print *, "RMS speed: ", sqrt(sum(u**2 + v**2) / n), "m/s"
+    print *, "Number of bonds: ", num_bonds
+    print *, "Number of bonds broken: ", num_bonds - num_bonds_nm1
+
+    ! update number of bonds at tstep-1 for next tstep
+    num_bonds_nm1 = num_bonds
 
 end subroutine sea_ice_post
-

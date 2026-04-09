@@ -20,8 +20,8 @@ subroutine plastic_contact (j, i, m_redu, hmin, ktc, krc, gamn, gamt, gamr)
     krc    = knc * delt_ridge(j,i) ** 2 / 12
 
     ! compute the dashpots constants
-    gamn   = -beta * sqrt( 4d0 * knc * m_redu )
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
+    gamn   = 2d0 * beta * sqrt( knc * m_redu )
+    gamt   = 2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
     gamr   = gamn * delt_ridge(j,i) ** 2 / 12
 
     ! compute the forces
@@ -128,8 +128,8 @@ subroutine plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, deltat_bc, ktc, k
     ! compute the dashpots constants
     ! note the 1/2 factor in gamn and gamt: this is a choice.
     ! same reason as above for consistency
-    gamn   = -beta * sqrt( 4d0 * knc * m(i) / 1d0 )
-    gamt   = -2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) / 1d0 )
+    gamn   = 2d0 * beta * sqrt( knc * m(i) / 1d0 )
+    gamt   = 2d0 * beta * sqrt( 2d0/3d0 * ktc * m(i) / 1d0 )
     gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
 
     ! compute the forces
