@@ -162,7 +162,7 @@ subroutine stepper (tstep, restart)
 			if ( bond (j, i) .eq. 1 ) then
 
 				call bond_forces_timoshenko (j, i)
-!				call bond_breaking (j, i)
+				call bond_breaking (j, i)
 
                 if ( bond (j, i) .eq. 1 ) then
 
@@ -305,7 +305,7 @@ subroutine stepper (tstep, restart)
     ! compute the total forcing from winds, currents and coriolis
     do i = first_iter, last_iter
         call forcing(i)
-!        call coriolis(i)
+        call coriolis(i)
     end do
     !$omp end parallel do
 
@@ -345,8 +345,6 @@ subroutine stepper (tstep, restart)
 !    call normal_forces("ridging", tstep)
 !    call gravity
 
-    tfx(1) = 0d0
-    tfy(1) = 0d0
     ! Velocity Verlet: update velocities after force computation
     ! (tstep=1 is Euler initialization; tstep>=2 is Verlet)
     if ( tstep .ge. 1 ) then
