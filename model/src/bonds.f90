@@ -176,29 +176,42 @@ subroutine bond_forces_timoshenko (j, i)
     double precision :: phi, phid
     double precision :: eta_i, eta_a, eta_s
     double precision :: k_axial, k_shear1, k_shear2, &
-                        k_rot1, k_rot2
+                        k_rot4, k_rot2
     double precision :: gam_axial, gam_shear1, gam_shear2, &
-                        gam_rot1, gam_rot2
+                        gam_rot4, gam_rot2
     double precision :: m_redu, i_redu
+    double precision :: omega_i, omega_j, alpha_dot, dalpha
 
     ! Timoshenko shear coefficient, depends on the geometry, k~5/6
     ! for a rectangular section
     kappa = 5d0 / 6d0
 
-    ! Relative displacements in bond frame
-    deltanb(j,i) = veln(j,i) * dt + deltanb(j,i)
-    deltatb(j,i) = veltb(j,i) * dt + deltatb(j,i)
+    ! Incremental beam rotation (always small, never wraps)
+    dalpha = atan2(sina(j,i)*cosa_old(j,i) - cosa(j,i)*sina_old(j,i), &
+                cosa(j,i)*cosa_old(j,i) + sina(j,i)*sina_old(j,i))
+    alpha_total(j,i) = alpha_total(j,i) + dalpha
+    cosa_old(j,i) = cosa(j,i)
+    sina_old(j,i) = sina(j,i)
 
-    ! angle relative to beam axis for bending and twisting
-    thetarelb(j,i) = omega(i) * dt + thetarelb(j,i)
-    thetarelb(i,j) = omega(j) * dt + thetarelb(i,j)
+    ! Beam properties
+    L = lb(j,i)
+    alpha_dot = veltb(j,i) / L
+    omega_i = omega(i) - alpha_dot
+    omega_j = omega(j) - alpha_dot
+
+    ! Relative displacements in bond frame
+    deltanb(j,i) = L - dist(j, i)
+    deltatb(j,i) = 0d0!-veltb(j,i) * dt + deltatb(j,i)
+
+    ! angle relative to beam axis for bending
+    ! thetarelb(j,i) = -omega(i) * dt + thetarelb(j,i)
+    ! thetarelb(i,j) = -omega(j) * dt + thetarelb(i,j)
+    thetarelb(j,i) = -(theta(i) - alpha_total(j,i) - theta_offset(j,i))
+    thetarelb(i,j) = -(theta(j) - alpha_total(j,i) - theta_offset(i,j))
 
     ! reduced variables for the viscosity
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
     i_redu =  inertia(i) * inertia(j) / ( inertia(i) + inertia(j) )
-
-    ! Beam length
-    L = lb(j,i)
 
     ! Axial and bending rigidities with damage
     EA = (1d0 - damageb(j,i)) * eb * sb(j,i)
@@ -209,9 +222,9 @@ subroutine bond_forces_timoshenko (j, i)
 
     ! Timoshenko stiffness coefficients
     k_axial  = EA / L
-    k_shear1 = 12d0 * EI / L**3 / ( 1d0 + phi )
+    k_shear1 = -12d0 * EI / L**3 / ( 1d0 + phi )
     k_shear2 = 6d0  * EI / L**2 / ( 1d0 + phi )
-    k_rot1   = (4d0 + phi) * EI / L / ( 1d0 + phi )
+    k_rot4   = (4d0 + phi) * EI / L / ( 1d0 + phi )
     k_rot2   = (2d0 - phi) * EI / L / ( 1d0 + phi )
 
     ! Timoshenko damping coefficients
@@ -229,38 +242,42 @@ subroutine bond_forces_timoshenko (j, i)
     ! scheme.
 
     ! viscosities
-    eta_i = 2d0 * sqrt( EI * i_redu / L )
-    eta_s = 2d0 * sqrt( kappa * GA * m_redu * L )
-    eta_a = 2d0 * sqrt( EA * m_redu * L )
+    eta_a = 2d0 * beta * sqrt( EA * m_redu * L )
+    eta_i = 2d0 * beta * sqrt( EI * i_redu * L )
+    eta_s = 2d0 * beta * sqrt( kappa * GA * m_redu * L )
     phid = 12d0 * eta_i / ( eta_s * L**2 )
 
     ! Timoshenko damping coefficients
     gam_axial  = eta_a / L
-    gam_shear1 = 12d0 * eta_i / L**3 / ( 1d0 + phid )
+    gam_shear1 = -12d0 * eta_i / L**3 / ( 1d0 + phid )
     gam_shear2 = 6d0  * eta_i / L**2 / ( 1d0 + phid )
-    gam_rot1   = (4d0 + phid) * eta_i / L / ( 1d0 + phid )
+    gam_rot4   = (4d0 + phid) * eta_i / L / ( 1d0 + phid )
     gam_rot2   = (2d0 - phid) * eta_i / L / ( 1d0 + phid )
 
     ! Axial force
-    fbn(j,i) = k_axial * deltanb(j,i) + gam_axial * veln(j,i)
+    fbn(j,i) = k_axial * deltanb(j,i) - gam_axial * veln(j,i)
 
-    ! Transverse shear force
-    fbt(j,i) = k_shear1 * deltatb(j,i) &
-                + k_shear2 * (thetarelb(j,i) + thetarelb(i,j)) &
-                + gam_shear1 * veltb(j,i) &
-                + gam_shear2 * (omega(i) + omega(j))
+    ! ! Transverse shear force
+    ! fbt(j,i) = k_shear1 * deltatb(j,i) &
+    !             + k_shear2 * (thetarelb(j,i) + thetarelb(i,j)) &
+    !             !- gam_shear1 * veltb(j,i) &
+    !             - gam_shear2 * (omega_i + omega_j)
 
     ! Moments (Timoshenko)
-    mbb(j,i) =  k_rot1 * thetarelb(j,i) + k_rot2 * thetarelb(i,j) &
+    mbb(j,i) =  k_rot4 * thetarelb(j,i) + k_rot2 * thetarelb(i,j) &
                 - k_shear2 * deltatb(j,i) &
-                + gam_rot1 * omega(i) + gam_rot2 * omega(j) &
-                - gam_shear2 * veltb(j,i)
+                - gam_rot4 * omega_i - gam_rot2 * omega_j !&
+                !+ gam_shear2 * veltb(j,i)
                 
     ! Newton's 3rd law for moments            
-    mbb(i,j) =  k_rot2 * thetarelb(j,i) + k_rot1 * thetarelb(i,j) &
+    mbb(i,j) =  k_rot2 * thetarelb(j,i) + k_rot4 * thetarelb(i,j) &
                 - k_shear2 * deltatb(j,i) &
-                + gam_rot2 * omega(i) + gam_rot1 * omega(j) &
-                - gam_shear2 * veltb(j,i)
+                - gam_rot2 * omega_i - gam_rot4 * omega_j !&
+                !+ gam_shear2 * veltb(j,i)
+
+    ! the shear force is computed from the moment 
+    ! to ensure energy conservation
+    fbt(j,i) = -(mbb(j,i) + mbb(i,j)) / dist(j,i)
 
 end subroutine bond_forces_timoshenko
 
@@ -275,27 +292,23 @@ subroutine bond_breaking (j, i)
 	include "CB_bond.h"
 
 	integer, intent(in) :: i, j
+    double precision :: Pressure, Tension, Shear
     double precision :: phi, psi
 
+    ! critical values
+    Pressure = sigmacb_crit * hb(j,i)
+    Tension = sigmatb_crit * hb(j,i)
+    Shear = tau_crit * hb(j,i)
+
     ! compute stresses in the bond
-	taub(j, i) = abs(fbt(j, i)) / sb(j, i)
-	sigmatb(j, i) = - fbn(j, i) / sb(j, i) &
-                    + max(abs(mbb(j, i)), abs(mbb(i, j))) &
-					* rb(j, i) / ib(j, i)
-	sigmacb(j, i) = fbn(j, i) / sb(j, i) &
-                    + max(abs(mbb(j, i)), abs(mbb(i, j))) &
-                    * rb(j, i) / ib(j, i)
+	taub(j, i) = fbt(j, i) / sb(j, i)
+	sigmab(j, i) = fbn(j, i) / sb(j, i) &
+                     + max(abs(mbb(j, i)), abs(mbb(i, j))) &
+                     * rb(j, i) / ib(j, i)
 
     ! compute the failure criteria for the bond
-	phi = (taub(j, i) / (tau_crit * hb(j,i))) ** 2d0
-
-	if ( sigmacb(j, i) .gt. 0 ) then	
-        phi = phi + (sigmacb(j, i) / (sigmacb_crit * hb(j,i))) ** 2d0
-    end if
-
-	if ( sigmatb(j, i) .gt. 0 ) then
-        phi = phi + (sigmatb(j, i) / (sigmatb_crit * hb(j,i))) ** 2d0
-	end if
+	phi = (taub(j, i) / Shear) ** 2d0 &
+        + ( (sigmab(j, i) + (Pressure - Tension)/2d0) / ((Pressure + Tension)/2d0) ) ** 2d0
 
     psi = min( 1d0, 1d0 / sqrt( phi ) )
 
@@ -311,6 +324,7 @@ subroutine bond_breaking (j, i)
         fbn(j, i) = 0d0
         fbt(j, i) = 0d0
         mbb(j, i) = 0d0
+        mbb(i, j) = 0d0
         damageb(j, i) = 1d0
 
     end if
@@ -331,9 +345,17 @@ subroutine bond_creation (j, i)
 
 	if ( deltan(j, i) .ge. 0.01 * r(i)) then
 		
+        ! intialize the bond between i and j
 		bond(j, i) = 1
         damageb(j, i) = 0d0
         call bond_properties (j ,i)
+
+        ! initialize the relative angle for bending
+        cosa_old(j,i) = cosa(j,i)
+        sina_old(j,i) = sina(j,i)
+        alpha_total(j,i) = alpha(j,i)
+        theta_offset(j,i) = theta(i) - alpha(j,i)
+        theta_offset(i,j) = theta(j) - alpha(j,i)
 
 	end if   
 

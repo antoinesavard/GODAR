@@ -2,6 +2,11 @@
 !             Common block: bond properties
 !=======================================================================
 
+	integer :: 					& ! number of bonds diagnostics
+				num_bonds	 ,  &
+				num_bonds_nm1, 	&
+				num_bonds_broken
+
     double precision :: 	 	& ! global physical parameters
 				eb			 , 	& ! elastic stiffness
 				lambda_rb	 , 	& ! radius parameter
@@ -27,6 +32,12 @@
                 deltatb (n,n),  & ! deflection
 				damageb (n,n)     ! damage variable for bond i-j
 
+	double precision ::			    & ! angle variables for bending
+				theta_offset(n,n) , & ! angle offset from lab frame
+				cosa_old(n,n)     , & ! old value of cosa
+				sina_old(n,n)     , & ! old value of sina
+				alpha_total(n,n)      ! total beam angle
+
 	double precision ::			& ! forces in bonds
 				fbn		(n,n),	& ! force due to floes sliding
 				fbt		(n,n),	& ! force due to compresion/elongation
@@ -37,7 +48,7 @@
 
 	double precision ::			& ! stresses in bonds
 				taub	(n,n),	&
-				sigmacb	(n,n),	&
+				sigmab	(n,n),	&
 				sigmatb	(n,n)
 
     integer :: 					& ! bond presence or not
@@ -45,6 +56,11 @@
 
     common/bond_bool/           &
                 bond              ! bond between disks i and j  [0 or 1]
+
+	common/bond_diagnostics/	& ! bond diagnostics
+				num_bonds	 ,  & ! number of bonds
+				num_bonds_nm1, 	& ! number of bonds at prev tstep
+				num_bonds_broken  ! number of bonds broken
 
     common/bond_param/			& ! global physical parameters
                 eb			 ,	& ! elastic modulus of bonds	 [N/m^2]
@@ -71,6 +87,12 @@
                 deltatb      ,  & ! deflection
                 damageb           ! damage variable for bond i-j
 
+	common/bond_var/			& ! angle variables for bending
+				theta_offset  , & ! angle offset from lab frame
+				cosa_old   	  , & ! old value of cosa
+				sina_old	  , & ! old value of sina
+				alpha_total	      ! total beam angle
+
 	common/bond_var/			& ! forces in bonds
 				fbn			 ,	& ! force due to floes sliding
 				fbt			 ,	& ! force due to compresion/elongation
@@ -84,5 +106,5 @@
 
 	common/bond_var/			& ! stresses in bonds
 				taub		 ,	& ! shear stress
-				sigmacb		 ,	& ! compressive stress
+				sigmab		 ,	& ! compressive stress
 				sigmatb           ! tensile stress

@@ -216,8 +216,8 @@ program godar
     if ( rank .eq. master ) then
         tac = omp_get_wtime()
 
-        print '(A, A, F0.3, A)', &
-            "--------------------------------------------------",&
+        print *, "--------------------------------------------------"
+        print '(A, F0.3, A)', &
             " Total simulation time: ", tac - tic, ' s'
 
         print '(a)', &
