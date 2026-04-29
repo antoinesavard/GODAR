@@ -58,9 +58,10 @@ subroutine stepper (tstep, restart)
     ! reset the forces and sheltering height
     call reset_forces
 
-    if ( shelter .eqv. .true. ) then
-        call reset_shelter
-    end if
+    ! always reset shelter mins so body drag is not silently zeroed
+    ! when shelter=.false. (hsfa_min_r/hsfw_min_r still flow through
+    ! broadcast_shape's mpi_reduce_scatter and forcing()).
+    call reset_shelter
     
     ! put yourself in the referential of the ith particle
 	! loop through all j particles and compute interactions
@@ -98,11 +99,7 @@ subroutine stepper (tstep, restart)
 			! bond initialization
             if ( tstep .eq. 0 .and. restart .ne. 1 ) then
                 if ( cohesion .eqv. .true. ) then
-                    if ( deltan(j, i) .ge. -bond_lim ) then ! can be fancier
-                        bond (j, i) = 1
-                        damageb(j, i) = 0d0
-                        call bond_properties (j, i)
-                    end if
+                    call bond_creation (j, i)
                 end if
 			end if
 

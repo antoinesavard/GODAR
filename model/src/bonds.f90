@@ -195,7 +195,7 @@ subroutine bond_forces_timoshenko (j, i)
 
     ! Beam properties
     L = lb(j,i)
-    alpha_dot = veltb(j,i) / L
+    alpha_dot = veltb(j,i) / dist(j,i)
     omega_i = omega(i) - alpha_dot
     omega_j = omega(j) - alpha_dot
 
@@ -343,7 +343,7 @@ subroutine bond_creation (j, i)
 
 	integer, intent(in) :: i, j
 
-	if ( deltan(j, i) .ge. 0.01 * r(i)) then
+	if ( deltan(j, i) .ge. -bond_lim ) then
 		
         ! intialize the bond between i and j
 		bond(j, i) = 1
