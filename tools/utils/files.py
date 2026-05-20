@@ -3,6 +3,7 @@ import netCDF4 as nc
 from matplotlib.patches import Circle, Rectangle
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from matplotlib.transforms import Affine2D
 import sparse
 
 
@@ -76,9 +77,13 @@ def multiload(output_dir, files: list, bond=0, n=None) -> np.ndarray:
                     continue
                 __, num_per_tstep = np.unique(idx[:, 0], return_counts=True)
                 third_dim = len(num_per_tstep)
-                idx = idx.T - 1
-                value = np.ones(idx.shape[1])
-                data = sparse.COO(idx, value, shape=(third_dim, n, n))
+                idx = idx.T
+                idx[1:] -= 1  # particle indices
+                if (
+                    idx[0, 0] == 1
+                ):  # if the first column is 1, then we need to subtract 1 from it to make it 0 indexed
+                    idx[0] -= 1
+                data = sparse.COO(idx, 1, shape=(third_dim, n, n))
 
     return data[0] if data.shape[0] == 1 else data
 

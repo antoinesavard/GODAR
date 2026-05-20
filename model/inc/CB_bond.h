@@ -11,13 +11,13 @@
 				eb			 , 	& ! elastic stiffness
 				lambda_rb	 , 	& ! radius parameter
 				lambda_lb	 , 	& ! lenght parameter
-				sigmatb_crit , 	&
 				sigmacb_crit ,	&
 				tau_crit	 ,	&
 				bond_lim     ,  & ! dist lim between part. for bond
 				dmax		 ,  & ! max damage for bond breaking
-				dtd		 	 ,  & ! time step for damage evolution
-				dth		 	      ! time step for damage evolution
+				dtd		 	 ,  & ! time step for damage evolution	 [s]
+				dth		 	 ,  & ! time step for damage evolution   [s]
+				phi_int	 	      ! internal friction angle    [degrees]
 
 	double precision ::			& ! individual physical properties
 				knb 	(n,n), 	& ! bond normal stiffness
@@ -47,9 +47,10 @@
 				fby     (n)       ! forces in y
 
 	double precision ::			& ! stresses in bonds
-				taub	(n,n),	&
-				sigmab	(n,n),	&
-				sigmatb	(n,n)
+				taub	(n,n),	& ! shear stress
+				sigmacb	(n,n),	& ! compressive stress
+				sigmatb (n,n)     ! tensile stress
+	
 
     integer :: 					& ! bond presence or not
 				bond 	(n,n)
@@ -66,13 +67,13 @@
                 eb			 ,	& ! elastic modulus of bonds	 [N/m^2]
 				lambda_rb	 , 	& ! radius parameter                 [-]
 				lambda_lb	 , 	& ! lenght parameter                 [-]
-				sigmatb_crit , 	&
 				sigmacb_crit ,	&
 				tau_crit	 ,	&
 				bond_lim	 ,  &
 				dmax		 ,  & ! max damage for bond breaking
-				dtd		     ,  & ! time step for damage evolution
-				dth		 	      ! time step for damage evolution
+				dtd		     ,  & ! time step for damage evolution   [s]
+				dth		 	 ,  & ! time step for damage evolution   [s]
+				phi_int	 	      ! internal friction angle	   [degrees]
 
 	common/bond_var/			& ! individual physical properties
 				knb 		 , 	& ! bond normal stiffness
@@ -106,5 +107,5 @@
 
 	common/bond_var/			& ! stresses in bonds
 				taub		 ,	& ! shear stress
-				sigmab		 ,	& ! compressive stress
+				sigmacb		 ,	& ! compressive stress
 				sigmatb           ! tensile stress

@@ -133,6 +133,8 @@ subroutine info (expno_str, restart)
     write(10,lfmt) 'cohesion  = ', cohesion
     write(10,lfmt) 'ridging   = ', ridging
     write(10,lfmt) 'shelter   = ', shelter
+    write(10,lfmt) 'flag_diag_stress   = ', flag_diag_stress
+    write(10,lfmt) 'flag_diag_pressure = ', flag_diag_pressure
     ! numerical parameters
     write(10,cfmt) ('************************************************')
     write(10,cfmt) (' NUMERICAL PARAMETERS')
@@ -176,13 +178,13 @@ subroutine info (expno_str, restart)
     write(10,ffmt) 'eb           = ', eb
     write(10,ffmt) 'lambda_rb    = ', lambda_rb
     write(10,ffmt) 'lambda_lb    = ', lambda_lb
-    write(10,ffmt) 'sigmatb_crit = ', sigmatb_crit
     write(10,ffmt) 'sigmacb_crit = ', sigmacb_crit
     write(10,ffmt) 'tau_crit     = ', tau_crit
     write(10,ffmt) 'bond_lim     = ', bond_lim
     write(10,ffmt) 'dmax         = ', dmax
     write(10,ffmt) 'dtd          = ', dtd
     write(10,ffmt) 'dth          = ', dth
+    write(10,ffmt) 'phi_int      = ', phi_int
 
     ! forcings
     write(10,cfmt) ('************************************************')

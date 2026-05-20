@@ -191,8 +191,10 @@ subroutine reset_shelter
     include "CB_mpi.h"
 
     ! reinitialize sheltering height
-    hsfa = 1d0
-    hsfw = 1d0
+    if ( shelter .eqv. .true. ) then
+        hsfa = 1d0
+        hsfw = 1d0
+    end if
     
     ! mpi
     hsfa_min_r = 1d0

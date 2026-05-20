@@ -97,8 +97,9 @@ subroutine update_shape (j, i)
     end if
 
     ! update the new tangent overlap for pressure
-    delt_ridge(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
-                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 )
+    delt_ridge(j,i) = 2 * sqrt( max( r(i) ** 2 - ( (dist(j,i) ** 2 - &
+                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2, &
+                    0d0 ) )
 
 end subroutine update_shape
 
@@ -182,6 +183,7 @@ subroutine update_shape_bc (i, deltan_bc)
     call floe_properties(i)
 
     ! update the new tangent overlap for pressure
-    delt_ridge_bc(i) = 2 * sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
+    delt_ridge_bc(i) = 2 * sqrt( max( r(i) ** 2 &
+                        - ( r(i) - deltan_bc ) ** 2, 0d0 ) )
 
 end subroutine update_shape_bc

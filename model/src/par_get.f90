@@ -19,6 +19,12 @@ subroutine get_default
     cohesion  = .true.             ! bonds/no bond
     ridging   = .true.             ! plastic behavior at contact
     shelter   = .true.             ! sheltering from forcings
+
+    !-------------------------------------------------------------------
+    !           diagnostic flags
+    !-------------------------------------------------------------------
+    flag_diag_stress   = .false.   ! Cauchy stress accumulation
+    flag_diag_pressure = .false.   ! contact/bond pressure accumulation
     
     !-------------------------------------------------------------------
     !           set parameter for the run
@@ -74,13 +80,13 @@ subroutine get_default
 	eb			 = 6d9
 	lambda_rb	 = 8d-1
 	lambda_lb	 = 1d0
-	sigmatb_crit = 1d5
 	sigmacb_crit = 1d6
 	tau_crit	 = 1d6
     bond_lim     = 1d-2
     dmax         = 9d-1
     dtd          = 1d0
     dth          = 1d5
+    phi_int      = 30d0 * pi / 180d0
 
     !-------------------------------------------------------------------
     !           Winds and currents forcings
@@ -128,7 +134,8 @@ subroutine read_namelist (namelist_name)
 
     !---- namelist variables -------------------------------------------
     namelist /options_nml/ &
-        dynamics, slipping, thermodyn, cohesion, ridging, shelter
+        dynamics, slipping, thermodyn, cohesion, ridging, shelter, &
+        flag_diag_stress, flag_diag_pressure
     
     namelist /numerical_param_nml/ &
         rtree, ntree, dt, nt, comp
@@ -141,9 +148,9 @@ subroutine read_namelist (namelist_name)
         e_modul, poiss_ratio, friction_coeff, rest_coeff, sigmanc_crit
 
     namelist /bond_param_nml/ &
-        eb, lambda_rb, lambda_lb, sigmatb_crit, &
+        eb, lambda_rb, lambda_lb, &
         sigmacb_crit, tau_crit, bond_lim, &
-        dmax, dtd, dth
+        dmax, dtd, dth, phi_int
 
     namelist /forcings_nml/ &
         uw, vw, ua, va 
@@ -271,5 +278,6 @@ subroutine read_namelist (namelist_name)
     ec = e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
     gc = e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
     beta = -1d0 * log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
+    phi_int = phi_int * pi / 180d0 
 
 end subroutine read_namelist

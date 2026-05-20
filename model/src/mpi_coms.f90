@@ -127,6 +127,10 @@ subroutine broadcasting_ini (thread_requested, restart)
                     master, mpi_comm_world, ierr) 
     call mpi_bcast(shelter, 1, mpi_logical,             &
                     master, mpi_comm_world, ierr)
+    call mpi_bcast(flag_diag_stress, 1, mpi_logical,    &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(flag_diag_pressure, 1, mpi_logical,  &
+                    master, mpi_comm_world, ierr)
 
     ! numerical_param
     call mpi_bcast(rtree, 1, mpi_double_precision,      &
@@ -179,8 +183,6 @@ subroutine broadcasting_ini (thread_requested, restart)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(lambda_lb, 1, mpi_double_precision,      &
                     master, mpi_comm_world, ierr)   
-    call mpi_bcast(sigmatb_crit, 1, mpi_double_precision,   &
-                    master, mpi_comm_world, ierr)   
     call mpi_bcast(sigmacb_crit, 1, mpi_double_precision,   &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(tau_crit, 1, mpi_double_precision,       &
@@ -192,6 +194,8 @@ subroutine broadcasting_ini (thread_requested, restart)
     call mpi_bcast(dtd, 1, mpi_double_precision,            &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(dth, 1, mpi_double_precision,            &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(phi_int, 1, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
 
     ! forcings
@@ -238,6 +242,7 @@ subroutine broadcast_shape
     include "CB_forcings.h"
     include "CB_mpi.h"
     include "CB_variables.h"
+    include "CB_options.h"
 
     ! local variables
     double precision, allocatable :: local_h(:), local_r(:)
@@ -251,26 +256,28 @@ subroutine broadcast_shape
     allocate(local_hfa(local_n))
     allocate(local_hfw(local_n))
 
-    ! allocate recv buffers
-    allocate(recv_min_a(local_n))
-    allocate(recv_min_w(local_n))
-
     local_hfw = hfw(first_iter:last_iter)
     local_hfa = hfa(first_iter:last_iter)
 
     local_r = r(first_iter:last_iter)
     local_h = h(first_iter:last_iter)
 
-    ! sendbuf: local_hsfa_min (n), recvbuf: recv_min_a (local_n)
-    call mpi_reduce_scatter(local_hsfa_min, recv_min_a, counts, &
-            mpi_double_precision, mpi_min, mpi_comm_world, ierr)
+    if ( shelter .eqv. .true. ) then
+        ! allocate recv buffers
+        allocate(recv_min_a(local_n))
+        allocate(recv_min_w(local_n))
 
-    call mpi_reduce_scatter(local_hsfw_min, recv_min_w, counts, &
-            mpi_double_precision, mpi_min, mpi_comm_world, ierr)
+        ! sendbuf: local_hsfa_min (n), recvbuf: recv_min_a (local_n)
+        call mpi_reduce_scatter(local_hsfa_min, recv_min_a, counts, &
+                mpi_double_precision, mpi_min, mpi_comm_world, ierr)
 
-    ! place received minima into hsfX_min_r at the local positions
-    hsfa_min_r(local_disp+1 : local_disp + local_n) = recv_min_a
-    hsfw_min_r(local_disp+1 : local_disp + local_n) = recv_min_w
+        call mpi_reduce_scatter(local_hsfw_min, recv_min_w, counts, &
+                mpi_double_precision, mpi_min, mpi_comm_world, ierr)
+
+        ! place received minima into hsfX_min_r at the local positions
+        hsfa_min_r(local_disp+1 : local_disp + local_n) = recv_min_a
+        hsfw_min_r(local_disp+1 : local_disp + local_n) = recv_min_w
+    end if
 
     ! thickness and radius
     call mpi_allgatherv(local_h,                                  &
@@ -302,8 +309,10 @@ subroutine broadcast_shape
     deallocate(local_hfw)
 
     ! deallocate recv buffers
-    deallocate(recv_min_a)
-    deallocate(recv_min_w)
+    if ( shelter .eqv. .true. ) then
+        deallocate(recv_min_a)
+        deallocate(recv_min_w)
+    end if
 
 end subroutine broadcast_shape
 

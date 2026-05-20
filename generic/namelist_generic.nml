@@ -5,6 +5,8 @@
     cohesion  = .false.            ! bond/no bond
     ridging   = .false.            ! plastic behavior at contact
     shelter   = .false.            ! sheltering from other particles
+    flag_diag_stress   = .false.   ! Cauchy stress accumulation
+    flag_diag_pressure = .false.   ! contact/bond pressure accumulation
     /
 
 &numerical_param_nml
@@ -39,13 +41,13 @@
     eb			 = 1d9             ! bond elastic moduli
 	lambda_rb	 = 1d0             ! width scale factor
 	lambda_lb	 = 0d0             ! lenght scale factor
-	sigmatb_crit = 1d3             ! critical tensile strenght
-	sigmacb_crit = 27.5d3          ! critical compressive strenght
-	tau_crit	 = 6.9d3           ! critical shear strenght
+	sigmacb_crit = 27.5d3          ! crit. compressive strength [Pa/m]
+	tau_crit	 = 6.9d3           ! crit. shear strenght [Pa/m]
     bond_lim     = 1d-2            ! max bond distance [m]
     dmax         = 9d-1            ! max damage
     dtd          = 1d0             ! damage timescale [s]
     dth          = 1d5             ! healing timescale [s]
+    phi_int      = 45d0            ! internal friction angle [deg]
     /
 
 &forcings_nml
@@ -56,8 +58,8 @@
     /
 
 &plates_nml
-    pfn = 5d7                      ! y force
-    pfs = 5d7                      ! x force
+    pfn = 0d0                      ! y force
+    pfs = 0d0                      ! x force
     /
 
 &input_files_nml

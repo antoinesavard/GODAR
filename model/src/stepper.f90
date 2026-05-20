@@ -34,11 +34,13 @@ subroutine stepper (tstep, restart)
     ! allocate local sheltering reduction arrays
     thread_num = omp_get_max_threads()
 
-    allocate(local_hsfa_min_thread(thread_num, n))
-    allocate(local_hsfw_min_thread(thread_num, n))
+    if ( shelter .eqv. .true. ) then
+        allocate(local_hsfa_min_thread(thread_num, n))
+        allocate(local_hsfw_min_thread(thread_num, n))
 
-    local_hsfa_min_thread = 1.0d0
-    local_hsfw_min_thread = 1.0d0
+        local_hsfa_min_thread = 1.0d0
+        local_hsfw_min_thread = 1.0d0
+    end if
 
     ! Velocity Verlet: advance positions before force computation
     ! (tree and contacts will be evaluated at x^{n+1})
@@ -58,9 +60,8 @@ subroutine stepper (tstep, restart)
     ! reset the forces and sheltering height
     call reset_forces
 
-    ! always reset shelter mins so body drag is not silently zeroed
-    ! when shelter=.false. (hsfa_min_r/hsfw_min_r still flow through
-    ! broadcast_shape's mpi_reduce_scatter and forcing()).
+    ! reset the sheltering height to the maximum value (i.e. no
+    ! sheltering) before computing the minimum value from the neighbors
     call reset_shelter
     
     ! put yourself in the referential of the ith particle
@@ -131,23 +132,23 @@ subroutine stepper (tstep, restart)
                 ! update moment on particule j by particule i due to tangent contact 
                 mc(j) = mc(j) - r(j) * fct(j,i) + mcc(j,i)
 
-                ! if ( flag_diag_pressure .eqv. .true. ) then
-                ! compute the average pressure inside particle i
-                !-------------------------------------------------------
-                !
-                !    P_i = \sum_{c} Fcn_{ij} * a_{ij} / \sum_{c} a_{ij}
-                !
-                !-------------------------------------------------------
-                ! local area
-                ac(j,i) = delt_ridge(j, i) * min(h(i), h(j))
-                ! total contact area
-                tac(i)  = tac(i) + ac(j, i)
-                ! pressure from contacts
-                pc(i)   = pc(i) - fcn(j, i) * ac(j, i)
-                ! symmetric part
-                tac(j) = tac(j) + ac(j, i)
-                pc(j)  = pc(j) - fcn(j, i) * ac(j ,i)
-                ! end if
+                if ( flag_diag_pressure .eqv. .true. ) then
+                    ! compute the average pressure inside particle i
+                    !---------------------------------------------------
+                    !
+                    ! P_i = \sum_{c} Fcn_{ij} * a_{ij} / \sum_{c} a_{ij}
+                    !
+                    !---------------------------------------------------
+                    ! local area
+                    ac(j,i) = delt_ridge(j, i) * min(h(i), h(j))
+                    ! total contact area
+                    tac(i)  = tac(i) + ac(j, i)
+                    ! pressure from contacts
+                    pc(i)   = pc(i) - fcn(j, i) * ac(j, i)
+                    ! symmetric part
+                    tac(j) = tac(j) + ac(j, i)
+                    pc(j)  = pc(j) - fcn(j, i) * ac(j ,i)
+                end if
 
             else
             
@@ -184,22 +185,22 @@ subroutine stepper (tstep, restart)
                     ! update moment on particule j by i due to bond
                     mb(j) = mb(j) + mbb(i, j)
 
-                    ! if ( flag_diag_pressure .eqv. .true. ) then
-                    ! compute the average pressure inside particle i
-                    !---------------------------------------------------
-                    !
-                    ! P_i = \sum_{c} Fbn_{ij} * a_{ij} / \sum_{c} a_{ij}
-                    !
-                    !---------------------------------------------------
-                    ! total bond area
-                    tab(i)  = tab(i) + sb(j, i)                   
-                    ! pressure from bonds
-                    pb(i)   = pb(i) - fbn(j, i) * sb(j, i)     
-                    
-                    ! symmetric part
-                    tab(j) = tab(j) + sb(j, i)
-                    pb(j)  = pb(j) - fbn(j, i) * sb(j, i)
-                    ! end if
+                    if ( flag_diag_pressure .eqv. .true. ) then
+                        ! compute the average pressure inside particle i
+                        !-----------------------------------------------
+                        !
+                        ! P_i = \sum_{c}Fbn_{ij}*a_{ij}/\sum_{c}a_{ij}
+                        !
+                        !-----------------------------------------------
+                        ! total bond area
+                        tab(i)  = tab(i) + sb(j, i)                   
+                        ! pressure from bonds
+                        pb(i)   = pb(i) - fbn(j, i) * sb(j, i)     
+                        
+                        ! symmetric part
+                        tab(j) = tab(j) + sb(j, i)
+                        pb(j)  = pb(j) - fbn(j, i) * sb(j, i)
+                    end if
 
                 end if
 
@@ -230,50 +231,32 @@ subroutine stepper (tstep, restart)
             !           Computation of diagnotics variables
             !-------------------------------------------------------
             
-            ! if ( flag_diag_stress .eqv. .true. ) then
+            if ( flag_diag_stress .eqv. .true. ) then
             ! compute the stress using cauchy stress formula (this needs to be averaged over the size of the particle)
             !-------------------------------------------------------
             !
             !    \sigma_{ij} = 1/A \sum_{c} r_j * Fcn_i
             !
             !-------------------------------------------------------
+                block
+                    double precision :: force_mag, ri_f, rj_f
+                    force_mag = sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) + &
++                                sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)
+                    ri_f = r(i) * force_mag
+                    rj_f = r(j) * force_mag
 
-            sigxx(i) = sigxx(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * cosa(j,i)
-            sigyy(i) = sigyy(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * sina(j,i)
-            sigxy(i) = sigxy(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(i) * cosa(j,i)
-            sigyx(i) = sigyx(i) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(i) * sina(j,i)
+                    sigxx(i) = sigxx(i) - ri_f * cosa(j,i) * cosa(j,i)
+                    sigyy(i) = sigyy(i) - ri_f * sina(j,i) * sina(j,i)
+                    sigxy(i) = sigxy(i) - ri_f * sina(j,i) * cosa(j,i)
+                    sigyx(i) = sigyx(i) - ri_f * cosa(j,i) * sina(j,i)
 
-            ! Newton's third law equivalent for stress
-            sigxx(j) = sigxx(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(j) * cosa(j,i)
-            sigyy(j) = sigyy(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(j) * sina(j,i)
-            sigxy(j) = sigxy(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        sina(j,i) * r(j) * cosa(j,i)
-            sigyx(j) = sigyx(j) - (                            &
-                        sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) +  &
-                        sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)) * &
-                        cosa(j,i) * r(j) * sina(j,i)
-
-            ! end if
+                    ! Newton's third law equivalent for stress
+                    sigxx(j) = sigxx(j) - rj_f * cosa(j,i) * cosa(j,i)
+                    sigyy(j) = sigyy(j) - rj_f * sina(j,i) * sina(j,i)
+                    sigxy(j) = sigxy(j) - rj_f * sina(j,i) * cosa(j,i)
+                    sigyx(j) = sigyx(j) - rj_f * cosa(j,i) * sina(j,i)
+                end block
+            end if
 
         end do
 
@@ -285,15 +268,17 @@ subroutine stepper (tstep, restart)
     !$omp end parallel
 
     ! reduce the sheltering coefficient arrays
-    do thread_id = 1, thread_num
-        do i = 1, n
-            local_hsfa_min(i) = min(local_hsfa_min(i), local_hsfa_min_thread(thread_id, i))
-            local_hsfw_min(i) = min(local_hsfw_min(i), local_hsfw_min_thread(thread_id, i))
+    if ( shelter .eqv. .true. ) then
+        do thread_id = 1, thread_num
+            do i = 1, n
+                local_hsfa_min(i) = min(local_hsfa_min(i), local_hsfa_min_thread(thread_id, i))
+                local_hsfw_min(i) = min(local_hsfw_min(i), local_hsfw_min_thread(thread_id, i))
+            end do
         end do
-    end do
 
-    deallocate(local_hsfa_min_thread)
-    deallocate(local_hsfw_min_thread)
+        deallocate(local_hsfa_min_thread)
+        deallocate(local_hsfw_min_thread)
+    end if
 
     ! broadcast the updated shape and shelter coeff.
     call broadcast_shape

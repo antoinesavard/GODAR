@@ -19,8 +19,12 @@ subroutine contact_forces (j, i)
     deltat(j,i) = -velt(j,i) * dt + deltat(j,i)
     
     ! this is the whole length of contact
-    delt_ridge(j,i) = 2 * sqrt( r(i) ** 2 - ( (dist(j,i) ** 2 - &
-                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2 ) 
+    ! clamp arg of sqrt to >=0: under -ffast-math the cancellation
+    ! r_i^2 - delta_ij^2 can flip slightly negative near deltan->0+
+    ! (i.e. nearly-touching contacts), producing NaN that cascades
+    delt_ridge(j,i) = 2 * sqrt( max( r(i) ** 2 - ( (dist(j,i) ** 2 - &
+                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2, &
+                    0d0 ) )
 
     ! relative angle
     thetarelc(j,i) = -omegarel(j,i) * dt + thetarelc(j,i)
@@ -138,7 +142,8 @@ subroutine contact_bc (i, dir1, dir2, bd)
     deltat_bc = 0d0
 
     ! this is the full contact length
-    delt_ridge_bc(i) = 2 * sqrt( r(i) ** 2 - ( r(i) - deltan_bc ) ** 2 )
+    delt_ridge_bc(i) = 2 * sqrt( max( r(i) ** 2 &
+                        - ( r(i) - deltan_bc ) ** 2, 0d0 ) )
 
     ! compression has delta_t > 0
     if (bd .eq. 1) then

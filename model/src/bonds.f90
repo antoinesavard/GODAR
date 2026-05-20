@@ -186,7 +186,7 @@ subroutine bond_forces_timoshenko (j, i)
     ! for a rectangular section
     kappa = 5d0 / 6d0
 
-    ! Incremental beam rotation (always small, never wraps)
+    ! Incremental beam rotation
     dalpha = atan2(sina(j,i)*cosa_old(j,i) - cosa(j,i)*sina_old(j,i), &
                 cosa(j,i)*cosa_old(j,i) + sina(j,i)*sina_old(j,i))
     alpha_total(j,i) = alpha_total(j,i) + dalpha
@@ -292,25 +292,40 @@ subroutine bond_breaking (j, i)
 	include "CB_bond.h"
 
 	integer, intent(in) :: i, j
-    double precision :: Pressure, Tension, Shear
-    double precision :: phi, psi
+    double precision :: psi_cohesion, psi_compression, psi
+    double precision :: mu, cohesion, pressure
+    double precision :: sigI_t, sigII_t, sigI_c, sigII_c
+    double precision :: sig_axial, sig_bend
 
-    ! critical values
-    Pressure = sigmacb_crit * hb(j,i)
-    Tension = sigmatb_crit * hb(j,i)
-    Shear = tau_crit * hb(j,i)
+    ! slope of the frictional part of the failure criterion
+    mu = sin(phi_int)
+    cohesion = tau_crit * hb(j,i)
+    pressure = sigmacb_crit * hb(j,i)
 
     ! compute stresses in the bond
-	taub(j, i) = fbt(j, i) / sb(j, i)
-	sigmab(j, i) = fbn(j, i) / sb(j, i) &
-                     + max(abs(mbb(j, i)), abs(mbb(i, j))) &
-                     * rb(j, i) / ib(j, i)
+    sig_axial = -fbn(j, i) / sb(j, i)
+    sig_bend  = max(abs(mbb(j, i)), abs(mbb(i, j))) &
+                * rb(j, i) / ib(j, i)
 
-    ! compute the failure criteria for the bond
-	phi = (taub(j, i) / Shear) ** 2d0 &
-        + ( (sigmab(j, i) + (Pressure - Tension)/2d0) / ((Pressure + Tension)/2d0) ) ** 2d0
+    ! tension-positive (sigmab>0 = tension)
+    taub(j, i) = fbt(j, i) / sb(j, i)
+	sigmacb(j, i) = sig_axial - sig_bend
+    sigmatb(j, i) = sig_axial + sig_bend
 
-    psi = min( 1d0, 1d0 / sqrt( phi ) )
+    ! sign convention: sigma>0 = tension.
+    sigI_t  =  sigmatb(j, i) / 2d0
+    sigII_t =  sqrt( sigmatb(j, i) ** 2d0 / 4d0 + taub(j, i) ** 2d0 )
+
+    ! compressive crushing cap
+    sigI_c  = sigmacb(j, i) / 2d0
+    sigII_c = sqrt( sigmacb(j, i) ** 2d0 / 4d0 + taub(j, i) ** 2d0 )
+
+    ! Mohr-Coulomb scaling factor (no tension cutoff)
+    psi_cohesion = cohesion &
+                    / ( sigII_t + mu * sigI_t + 1d-20 )
+    psi_compression = pressure &
+                    / max( sigII_c - sigI_c, 1d-20 )
+    psi = min(1d0, psi_cohesion, psi_compression)
 
     ! compute damage in the bond
     damageb(j,i) = damageb(j,i) &
