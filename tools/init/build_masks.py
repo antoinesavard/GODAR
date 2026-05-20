@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Convert NSIDC-0780 sea-ice region NetCDF masks to ASCII 0/1 grids.
+"""Convert NSIDC-0780 sea-ice region NetCDF masks to Fortran-friendly 0/1 grids.
 
 Run once from the repo root:
     python tools/init/build_masks.py
 
 Output format (per file):
     nx ny dx x_min y_max projection
-    <ny rows of nx chars; '1' = water (sea_ice_region_surface_mask in 0..18),
-     '0' = land/ice/fresh-water/disconnected/off-earth/fill>
+    <ny rows of nx whitespace-separated ints; 1 = water
+     (sea_ice_region_surface_mask in 0..18), 0 = land/ice/fresh-water/
+     disconnected/off-earth/fill>
+
+The body uses list-directed numeric tokens so Fortran can read it with
+    read(u,*) nx, ny, dx, x_min, y_max, proj
+    read(u,*) ((mask(i,j), i=1,nx), j=1,ny)
 
 Rows are emitted top-to-bottom, matching the NetCDF y[0] = highest y.
 """
@@ -20,12 +25,12 @@ MASKS_DIR = REPO / "masks"
 
 JOBS = [
     dict(nc="NSIDC-0780_SeaIceRegions_EASE2-N3.125km_v1.0.nc",
-         out="ease2.mask",
+         out="ease2.dat",
          nx=5760, ny=5760, dx=3125.0,
          x_min=-9_000_000.0, y_max=9_000_000.0,
          projection="EASE2-N"),
     dict(nc="NSIDC-0780_SeaIceRegions_PS-N3.125km_v1.0.nc",
-         out="ps.mask",
+         out="ps.dat",
          nx=2432, ny=3584, dx=3125.0,
          x_min=-3_850_000.0, y_max=5_850_000.0,
          projection="PS-N"),
@@ -54,7 +59,7 @@ def convert(job: dict) -> None:
                 f'{job["projection"]}\n'
             )
             in_data = False
-            row = bytearray()
+            row = []
             cells_done = 0
             for line in proc.stdout:
                 if not in_data:
@@ -71,12 +76,12 @@ def convert(job: dict) -> None:
                     if not tok:
                         continue
                     v = 255 if tok == "_" else int(tok)
-                    row.append(0x31 if is_water(v) else 0x30)
+                    row.append("1" if is_water(v) else "0")
                     if len(row) == nx:
-                        out.write(row.decode("ascii"))
+                        out.write(" ".join(row))
                         out.write("\n")
                         cells_done += nx
-                        del row[:]
+                        row.clear()
                 if cells_done >= total:
                     break
     finally:
