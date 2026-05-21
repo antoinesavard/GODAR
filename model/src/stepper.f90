@@ -8,6 +8,7 @@ subroutine stepper (tstep, restart)
     use dArgDynamicArray_Class, only: dArgDynamicArray
     use m_strings, only: str
     use global_kdtree
+    use mask_io, only: nx_mask
 
     implicit none
 
@@ -78,6 +79,8 @@ subroutine stepper (tstep, restart)
     !$omp do schedule(dynamic, 1)
     do i = first_iter, last_iter
 
+        if (.not. active(i)) cycle
+
         ! calculate the winds and currents applied on particle i
         call winds_currents(i)
 
@@ -93,6 +96,8 @@ subroutine stepper (tstep, restart)
             if (i .ge. j) then
                 cycle
             end if
+
+            if (.not. active(j)) cycle
 
 			! compute relative position and velocity
             call rel_pos_vel (j, i)
@@ -261,7 +266,11 @@ subroutine stepper (tstep, restart)
         end do
 
         ! verify the bondary conditions for each particle
-        call verify_bc (i)
+        if (nx_mask > 0) then
+            call verify_bc_mask (i)
+        else
+            call verify_bc (i)
+        end if
 
     end do
     !$omp end do
@@ -286,6 +295,7 @@ subroutine stepper (tstep, restart)
     !$omp parallel do
     ! compute the total forcing from winds, currents and coriolis
     do i = first_iter, last_iter
+        if (.not. active(i)) cycle
         call forcing(i)
         call coriolis(i)
     end do

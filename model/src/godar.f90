@@ -6,6 +6,7 @@ program godar
     use omp_lib
     use mpi_f08
     use mpi_counts_mod, only: init_mpi_counts
+    use mask_io, only: load_sdf
 
     implicit none
 
@@ -93,6 +94,10 @@ program godar
             call read_namelist (namelist_name)
         endif
         call ini_get (restart, expno_str_r, nt_r)
+
+        if (len_trim(mask_file) > 0) then
+            call load_sdf(trim(mask_file))
+        end if
 
         call clear_posts (expno_str)
         

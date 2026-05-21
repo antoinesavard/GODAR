@@ -63,6 +63,9 @@
                 ay_nm1      (n),    & ! y acceleration at previous step
                 atheta_nm1  (n)       ! angular accel  at previous step
 
+    logical ::                      & ! activity flag
+                active      (n)       ! .true. while particle is in-grid
+
 
     common/variables/        & ! particle variables
                 x       ,    & ! x positions                         [m]
@@ -129,3 +132,6 @@
                 ax_nm1   ,   & ! x acceleration at n-1           [m/s^2]
                 ay_nm1   ,   & ! y acceleration at n-1           [m/s^2]
                 atheta_nm1     ! angular accel  at n-1         [rad/s^2]
+
+    common/active_var/       &
+                active         ! activity flag

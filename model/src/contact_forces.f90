@@ -249,6 +249,79 @@ subroutine contact_bc (i, dir1, dir2, bd)
 end subroutine contact_bc
 
 
+subroutine contact_bc_mask (i, cosa_bc, sina_bc, deltan_bc)
+
+    ! SDF-based variant of contact_bc: caller supplies the wall normal
+    ! (cosa_bc, sina_bc) and penetration deltan_bc. Single tangential
+    ! history slot per particle, reusing deltat_bc1 and theta_bc1.
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_options.h"
+
+    integer, intent(in) :: i
+    double precision, intent(in) :: cosa_bc, sina_bc, deltan_bc
+
+    double precision :: fit
+    double precision :: knc, ktc, gamn, gamt
+    double precision :: krc, gamr
+    double precision :: mrolling_bc
+    double precision :: veln_bc, velt_bc
+
+    veln_bc = -u(i) * cosa_bc - v(i) * sina_bc
+    velt_bc =  u(i) * sina_bc - v(i) * cosa_bc - omega(i) * r(i)
+
+    delt_ridge_bc(i) = 2 * sqrt( max( r(i) ** 2 &
+                        - ( r(i) - deltan_bc ) ** 2, 0d0 ) )
+
+    deltat_bc1(i) = -velt_bc * dt + deltat_bc1(i)
+    theta_bc1(i)  = -omega(i) * dt + theta_bc1(i)
+
+    knc    = pi * ec * h(i)  *                  &
+                fit( deltan_bc * r(i) /         &
+                ( 1d0 * 2d0 * h(i) ** 2 ) )
+    ktc    = 6d0 * gc / ec * knc
+
+    krc    = knc * delt_ridge_bc(i) ** 2 / 12
+
+    gamn   = 2d0 * beta * sqrt( knc * mass(i) / 1d0 )
+    gamt   = 2d0 * beta * sqrt( 2d0/3d0 * ktc * mass(i) / 1d0 )
+    gamr   = gamn * delt_ridge_bc(i) ** 2 / 12
+
+    fn_bc(i) = max(knc * deltan_bc - gamn * veln_bc, 0d0)
+    ft_bc(i) = ktc * deltat_bc1(i) - gamt * velt_bc
+
+    if ( ridging .eqv. .true. ) then
+        if ( sigmanc_crit * h(i) .le. fn_bc(i) / delt_ridge_bc(i) &
+        / h(i) ) then
+
+            call plastic_contact_bc (i, veln_bc, velt_bc, deltan_bc, &
+                                        deltat_bc1(i), ktc, krc, gamn,&
+                                        gamt, gamr)
+
+        end if
+    end if
+
+    call coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc1(i))
+
+    mrolling_bc = krc * theta_bc1(i) - gamr * omega(i)
+
+    if ( abs( theta_bc1(i) ) > 2 * abs(fn_bc(i)) / knc / &
+        delt_ridge_bc(i) ) then
+
+        mrolling_bc = 0d0
+
+    end if
+
+    mc_bc(i) = mrolling_bc
+
+end subroutine contact_bc_mask
+
+
 double precision function fit (xi)
 
     implicit none

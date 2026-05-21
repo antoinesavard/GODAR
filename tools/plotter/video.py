@@ -1,24 +1,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
+from matplotlib.colors import Normalize, ListedColormap
 from matplotlib.animation import FuncAnimation
+from matplotlib.transforms import Affine2D
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import cmocean as cm
 import tools.utils.files as tuf
 import os
 import sys
+import pathlib
 import sparse
 
 # ----------------------------------------------------------------------
 # figures
-xaxis_limits = 5  # in km
-xoffset = 0
-yaxis_limits = 2  # in km
+xaxis_limits = 140  # in km
+xoffset = 20
+yaxis_limits = 50  # in km
 yoffset = 0
-trans = True  # transparent background or not
+trans = False  # transparent background or not
 clean = False  # removes the green/red bars
-bonds_bool = True  # plots the bonds as rectangles between the disks
+bonds_bool = False  # plots the bonds as rectangles between the disks
 bonds_broken = False  # bonds are plotted as red dots in the middle
 
 # possible plots (all mutually exclusive)
@@ -32,14 +34,18 @@ stress_invariant = 2  # J1 or J2 invariant
 video = True
 image = False
 
+# mask background overlay
+mask_overlay = True  # draw the mask under the particles
+mask_overlay_file = "ps.dat"  # filename inside masks/
+
 # coming from sim
-dt = 1e-3  # tstep size in sim
+dt = 1e-1  # tstep size in sim
 comp = 1e5  # compression in sim
 
 # miscalleneous
 output_dir = "../output/"
 sf = 1e3  # conversion ratio m <-> km
-compression = 1  # data compression of videos
+compression = 5  # data compression of videos
 start = 0  # starting frame
 stop = None  # stopping frame
 cbar_horizontal_placement = (
@@ -205,7 +211,7 @@ if bond_ratio_plot:
 
 if thickness:
     cmap = plt.get_cmap("cmo.dense")
-    h = np.where(h > 2, 2, h)
+    h = np.where(h > 5, 5, h)
     h_cm, mapper = map_to_color_thickness(h, cmap=cmap)
 
 if stress:
@@ -239,7 +245,7 @@ if stress:
     dxy = tsigxy
     dyx = tsigyx
 
-    j1 = (dxx + dyy) / 2
+    j1 = (tsigxx + tsigyy) / 2
     j2 = np.sqrt((dxx**2 + dyy**2 + 2 * dxy**2) / 2)
     j1_cm, mapper = map_to_color_stress(j1)
     j2_cm, mapper = map_to_color_stress(j2)
@@ -278,6 +284,49 @@ def init_lists():
     broken_pairs = []
     num_bonds = np.zeros(n)
     return disks, radii, bonds, broken_pairs, num_bonds
+
+
+_MASKS_DIR = pathlib.Path(__file__).resolve().parents[2] / "masks"
+
+
+def apply_mask_overlay(ax):
+    if not mask_overlay:
+        return
+    path = _MASKS_DIR / mask_overlay_file
+    with open(path) as f:
+        h = f.readline().split()
+        nx, ny = int(h[0]), int(h[1])
+        dx = float(h[2])
+        x_min = float(h[3])
+        y_max = float(h[4])
+        grid = np.loadtxt(f, dtype=np.uint8).reshape(ny, nx)
+    extent = (
+        x_min / sf,
+        (x_min + nx * dx) / sf,
+        (y_max - ny * dx) / sf,
+        y_max / sf,
+    )
+    cmap = ListedColormap(["#d2b48c", "#cfe5f7"])  # land=tan, water=light blue
+    ax.imshow(
+        grid,
+        origin="upper",
+        extent=extent,
+        cmap=cmap,
+        interpolation="nearest",
+        vmin=0,
+        vmax=1,
+        zorder=0,
+    )
+    ax.set_xlim(extent[0], extent[1])
+    ax.set_ylim(extent[2], extent[3])
+
+
+def fit_figure_to_axes(fig, ax, base_width=8):
+    axes = ax if isinstance(ax, (list, tuple)) else [ax]
+    xmin, xmax = axes[0].get_xlim()
+    ymin, ymax = axes[0].get_ylim()
+    aspect = abs((ymax - ymin) / (xmax - xmin))
+    fig.set_size_inches(base_width, len(axes) * base_width * aspect)
 
 
 def init_figure(
@@ -385,6 +434,9 @@ if video:
 
     # colors
     ax.set_facecolor("xkcd:baby blue")
+
+    apply_mask_overlay(ax)
+    fit_figure_to_axes(fig, ax)
     if bond_num_plot:
         ax.set_facecolor("white")
         cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
@@ -393,7 +445,11 @@ if video:
             labels=np.arange(0, np.max(bond_num) + 1, dtype=int),
         )
         cb.set_label(
-            "Number of\nbonds", rotation=0, multialignment="left", ha="left", va="top"
+            "Number of\nbonds",
+            rotation=0,
+            multialignment="left",
+            ha="left",
+            va="top",
         )
     elif bond_ratio_plot:
         ax.set_facecolor("white")
@@ -424,7 +480,11 @@ if video:
         ax.set_facecolor("white")
         cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
         cb.set_label(
-            "$J_1$ [Pa]", rotation=0, multialignment="left", ha="left", va="top"
+            "$J_1$ [Pa]",
+            rotation=0,
+            multialignment="left",
+            ha="left",
+            va="top",
         )
     elif bonds_broken:
         xrange = ax.get_xlim()[1] - ax.get_xlim()[0]
@@ -437,7 +497,9 @@ if video:
         )
 
     # keep track of time in the figure
-    time = fig.text(0, 1.02, "", transform=ax.transAxes, horizontalalignment="left")
+    time = fig.text(
+        0, 1.02, "", transform=ax.transAxes, horizontalalignment="left"
+    )
 
 # --------------------------------------------
 # image initialization
@@ -471,12 +533,20 @@ elif image:
     ax[0].set_facecolor("xkcd:baby blue")
     ax[1].set_facecolor("xkcd:baby blue")
 
+    apply_mask_overlay(ax[0])
+    apply_mask_overlay(ax[1])
+    fit_figure_to_axes(fig, ax)
+
     if bond_num_plot:
         ax[0].set_facecolor("white")
         ax[1].set_facecolor("white")
-        cb = fig.colorbar(mapper, cax=cax, orientation="vertical", use_gridspec=True)
+        cb = fig.colorbar(
+            mapper, cax=cax, orientation="vertical", use_gridspec=True
+        )
         cb.set_ticks(
-            ticks=np.arange(0, np.max(bond_num) + 1, (np.max(bond_num) + 1) // 9),
+            ticks=np.arange(
+                0, np.max(bond_num) + 1, (np.max(bond_num) + 1) // 9
+            ),
             labels=np.arange(
                 0, np.max(bond_num) + 1, (np.max(bond_num) + 1) // 9, dtype=int
             ),
@@ -493,7 +563,9 @@ elif image:
     elif bond_ratio_plot:
         ax[0].set_facecolor("white")
         ax[1].set_facecolor("white")
-        cb = fig.colorbar(mapper, cax=cax, orientation="vertical", use_gridspec=True)
+        cb = fig.colorbar(
+            mapper, cax=cax, orientation="vertical", use_gridspec=True
+        )
         # cb.set_ticks(
         #     ticks=np.arange(0, np.max(bond_ratio) + 1, (np.max(bond_ratio) + 1)),
         #     labels=np.arange(
@@ -512,7 +584,9 @@ elif image:
     elif thickness:
         ax[0].set_facecolor("white")
         ax[1].set_facecolor("white")
-        cb = fig.colorbar(mapper, cax=cax, orientation="vertical", extend="max")
+        cb = fig.colorbar(
+            mapper, cax=cax, orientation="vertical", extend="max"
+        )
         cb.set_label(
             "Thickness [m]",
             rotation=90,
@@ -545,8 +619,12 @@ elif image:
         )
 
     # keep track of time in the figure
-    time0 = fig.text(0, 1.02, "", transform=ax[0].transAxes, horizontalalignment="left")
-    time1 = fig.text(0, 1.02, "", transform=ax[1].transAxes, horizontalalignment="left")
+    time0 = fig.text(
+        0, 1.02, "", transform=ax[0].transAxes, horizontalalignment="left"
+    )
+    time1 = fig.text(
+        0, 1.02, "", transform=ax[1].transAxes, horizontalalignment="left"
+    )
 
 # --------------------------------------
 # functions for the animation/imagination
@@ -621,16 +699,21 @@ def animate(k, time):
                 if b[k, i, j] is False:
                     bond.set_visible(False)
                 else:
-                    pb = np.array(
-                        [
-                            x[k, i] + r[k, i] * np.sin(np.deg2rad(angleb[k, i, j])),
-                            y[k, i] - r[k, i] * np.cos(np.deg2rad(angleb[k, i, j])),
-                        ]
-                    )
-                    bond.xy = pb
-                    bond.angle = angleb[k, i, j] * b[k, i, j]
-                    bond.set_width(lb[k, i, j] * b[k, i, j])
-                    bond.set_height(2 * rb[k, i, j] * b[k, i, j])
+                    theta = np.deg2rad(angleb[k, i, j])
+                    width = lb[k, i, j]
+                    height = 2 * rb[k, i, j]
+                    # unit vector from i -> j
+                    ux = np.cos(theta)
+                    uy = np.sin(theta)
+
+                    # contact point
+                    px = x[k, i] + height * uy / 2
+                    py = y[k, i] - height * ux / 2
+
+                    bond.angle = angleb[k, i, j]
+                    bond.set_width(width)
+                    bond.set_height(height)
+                    bond.xy = (px, py)
 
         elif bonds_broken:
             # Detect bond breaking
@@ -668,7 +751,9 @@ def animate(k, time):
                     broken_scatter.set_offsets(np.empty((0, 2)))
 
     time.set_text(
-        r"$t = {}\>$hour".format(round(dt * comp * compression * (k + 1) / 60 / 60))
+        r"$t = {}\>$hour".format(
+            round(dt * comp * compression * (k + 1) / 60 / 60)
+        )
     )
 
     if k == 0 or k == r.shape[0] - 1:
@@ -767,7 +852,9 @@ def imaginate(
         radii.append(rad)
 
     time.set_text(
-        r"$t = {}\>$hour".format(round(dt * comp * compression * (k + 1) / 60 / 60))
+        r"$t = {}\>$hour".format(
+            round(dt * comp * compression * (k + 1) / 60 / 60)
+        )
     )
 
     return disks, radii, bonds

@@ -8,6 +8,7 @@ mkdir jobs
 mkdir plots
 mkdir plots/anim
 mkdir plots/plot
+mkdir plots/plot/packing
 
 #cp generic/SConstruct_generic SConstruct
 cp generic/namelist_generic.nml namelist/namelist.nml

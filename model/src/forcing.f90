@@ -188,6 +188,8 @@ end subroutine sheltering
 
 subroutine coriolis (i)
 
+    use mask_io, only: nx_mask, lat_at
+
 	implicit none
 
     include "parameter.h"
@@ -195,13 +197,21 @@ subroutine coriolis (i)
     include "CB_const.h"
 
 	integer, intent(in) :: i
-    double precision :: omega_earth
+    double precision :: omega_earth, lat_i
 
     omega_earth = 7.2921d-5
 
-	fcorx(i)  = mass(i) * 2 * omega_earth * sin(lat) * v(i)
+    if (nx_mask > 0) then
+        lat_i = lat_at(x(i), y(i))
+        ! use namelist lat
+        if (lat_i < -1.0d10) lat_i = lat
+    else
+        lat_i = lat
+    end if
 
-    fcory(i)  = - mass(i) * 2 * omega_earth * sin(lat) * u(i)
+	fcorx(i)  = mass(i) * 2 * omega_earth * sin(lat_i) * v(i)
+
+    fcory(i)  = -mass(i) * 2 * omega_earth * sin(lat_i) * u(i)
 
 end subroutine coriolis
 

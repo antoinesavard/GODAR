@@ -113,6 +113,7 @@ subroutine get_default
     Hfile = "files/h.dat"
     Tfile = "files/theta.dat"
     Ofile = "files/omega.dat"
+    mask_file = ""
 
 end subroutine get_default
 
@@ -159,7 +160,7 @@ subroutine read_namelist (namelist_name)
         pfn, pfs
 
     namelist /input_files_nml/ &
-        Xfile, Yfile, Rfile, Hfile, Tfile, Ofile
+        Xfile, Yfile, Rfile, Hfile, Tfile, Ofile, mask_file
     !-------------------------------------------------------------------
 
     filename = 'namelist/' // trim(adjustl(namelist_name))

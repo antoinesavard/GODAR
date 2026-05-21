@@ -176,6 +176,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
     end if
 
     do i = 1, n
+        ! activity flag
+        active(i) = .true.
         ! initial forces
         tfx(i)    =  0d0
         tfy(i)    =  0d0

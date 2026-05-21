@@ -3,6 +3,8 @@ subroutine broadcasting_ini (thread_requested, restart)
 ! to all the other mpi ranks
 
     use mpi_f08
+    use mask_io, only: nx_mask, ny_mask, dx_mask, x_origin, y_origin, &
+                       Lx, Ly, mask_proj, sdf
 
     implicit none
 
@@ -43,6 +45,8 @@ subroutine broadcasting_ini (thread_requested, restart)
     call mpi_bcast(omega, n, mpi_double_precision,      &
                     master, mpi_comm_world, ierr)
     call mpi_bcast(bond, n * n, mpi_integer,            &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(active, n, mpi_logical,              &
                     master, mpi_comm_world, ierr)
 
     !-------------------------------------------------------------------
@@ -221,7 +225,36 @@ subroutine broadcasting_ini (thread_requested, restart)
     call mpi_bcast(gc, 1, mpi_double_precision,             &
                     master, mpi_comm_world, ierr)   
     call mpi_bcast(beta, 1, mpi_double_precision,           &
-                    master, mpi_comm_world, ierr)   
+                    master, mpi_comm_world, ierr)
+
+    !-------------------------------------------------------------------
+    ! mask / signed-distance-field broadcast
+    !-------------------------------------------------------------------
+    call mpi_bcast(nx_mask, 1, mpi_integer,                 &
+                    master, mpi_comm_world, ierr)
+    call mpi_bcast(ny_mask, 1, mpi_integer,                 &
+                    master, mpi_comm_world, ierr)
+
+    if (nx_mask > 0 .and. ny_mask > 0) then
+        call mpi_bcast(dx_mask, 1, mpi_double_precision,    &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(x_origin, 1, mpi_double_precision,   &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(y_origin, 1, mpi_double_precision,   &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(Lx, 1, mpi_double_precision,         &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(Ly, 1, mpi_double_precision,         &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(mask_proj, 8, mpi_character,         &
+                        master, mpi_comm_world, ierr)
+
+        if (.not. allocated(sdf)) then
+            allocate(sdf(nx_mask, ny_mask))
+        end if
+        call mpi_bcast(sdf, nx_mask * ny_mask, mpi_real,    &
+                        master, mpi_comm_world, ierr)
+    end if
 
 end subroutine broadcasting_ini
 
@@ -370,7 +403,12 @@ subroutine broadcast_total_forces
     call mpi_allreduce( &
     tp_r, tp, n, mpi_double_precision, &
     mpi_sum, mpi_comm_world, ierr)
-    
+
+    ! sync activity flag
+    call mpi_allreduce( &
+    MPI_IN_PLACE, active, n, mpi_logical, &
+    mpi_land, mpi_comm_world, ierr)
+
 
 end subroutine broadcast_total_forces
 

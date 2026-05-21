@@ -97,6 +97,101 @@ subroutine verify_bc (i)
 end subroutine verify_bc
 
 
+subroutine verify_bc_mask (i)
+
+    use mask_io, only: sdf_at, sdf_grad, sdf_outside
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_bond.h"
+    include "CB_diagnostics.h"
+
+    integer, intent(in) :: i
+
+    double precision :: d, gx, gy, gnorm
+    double precision :: cosa_bc, sina_bc, deltan_bc
+
+    double precision, parameter :: gnorm_floor = 1d-3
+    double precision, parameter :: outside_thr = 0.5d0 * sdf_outside
+
+    if (.not. active(i)) return
+
+    d = sdf_at(x(i), y(i))
+
+    ! open-boundary exit: particle left the grid -> tag inactive,
+    ! break all bonds involving i
+    if (d > outside_thr) then
+        active(i) = .false.
+        bond(:, i) = 0
+        bond(i, :) = 0
+        call reset_boundary (i, 0)
+        return
+    end if
+
+    if (d >= r(i)) then
+        call reset_boundary (i, 0)
+        return
+    end if
+
+    call sdf_grad(x(i), y(i), gx, gy)
+    gnorm = sqrt(gx * gx + gy * gy)
+
+    ! medial axis: gradient ill-defined; skip this step
+    if (gnorm < gnorm_floor) then
+        call reset_boundary (i, 0)
+        return
+    end if
+
+    ! check_wall_mask / contact_bc_mask expect the normal pointing from
+    ! the particle toward the wall; sdf gradient points the other way
+    cosa_bc   = -gx / gnorm
+    sina_bc   = -gy / gnorm
+    deltan_bc = r(i) - d
+
+    call check_wall_mask (i, cosa_bc, sina_bc, deltan_bc)
+
+end subroutine verify_bc_mask
+
+
+subroutine check_wall_mask (i, cosa_bc, sina_bc, deltan_bc)
+
+    implicit none
+
+    include "parameter.h"
+    include "CB_variables.h"
+    include "CB_const.h"
+    include "CB_diagnostics.h"
+
+    integer, intent(in) :: i
+    double precision, intent(in) :: cosa_bc, sina_bc, deltan_bc
+
+    call contact_bc_mask (i, cosa_bc, sina_bc, deltan_bc)
+
+    fx_bc(i) = fx_bc(i) - fn_bc(i) * cosa_bc +    &
+                          fr_bc(i) * sina_bc
+    fy_bc(i) = fy_bc(i) - fn_bc(i) * sina_bc -    &
+                          fr_bc(i) * cosa_bc
+
+    m_bc(i) = m_bc(i) - mc_bc(i) - r(i) * ft_bc(i)
+
+    sigxx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * cosa_bc ** 2
+    sigyy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * sina_bc ** 2
+    sigxy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * cosa_bc * sina_bc
+    sigyx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
+                    * sina_bc * cosa_bc
+
+    ta_bc(i) = ta_bc(i) + delt_ridge_bc(i) * h(i)
+    p_bc(i)  = p_bc(i)  - fn_bc(i) * delt_ridge_bc(i) * h(i)
+
+end subroutine check_wall_mask
+
+
 subroutine check_wall(i, dir1, dir2, bd)
 
     implicit none
