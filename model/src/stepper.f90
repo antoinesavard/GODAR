@@ -246,7 +246,7 @@ subroutine stepper (tstep, restart)
                 block
                     double precision :: force_mag, ri_f, rj_f
                     force_mag = sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) + &
-+                                sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)
+                                + sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)
                     ri_f = r(i) * force_mag
                     rj_f = r(j) * force_mag
 

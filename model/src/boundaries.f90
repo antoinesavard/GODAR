@@ -121,7 +121,7 @@ subroutine verify_bc_mask (i)
 
     d = sdf_at(x(i), y(i))
 
-    ! open-boundary exit: particle left the grid -> tag inactive,
+    ! open-boundary exit: particle left domain -> tag inactive,
     ! break all bonds involving i
     if (d > outside_thr) then
         active(i) = .false.
@@ -139,14 +139,14 @@ subroutine verify_bc_mask (i)
     call sdf_grad(x(i), y(i), gx, gy)
     gnorm = sqrt(gx * gx + gy * gy)
 
-    ! medial axis: gradient ill-defined; skip this step
+    ! medial axis: gradient is ill-defined, skip this step
     if (gnorm < gnorm_floor) then
         call reset_boundary (i, 0)
         return
     end if
 
-    ! check_wall_mask / contact_bc_mask expect the normal pointing from
-    ! the particle toward the wall; sdf gradient points the other way
+    ! check_wall_mask/contact_bc_mask expect the normal pointing from
+    ! the particle toward the wall, sdf gradient points the other way
     cosa_bc   = -gx / gnorm
     sina_bc   = -gy / gnorm
     deltan_bc = r(i) - d
@@ -164,6 +164,7 @@ subroutine check_wall_mask (i, cosa_bc, sina_bc, deltan_bc)
     include "CB_variables.h"
     include "CB_const.h"
     include "CB_diagnostics.h"
+    include "CB_options.h"
 
     integer, intent(in) :: i
     double precision, intent(in) :: cosa_bc, sina_bc, deltan_bc
@@ -177,17 +178,40 @@ subroutine check_wall_mask (i, cosa_bc, sina_bc, deltan_bc)
 
     m_bc(i) = m_bc(i) - mc_bc(i) - r(i) * ft_bc(i)
 
-    sigxx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * cosa_bc ** 2
-    sigyy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * sina_bc ** 2
-    sigxy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * cosa_bc * sina_bc
-    sigyx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * sina_bc * cosa_bc
+    if ( flag_diag_stress .eqv. .true. ) then
+    ! compute the stress using cauchy stress formula due to 
+    ! the boundaries, always negative, off diag are zero
+    !-------------------------------------------------------
+    !
+    !    \sigma_{ij} = 1/A \sum_{c} r_j * Fcn_i
+    !
+    !-------------------------------------------------------
+        block
+            double precision :: force_mag, ri_f
+            force_mag = sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2)
+            ri_f = r(i) * force_mag
 
-    ta_bc(i) = ta_bc(i) + delt_ridge_bc(i) * h(i)
-    p_bc(i)  = p_bc(i)  - fn_bc(i) * delt_ridge_bc(i) * h(i)
+            sigxx_bc(i) = -ri_f * cosa_bc ** 2
+            sigyy_bc(i) = -ri_f * sina_bc ** 2
+            sigxy_bc(i) = -ri_f * cosa_bc * sina_bc
+            sigyx_bc(i) = -ri_f * sina_bc * cosa_bc
+        end block
+    end if
+
+
+    if ( flag_diag_pressure .eqv. .true. ) then
+    ! compute the average pressure inside particle i
+    !-----------------------------------------------
+    !
+    ! P_i = \sum_{c}Fbn_{ij}*a_{ij}/\sum_{c}a_{ij}
+    !
+    !-----------------------------------------------
+        ! total contact area
+        ta_bc(i) = ta_bc(i) + delt_ridge_bc(i) * h(i)
+
+        ! pressure from contacts and bonds
+        p_bc(i) = p_bc(i) - fn_bc(i) * delt_ridge_bc(i) * h(i)
+    end if
 
 end subroutine check_wall_mask
 
@@ -200,6 +224,7 @@ subroutine check_wall(i, dir1, dir2, bd)
     include "CB_variables.h"
     include "CB_const.h"
     include "CB_diagnostics.h"
+    include "CB_options.h"
 
     integer, intent(in) :: i, dir1, dir2, bd
 
@@ -220,23 +245,39 @@ subroutine check_wall(i, dir1, dir2, bd)
     ! update the moment applied by the boundaries on each particle
     m_bc(i) = m_bc(i) - mc_bc(i) - r(i) * ft_bc(i)
 
-    ! compute the stress using cauchy stress formula due to the boundaries, always negative
-    ! off diag are always 0
-    sigxx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * cosa_bc ** 2
-    sigyy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * sina_bc ** 2
-    sigxy_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * cosa_bc * sina_bc
-    sigyx_bc(i) = -sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2) * r(i) &
-                    * sina_bc * cosa_bc
+    if ( flag_diag_stress .eqv. .true. ) then
+    ! compute the stress using cauchy stress formula due to 
+    ! the boundaries, always negative, off diag are zero
+    !-------------------------------------------------------
+    !
+    !    \sigma_{ij} = 1/A \sum_{c} r_j * Fcn_i
+    !
+    !-------------------------------------------------------
+        block
+            double precision :: force_mag, ri_f
+            force_mag = sqrt(fn_bc(i) ** 2 + ft_bc(i) ** 2)
+            ri_f = r(i) * force_mag
 
-    ! compute the pressure
-    ! total contact area
-    ta_bc(i) = ta_bc(i) + delt_ridge_bc(i) * h(i)
-    
-    ! pressure from contacts and bonds
-    p_bc(i) = p_bc(i) - fn_bc(i) * delt_ridge_bc(i) * h(i)
+            sigxx_bc(i) = -ri_f * cosa_bc ** 2
+            sigyy_bc(i) = -ri_f * sina_bc ** 2
+            sigxy_bc(i) = -ri_f * cosa_bc * sina_bc
+            sigyx_bc(i) = -ri_f * sina_bc * cosa_bc
+        end block
+    end if
+
+    if ( flag_diag_pressure .eqv. .true. ) then
+    ! compute the average pressure inside particle i
+    !-----------------------------------------------
+    !
+    ! P_i = \sum_{c}Fbn_{ij}*a_{ij}/\sum_{c}a_{ij}
+    !
+    !-----------------------------------------------
+        ! total contact area
+        ta_bc(i) = ta_bc(i) + delt_ridge_bc(i) * h(i)
+
+        ! pressure from contacts and bonds
+        p_bc(i) = p_bc(i) - fn_bc(i) * delt_ridge_bc(i) * h(i)
+    end if
 
 end subroutine check_wall
 
