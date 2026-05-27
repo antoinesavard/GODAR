@@ -19,35 +19,38 @@ xoffset = 20
 yaxis_limits = 50  # in km
 yoffset = 0
 trans = False  # transparent background or not
-clean = False  # removes the green/red bars
+clean = True  # removes the green/red bars
 bonds_bool = False  # plots the bonds as rectangles between the disks
-bonds_broken = False  # bonds are plotted as red dots in the middle
+bonds_broken = True  # bonds are plotted as red dots in the middle
+decay_frames = 1000  # number of frames a red dot stays visible
+breaks_min_rel_vel = 0.02  # shows breaks where velocity gradient at break frame exceeds this (km/frame)
+breaks_track_midpoint = True  # False: dots frozen at break location
 
 # possible plots (all mutually exclusive)
 bond_num_plot = False  # plots number of bonds per particle
 bond_ratio_plot = False  # plots the ratio of fractured bonds per particle, weighted by the size of the particle
-thickness = False  # plots thickness fields
+thickness = True  # plots thickness fields
 stress = False  # plots the stress as facecolor rather than just white
-stress_invariant = 2  # J1 or J2 invariant
+stress_invariant = 10  # J1 or J2 invariant
 
 # what you want to produce
 video = True
 image = False
 
-# mask background overlay
-mask_overlay = True  # draw the mask under the particles
-mask_overlay_file = "ps.dat"  # filename inside masks/
+# mask background overlay, overides the axis limits
+mask_overlay = False  # draw the mask under the particles
+mask_overlay_file = "channel.dat"  # filename inside masks/
 
 # coming from sim
-dt = 1e-1  # tstep size in sim
-comp = 1e5  # compression in sim
+dt = 1e-2  # tstep size in sim
+comp = 5e4  # compression in sim
 
 # miscalleneous
-output_dir = "../output/"
+output_dir = "../output/BIG_SIM_20260518/"
 sf = 1e3  # conversion ratio m <-> km
-compression = 5  # data compression of videos
+compression = 1  # data compression of videos
 start = 0  # starting frame
-stop = None  # stopping frame
+stop = 43  # stopping frame
 cbar_horizontal_placement = (
     -0.01
 )  # horizontal placement of the colorbar in the image, in fraction of the axis width
@@ -135,6 +138,107 @@ coords = b.coords  # shape (3, nnz)
 t_idx = coords[0]
 i_idx = coords[1]
 j_idx = coords[2]
+
+# --------------------------------------
+# precompute broken-bond events (once)
+# --------------------------------------
+# For each frame k >= 1, find pairs present at k-1 but absent at k, and
+# freeze the (px, py) midpoint at the moment of break.
+breaks_k = np.empty(0, dtype=np.int32)
+breaks_px = np.empty(0)
+breaks_py = np.empty(0)
+breaks_rel_vel = np.empty(0)
+breaks_i = np.empty(0, dtype=np.int64)
+breaks_j = np.empty(0, dtype=np.int64)
+if bonds_broken:
+    print("Precomputing broken-bond events...")
+    order = np.argsort(coords[0], kind="stable")
+    sc = coords[:, order]
+    T_frames = b.shape[0]
+    frame_starts = np.searchsorted(sc[0], np.arange(T_frames + 1))
+
+    bk_list, bpx_list, bpy_list, brv_list = [], [], [], []
+    bi_list, bj_list = [], []
+    prev_set = set(
+        zip(
+            sc[1, : frame_starts[1]].tolist(),
+            sc[2, : frame_starts[1]].tolist(),
+        )
+    )
+    for k in range(1, T_frames):
+        s0, s1 = frame_starts[k], frame_starts[k + 1]
+        cur_set = set(zip(sc[1, s0:s1].tolist(), sc[2, s0:s1].tolist()))
+        broken = prev_set - cur_set
+        if broken:
+            ij = np.array(list(broken))
+            ii, jj = ij[:, 0], ij[:, 1]
+            r_i = r[k, ii]
+            r_j = r[k, jj]
+            dx = x[k, jj] - x[k, ii]
+            dy = y[k, jj] - y[k, ii]
+            px = x[k, ii] + r_i / (r_i + r_j) * dx
+            py = y[k, ii] + r_i / (r_i + r_j) * dy
+            # Long-window velocity gradient: average |v_j - v_i| from the break
+            # frame to the end of the simulation. We measure the change in
+            # separation vector between frame k and the final frame, divided by
+            # the elapsed frame count. Sustained shear/divergence scores high;
+            # jitter that reverses scores low.
+            k_end = T_frames - 1
+            duration = k_end - k
+            if duration > 0:
+                sep_dx_end = x[k_end, jj] - x[k_end, ii]
+                sep_dy_end = y[k_end, jj] - y[k_end, ii]
+                sep_dx_k = dx  # x[k, jj] - x[k, ii], already computed above
+                sep_dy_k = dy
+                rel_vel = (
+                    np.sqrt(
+                        (sep_dx_end - sep_dx_k) ** 2
+                        + (sep_dy_end - sep_dy_k) ** 2
+                    )
+                    / duration
+                )
+            else:
+                rel_vel = np.zeros(len(broken))
+            bk_list.append(np.full(len(broken), k, dtype=np.int32))
+            bpx_list.append(px)
+            bpy_list.append(py)
+            brv_list.append(rel_vel)
+            bi_list.append(ii.astype(np.int64))
+            bj_list.append(jj.astype(np.int64))
+        prev_set = cur_set
+
+    if bk_list:
+        breaks_k = np.concatenate(bk_list)
+        breaks_px = np.concatenate(bpx_list)
+        breaks_py = np.concatenate(bpy_list)
+        breaks_rel_vel = np.concatenate(brv_list)
+        breaks_i = np.concatenate(bi_list)
+        breaks_j = np.concatenate(bj_list)
+    print(
+        "  {} bond-break events precomputed across {} frames.".format(
+            breaks_k.size, T_frames
+        )
+    )
+    if breaks_rel_vel.size > 0:
+        p25, p50, p75, p90, p95, p99 = np.percentile(
+            breaks_rel_vel, [25, 50, 75, 90, 95, 99]
+        )
+        print(
+            "  |Δv| percentiles (km/frame): "
+            "p25={:.3g} p50={:.3g} p75={:.3g} p90={:.3g} p95={:.3g} p99={:.3g}".format(
+                p25, p50, p75, p90, p95, p99
+            )
+        )
+        if breaks_min_rel_vel > 0:
+            kept = int(np.sum(breaks_rel_vel >= breaks_min_rel_vel))
+            print(
+                "  Threshold breaks_min_rel_vel={:g}: keeping {}/{} breaks ({:.1f}%).".format(
+                    breaks_min_rel_vel,
+                    kept,
+                    breaks_k.size,
+                    100.0 * kept / breaks_k.size,
+                )
+            )
 
 # --------------------------------------
 # functions for colors
@@ -286,6 +390,42 @@ def init_lists():
     return disks, radii, bonds, broken_pairs, num_bonds
 
 
+def update_broken_dots(scatter, k):
+    """
+    Show broken-bond dots whose break frame falls within the decay window ending
+    at frame k, AND whose pair-relative velocity exceeds breaks_min_rel_vel.
+    Uses the precomputed (breaks_k, breaks_px, breaks_py, breaks_rel_vel).
+    """
+    if breaks_k.size == 0:
+        scatter.set_offsets(np.empty((0, 2)))
+        return
+    keep = (
+        (breaks_k > k - decay_frames)
+        & (breaks_k <= k)
+        & (breaks_rel_vel >= breaks_min_rel_vel)
+    )
+    if not np.any(keep):
+        scatter.set_offsets(np.empty((0, 2)))
+        return
+    if breaks_track_midpoint and breaks_i.size > 0:
+        ii = breaks_i[keep]
+        jj = breaks_j[keep]
+        r_i = r[k, ii]
+        r_j = r[k, jj]
+        live_dx = x[k, jj] - x[k, ii]
+        live_dy = y[k, jj] - y[k, ii]
+        live_px = x[k, ii] + r_i / (r_i + r_j) * live_dx
+        live_py = y[k, ii] + r_i / (r_i + r_j) * live_dy
+        scatter.set_offsets(np.c_[live_px, live_py])
+    else:
+        scatter.set_offsets(np.c_[breaks_px[keep], breaks_py[keep]])
+    if decay_frames > 1:
+        age = (k - breaks_k[keep]) / max(decay_frames - 1, 1)
+        rgba = np.tile(np.array([1.0, 0.42, 0.0, 1.0]), (keep.sum(), 1))
+        rgba[:, 3] = np.clip(1.0 - age, 0.0, 1.0)
+        scatter.set_facecolors(rgba)
+
+
 _MASKS_DIR = pathlib.Path(__file__).resolve().parents[2] / "masks"
 
 
@@ -321,12 +461,49 @@ def apply_mask_overlay(ax):
     ax.set_ylim(extent[2], extent[3])
 
 
-def fit_figure_to_axes(fig, ax, base_width=8):
+def fit_figure_to_axes(fig, ax, base_width=8, pad=0.1):
+    # Grow the figure on each side by the amount its decorations overflow.
+    # set_size_inches alone doesn't shift content, so at extreme aspect ratios
+    # axis labels and the colorbar would still fall off-canvas; shifting all
+    # axes by the per-side overflow keeps them inside the new figure.
     axes = ax if isinstance(ax, (list, tuple)) else [ax]
     xmin, xmax = axes[0].get_xlim()
     ymin, ymax = axes[0].get_ylim()
     aspect = abs((ymax - ymin) / (xmax - xmin))
     fig.set_size_inches(base_width, len(axes) * base_width * aspect)
+    fig.canvas.draw()
+
+    tight_bb = fig.get_tightbbox(fig.canvas.get_renderer())
+    fw, fh = fig.get_size_inches()
+
+    overflow_l = max(0.0, -tight_bb.x0) + pad
+    overflow_r = max(0.0, tight_bb.x1 - fw) + pad
+    overflow_b = max(0.0, -tight_bb.y0) + pad
+    overflow_t = max(0.0, tight_bb.y1 - fh) + pad
+
+    new_w = fw + overflow_l + overflow_r
+    new_h = fh + overflow_b + overflow_t
+
+    new_positions = []
+    for a in fig.axes:
+        pos = a.get_position()
+        old_x_in = pos.x0 * fw
+        old_y_in = pos.y0 * fh
+        old_w_in = pos.width * fw
+        old_h_in = pos.height * fh
+        new_positions.append(
+            [
+                (old_x_in + overflow_l) / new_w,
+                (old_y_in + overflow_b) / new_h,
+                old_w_in / new_w,
+                old_h_in / new_h,
+            ]
+        )
+
+    fig.set_size_inches(new_w, new_h)
+    for a, p in zip(fig.axes, new_positions):
+        a.set_position(p)
+    fig.canvas.draw()
 
 
 def init_figure(
@@ -334,7 +511,6 @@ def init_figure(
     colors=0,
 ):
     fig, ax = plt.subplots()
-    fig.set_layout_engine("tight")
     ax.set_aspect("equal")
     if trans:
         fig.patch.set_facecolor("None")
@@ -436,7 +612,6 @@ if video:
     ax.set_facecolor("xkcd:baby blue")
 
     apply_mask_overlay(ax)
-    fit_figure_to_axes(fig, ax)
     if bond_num_plot:
         ax.set_facecolor("white")
         cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
@@ -486,7 +661,9 @@ if video:
             ha="left",
             va="top",
         )
-    elif bonds_broken:
+
+    # bonds_broken overlay is independent of the disk-coloring modes above
+    if bonds_broken:
         xrange = ax.get_xlim()[1] - ax.get_xlim()[0]
         ref_range = 10
         ref_size = 15
@@ -498,8 +675,15 @@ if video:
 
     # keep track of time in the figure
     time = fig.text(
-        0, 1.02, "", transform=ax.transAxes, horizontalalignment="left"
+        0,
+        1.02,
+        r"$t = 0\>$hour",
+        transform=ax.transAxes,
+        horizontalalignment="left",
     )
+
+    # resize the figure so it tightly wraps the axes + decorations
+    fit_figure_to_axes(fig, ax)
 
 # --------------------------------------------
 # image initialization
@@ -535,7 +719,6 @@ elif image:
 
     apply_mask_overlay(ax[0])
     apply_mask_overlay(ax[1])
-    fit_figure_to_axes(fig, ax)
 
     if bond_num_plot:
         ax[0].set_facecolor("white")
@@ -608,7 +791,8 @@ elif image:
             va="top",
         )
 
-    elif bonds_broken:
+    # bonds_broken overlay is independent of the disk-coloring modes above
+    if bonds_broken:
         xrange = ax[1].get_xlim()[1] - ax[1].get_xlim()[0]
         ref_range = 10
         ref_size = 15
@@ -620,11 +804,22 @@ elif image:
 
     # keep track of time in the figure
     time0 = fig.text(
-        0, 1.02, "", transform=ax[0].transAxes, horizontalalignment="left"
+        0,
+        1.02,
+        r"$t = 0\>$hour",
+        transform=ax[0].transAxes,
+        horizontalalignment="left",
     )
     time1 = fig.text(
-        0, 1.02, "", transform=ax[1].transAxes, horizontalalignment="left"
+        0,
+        1.02,
+        r"$t = 0\>$hour",
+        transform=ax[1].transAxes,
+        horizontalalignment="left",
     )
+
+    # resize the figure so it tightly wraps the axes + decorations
+    fit_figure_to_axes(fig, ax)
 
 # --------------------------------------
 # functions for the animation/imagination
@@ -715,40 +910,9 @@ def animate(k, time):
                     bond.set_height(height)
                     bond.xy = (px, py)
 
-        elif bonds_broken:
-            # Detect bond breaking
-            if k > 0:
-                mask_k = b.coords[0] == k
-                i_k = b.coords[1, mask_k]
-                j_k = b.coords[2, mask_k]
-
-                mask_prev = b.coords[0] == 0
-                i_prev = b.coords[1, mask_prev]
-                j_prev = b.coords[2, mask_prev]
-
-                prev_bonds = set(zip(i_prev, j_prev))
-                current_bonds = set(zip(i_k, j_k))
-                broken = prev_bonds - current_bonds
-
-                if broken:
-                    i_idx = np.array([p[0] for p in broken])
-                    j_idx = np.array([p[1] for p in broken])
-
-                    # radii of the two particles
-                    r_i = r[k, i_idx]
-                    r_j = r[k, j_idx]
-
-                    # vector from i -> j
-                    dx = x[k, j_idx] - x[k, i_idx]
-                    dy = y[k, j_idx] - y[k, i_idx]
-
-                    # weighted midpoint along the bond
-                    px = x[k, i_idx] + r_i / (r_i + r_j) * dx
-                    py = y[k, i_idx] + r_i / (r_i + r_j) * dy
-
-                    broken_scatter.set_offsets(np.c_[px, py])
-                else:
-                    broken_scatter.set_offsets(np.empty((0, 2)))
+    # broken-bond dots
+    if bonds_broken and not (bond_num_plot or bond_ratio_plot):
+        update_broken_dots(broken_scatter, k)
 
     time.set_text(
         r"$t = {}\>$hour".format(
@@ -813,43 +977,12 @@ def imaginate(
                     num_bonds[i] += 1
                     if bond_num_plot or bond_ratio_plot:
                         bond.set_visible(False)
-        elif bonds_broken:
-            # Detect bond breaking
-            if k > 0:
-                mask_k = b.coords[0] == k
-                i_k = b.coords[1, mask_k]
-                j_k = b.coords[2, mask_k]
-
-                mask_prev = b.coords[0] == 0
-                i_prev = b.coords[1, mask_prev]
-                j_prev = b.coords[2, mask_prev]
-
-                prev_bonds = set(zip(i_prev, j_prev))
-                current_bonds = set(zip(i_k, j_k))
-                broken = prev_bonds - current_bonds
-
-                if broken:
-                    i_idx = np.array([p[0] for p in broken])
-                    j_idx = np.array([p[1] for p in broken])
-
-                    # radii of the two particles
-                    r_i = r[k, i_idx]
-                    r_j = r[k, j_idx]
-
-                    # vector from i -> j
-                    dx = x[k, j_idx] - x[k, i_idx]
-                    dy = y[k, j_idx] - y[k, i_idx]
-
-                    # weighted midpoint along the bond
-                    px = x[k, i_idx] + r_i / (r_i + r_j) * dx
-                    py = y[k, i_idx] + r_i / (r_i + r_j) * dy
-
-                    broken_scatter.set_offsets(np.c_[px, py])
-                else:
-                    broken_scatter.set_offsets(np.empty((0, 2)))
-
         disks.append(disk)
         radii.append(rad)
+
+    # broken-bond dots
+    if bonds_broken and not (bond_num_plot or bond_ratio_plot):
+        update_broken_dots(broken_scatter, k)
 
     time.set_text(
         r"$t = {}\>$hour".format(
