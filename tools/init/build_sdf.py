@@ -56,12 +56,12 @@ def build_sdf(name: str) -> None:
     )  # 0 on land,  > 0 in water
     d_land = distance_transform_edt(grid == 0) * dx  # 0 on water, > 0 on land
 
-    # EDT returns cell-center-to-cell-center distance; the coast actually
-    # lies on the cell edge, dx/2 closer. Subtract dx/2 from the magnitude
-    # so the zero level-set falls on the water/land cell edge.
-    sdf = np.where(
-        grid == 1, d_water - dx / 2.0, -(d_land - dx / 2.0)
-    ).astype(np.float32)
+    # EDT returns cell-center-to-cell-center distance the coast actually
+    # lies on the cell edge, dx/2 closer. Subtract dx/2 from the
+    # magnitude so the zero level-set falls on the water/land cell edge.
+    sdf = np.where(grid == 1, d_water - dx / 2.0, -(d_land - dx / 2.0)).astype(
+        np.float32
+    )
 
     with dst.open("w") as f:
         f.write(f"{nx} {ny} {dx} {x_min} {y_max} {proj}\n")

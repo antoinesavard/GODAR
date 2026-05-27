@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize, ListedColormap
 from matplotlib.animation import FuncAnimation
+from matplotlib.collections import LineCollection
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -18,6 +19,7 @@ xaxis_limits = 140  # in km
 xoffset = 20
 yaxis_limits = 50  # in km
 yoffset = 0
+
 trans = False  # transparent background or not
 clean = True  # removes the green/red bars
 bonds_bool = False  # plots the bonds as rectangles between the disks
@@ -25,13 +27,15 @@ bonds_broken = True  # bonds are plotted as red dots in the middle
 decay_frames = 1000  # number of frames a red dot stays visible
 breaks_min_rel_vel = 0.02  # shows breaks where velocity gradient at break frame exceeds this (km/frame)
 breaks_track_midpoint = True  # False: dots frozen at break location
+breaks_style = "dot"  # "dot": original midpoint dot, "line": segment between centers, "perp": perpendicular segment at surface midpoint
 
 # possible plots (all mutually exclusive)
 bond_num_plot = False  # plots number of bonds per particle
 bond_ratio_plot = False  # plots the ratio of fractured bonds per particle, weighted by the size of the particle
-thickness = True  # plots thickness fields
+thickness = False  # plots thickness fields
 stress = False  # plots the stress as facecolor rather than just white
 stress_invariant = 10  # J1 or J2 invariant
+velocity_x = True  # plots the x-component of velocity
 
 # what you want to produce
 video = True
@@ -92,6 +96,7 @@ filestsigyx = tuf.list_files(output_dir, "tsigyx", expno)
 filestfx = tuf.list_files(output_dir, "tfx", expno)
 filestfy = tuf.list_files(output_dir, "tfy", expno)
 filesmom = tuf.list_files(output_dir, "mom", expno)
+filesu = tuf.list_files(output_dir, "u", expno) if velocity_x else None
 
 # loading the files in memory
 x, y, r, h, t, o, b, tfx, tfy, mom = (
@@ -106,6 +111,8 @@ x, y, r, h, t, o, b, tfx, tfy, mom = (
     tuf.multiload(output_dir, filestfy, 0, n),
     tuf.multiload(output_dir, filesmom, 0, n),
 )
+if velocity_x:
+    u = tuf.multiload(output_dir, filesu, 0, n)
 
 # compressing the files
 x = x[start:stop:compression] / sf
@@ -118,6 +125,8 @@ b = b[start:stop:compression]
 tfx = tfx[start:stop:compression]
 tfy = tfy[start:stop:compression]
 mom = mom[start:stop:compression]
+if velocity_x:
+    u = u[start:stop:compression] * 100.0  # m/s -> cm/s
 
 # check dimensions of the data
 x = tuf.check_dim(x)
@@ -130,6 +139,8 @@ b = tuf.check_dim(b, 1)
 tfx = tuf.check_dim(tfx)
 tfy = tuf.check_dim(tfy)
 mom = tuf.check_dim(mom)
+if velocity_x:
+    u = tuf.check_dim(u)
 
 # massaging
 t = np.degrees(t)
@@ -273,6 +284,14 @@ def map_to_color_thickness(array, cmap=plt.cm.viridis):
     return mapper.to_rgba(array), mapper
 
 
+def map_to_color_velocity_x(array, cmap=plt.cm.coolwarm):
+    # symmetric range around zero so 0 maps to the neutral
+    norm = Normalize(vmin=-25, vmax=25)
+    mapper = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+
+    return mapper.to_rgba(array), mapper
+
+
 def map_to_alpha(array, low, high):
     minimum = np.min(array)
     maximum = np.max(array)
@@ -317,6 +336,10 @@ if thickness:
     cmap = plt.get_cmap("cmo.dense")
     h = np.where(h > 5, 5, h)
     h_cm, mapper = map_to_color_thickness(h, cmap=cmap)
+
+if velocity_x:
+    cmap = plt.get_cmap("coolwarm")
+    u_cm, mapper = map_to_color_velocity_x(u, cmap=cmap)
 
 if stress:
     # load
@@ -390,14 +413,27 @@ def init_lists():
     return disks, radii, bonds, broken_pairs, num_bonds
 
 
-def update_broken_dots(scatter, k):
+def update_broken_dots(artist, k):
     """
-    Show broken-bond dots whose break frame falls within the decay window ending
-    at frame k, AND whose pair-relative velocity exceeds breaks_min_rel_vel.
-    Uses the precomputed (breaks_k, breaks_px, breaks_py, breaks_rel_vel).
+    Update the broken-bond markers for frame k. Style depends on breaks_style:
+      "dot"  - one dot at the radius-weighted contact midpoint;
+      "line" - one segment between the two particle centers;
+      "perp" - one short segment perpendicular to the i->j axis, centered on
+               the midpoint between the two surfaces, of length min(r_i, r_j).
+    Filtered by the decay window and the breaks_min_rel_vel threshold. When
+    breaks_track_midpoint is True the geometry uses live positions/radii at
+    frame k; otherwise it is frozen at the break frame.
     """
+    is_line = breaks_style in ("line", "perp")
+
+    def clear():
+        if is_line:
+            artist.set_segments([])
+        else:
+            artist.set_offsets(np.empty((0, 2)))
+
     if breaks_k.size == 0:
-        scatter.set_offsets(np.empty((0, 2)))
+        clear()
         return
     keep = (
         (breaks_k > k - decay_frames)
@@ -405,25 +441,83 @@ def update_broken_dots(scatter, k):
         & (breaks_rel_vel >= breaks_min_rel_vel)
     )
     if not np.any(keep):
-        scatter.set_offsets(np.empty((0, 2)))
+        clear()
         return
-    if breaks_track_midpoint and breaks_i.size > 0:
-        ii = breaks_i[keep]
-        jj = breaks_j[keep]
-        r_i = r[k, ii]
-        r_j = r[k, jj]
-        live_dx = x[k, jj] - x[k, ii]
-        live_dy = y[k, jj] - y[k, ii]
-        live_px = x[k, ii] + r_i / (r_i + r_j) * live_dx
-        live_py = y[k, ii] + r_i / (r_i + r_j) * live_dy
-        scatter.set_offsets(np.c_[live_px, live_py])
+    ii = breaks_i[keep]
+    jj = breaks_j[keep]
+    kk = breaks_k[keep]
+
+    # positions: live or frozen depending on breaks_track_midpoint
+    if breaks_track_midpoint:
+        x_i = x[k, ii]
+        y_i = y[k, ii]
+        x_j = x[k, jj]
+        y_j = y[k, jj]
     else:
-        scatter.set_offsets(np.c_[breaks_px[keep], breaks_py[keep]])
+        x_i = x[kk, ii]
+        y_i = y[kk, ii]
+        x_j = x[kk, jj]
+        y_j = y[kk, jj]
+
+    # radii: always taken at the break frame so the segment length is fixed
+    r_i = r[kk, ii]
+    r_j = r[kk, jj]
+
+    if breaks_style == "dot":
+        if breaks_track_midpoint:
+            mx = x_i + r_i / (r_i + r_j) * (x_j - x_i)
+            my = y_i + r_i / (r_i + r_j) * (y_j - y_i)
+        else:
+            mx = breaks_px[keep]
+            my = breaks_py[keep]
+        artist.set_offsets(np.c_[mx, my])
+    elif breaks_style in ("line", "perp"):
+        dxij = x_j - x_i
+        dyij = y_j - y_i
+        norm = np.sqrt(dxij * dxij + dyij * dyij)
+        norm = np.where(norm == 0.0, 1.0, norm)
+        ux_ij = dxij / norm
+        uy_ij = dyij / norm
+
+        if breaks_style == "line":
+            # frozen length = inter-center distance at the break frame
+            seg_len = np.sqrt(
+                (x[kk, jj] - x[kk, ii]) ** 2 + (y[kk, jj] - y[kk, ii]) ** 2
+            )
+            half_len = 0.5 * seg_len
+            # midpoint between live centers; segment oriented along live i->j
+            mx = 0.5 * (x_i + x_j)
+            my = 0.5 * (y_i + y_j)
+            dirx = ux_ij
+            diry = uy_ij
+        else:  # "perp"
+            # frozen length = min(r_i, r_j) at the break frame
+            half_len = 0.5 * np.minimum(r_i, r_j)
+            # midpoint between live surfaces using frozen radii
+            mx = 0.5 * (x_i + x_j) + 0.5 * (r_i - r_j) * ux_ij
+            my = 0.5 * (y_i + y_j) + 0.5 * (r_i - r_j) * uy_ij
+            # segment direction is perpendicular to live i->j
+            dirx = -uy_ij
+            diry = ux_ij
+
+        e1x = mx - half_len * dirx
+        e1y = my - half_len * diry
+        e2x = mx + half_len * dirx
+        e2y = my + half_len * diry
+        segments = np.stack(
+            [np.column_stack((e1x, e1y)), np.column_stack((e2x, e2y))],
+            axis=1,
+        )
+        artist.set_segments(segments)
+
     if decay_frames > 1:
         age = (k - breaks_k[keep]) / max(decay_frames - 1, 1)
-        rgba = np.tile(np.array([1.0, 0.42, 0.0, 1.0]), (keep.sum(), 1))
+        rgba = np.tile(np.array([0.008, 0.0, 0.208, 1.0]), (keep.sum(), 1))
         rgba[:, 3] = np.clip(1.0 - age, 0.0, 1.0)
-        scatter.set_facecolors(rgba)
+        if is_line:
+            artist.set_colors(rgba)
+        else:
+            artist.set_facecolors(rgba)
 
 
 _MASKS_DIR = pathlib.Path(__file__).resolve().parents[2] / "masks"
@@ -462,10 +556,7 @@ def apply_mask_overlay(ax):
 
 
 def fit_figure_to_axes(fig, ax, base_width=8, pad=0.1):
-    # Grow the figure on each side by the amount its decorations overflow.
-    # set_size_inches alone doesn't shift content, so at extreme aspect ratios
-    # axis labels and the colorbar would still fall off-canvas; shifting all
-    # axes by the per-side overflow keeps them inside the new figure.
+    # Grow the figure on each side
     axes = ax if isinstance(ax, (list, tuple)) else [ax]
     xmin, xmax = axes[0].get_xlim()
     ymin, ymax = axes[0].get_ylim()
@@ -594,7 +685,7 @@ def init_figure_image(
 if video:
     fig, ax, cax = init_figure(
         trans,
-        stress + bond_num_plot + bond_ratio_plot + thickness,
+        stress + bond_num_plot + bond_ratio_plot + thickness + velocity_x,
     )
     ax.set_ylabel(
         r"$y$ [km]",
@@ -661,17 +752,38 @@ if video:
             ha="left",
             va="top",
         )
+    elif velocity_x:
+        ax.set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
+        cb.set_label(
+            "$u$ [cm/s]",
+            rotation=0,
+            multialignment="left",
+            ha="left",
+            va="top",
+            position=(0, 0.9),
+        )
 
     # bonds_broken overlay is independent of the disk-coloring modes above
     if bonds_broken:
-        xrange = ax.get_xlim()[1] - ax.get_xlim()[0]
-        ref_range = 10
-        ref_size = 15
-        scale = ref_range / xrange
-        marker_size = ref_size * scale**2
-        broken_scatter = ax.scatter(
-            [], [], c="xkcd:bright orange", s=marker_size, zorder=5
-        )
+        if breaks_style == "dot":
+            xrange = ax.get_xlim()[1] - ax.get_xlim()[0]
+            scale = 10.0 / xrange
+            marker_size = 250.0 * scale**2
+            broken_scatter = ax.scatter(
+                [],
+                [],
+                c="xkcd:midnight blue",
+                s=marker_size,
+                edgecolors="none",
+                marker="o",
+                zorder=5,
+            )
+        else:
+            broken_scatter = LineCollection(
+                [], colors="xkcd:midnight blue", linewidths=1.0, zorder=5
+            )
+            ax.add_collection(broken_scatter)
 
     # keep track of time in the figure
     time = fig.text(
@@ -691,7 +803,7 @@ if video:
 elif image:
     fig, ax, cax = init_figure_image(
         trans,
-        stress + bond_num_plot + bond_ratio_plot + thickness,
+        stress + bond_num_plot + bond_ratio_plot + thickness + velocity_x,
     )
     ax[0].set_ylabel(
         r"$y$ [km]",
@@ -791,16 +903,39 @@ elif image:
             va="top",
         )
 
+    elif velocity_x:
+        ax[0].set_facecolor("white")
+        ax[1].set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
+        cb.set_label(
+            "$u$ [cm/s]",
+            rotation=90,
+            multialignment="left",
+            ha="center",
+            va="top",
+            position=(0, 0.5),
+        )
+
     # bonds_broken overlay is independent of the disk-coloring modes above
     if bonds_broken:
-        xrange = ax[1].get_xlim()[1] - ax[1].get_xlim()[0]
-        ref_range = 10
-        ref_size = 15
-        scale = ref_range / xrange
-        marker_size = ref_size * scale**2
-        broken_scatter = ax[1].scatter(
-            [], [], c="xkcd:bright orange", s=marker_size, zorder=5
-        )
+        if breaks_style == "dot":
+            xrange = ax[1].get_xlim()[1] - ax[1].get_xlim()[0]
+            scale = 10.0 / xrange
+            marker_size = 250.0 * scale**2
+            broken_scatter = ax[1].scatter(
+                [],
+                [],
+                c="xkcd:midnight blue",
+                s=marker_size,
+                edgecolors="none",
+                marker="o",
+                zorder=5,
+            )
+        else:
+            broken_scatter = LineCollection(
+                [], colors="xkcd:midnight blue", linewidths=1.0, zorder=5
+            )
+            ax[1].add_collection(broken_scatter)
 
     # keep track of time in the figure
     time0 = fig.text(
@@ -838,7 +973,13 @@ def init(ax, time):
             continue
         disks.append(disk)
         radii.append(rad)
-        if bond_num_plot or bond_ratio_plot or thickness or stress:
+        if (
+            bond_num_plot
+            or bond_ratio_plot
+            or thickness
+            or stress
+            or velocity_x
+        ):
             continue
         if bonds_bool:
             for j in range(i + 1, b.shape[-1]):
@@ -876,6 +1017,9 @@ def animate(k, time):
         if stress:
             disk.set_facecolor(j_cm[k, i])
             disk.set_linewidth(0)
+        if velocity_x:
+            disk.set_facecolor(u_cm[k, i])
+            disk.set_linewidth(0)
         rad.xy = p
         rad.angle = t[k, i]
         rad.set_width(r[k, i])
@@ -884,7 +1028,13 @@ def animate(k, time):
             rad.set_visible(False)
         # if i == len(disks) - 1:
         #     continue
-        if bond_num_plot or bond_ratio_plot or thickness or stress:
+        if (
+            bond_num_plot
+            or bond_ratio_plot
+            or thickness
+            or stress
+            or velocity_x
+        ):
             continue
         if bonds_bool:
             for n, bond in enumerate(bonds):
@@ -952,6 +1102,10 @@ def imaginate(
             disk.set_facecolor(j_cm[k, i])
             disk.set_linewidth(0)
 
+        if velocity_x:
+            disk.set_facecolor(u_cm[k, i])
+            disk.set_linewidth(0)
+
         if clean is True:
             rad.set_visible(False)
 
@@ -960,7 +1114,13 @@ def imaginate(
             radii.append(rad)
             continue
 
-        if bond_num_plot or bond_ratio_plot or thickness or stress:
+        if (
+            bond_num_plot
+            or bond_ratio_plot
+            or thickness
+            or stress
+            or velocity_x
+        ):
             continue
 
         if bonds_bool:

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Convert NSIDC-0780 sea-ice region NetCDF masks to Fortran-friendly 0/1 grids.
+"""
+Convert NSIDC-0780 sea-ice region NetCDF masks to Fortran-friendly 0/1 grids.
 
 Run once from the repo root:
     python tools/init/build_masks.py
@@ -16,6 +17,7 @@ The body uses list-directed numeric tokens so Fortran can read it with
 
 Rows are emitted top-to-bottom, matching the NetCDF y[0] = highest y.
 """
+
 import pathlib
 import subprocess
 import sys
@@ -24,16 +26,26 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 MASKS_DIR = REPO / "masks"
 
 JOBS = [
-    dict(nc="NSIDC-0780_SeaIceRegions_EASE2-N3.125km_v1.0.nc",
-         out="ease2.dat",
-         nx=5760, ny=5760, dx=3125.0,
-         x_min=-9_000_000.0, y_max=9_000_000.0,
-         projection="EASE2-N"),
-    dict(nc="NSIDC-0780_SeaIceRegions_PS-N3.125km_v1.0.nc",
-         out="ps.dat",
-         nx=2432, ny=3584, dx=3125.0,
-         x_min=-3_850_000.0, y_max=5_850_000.0,
-         projection="PS-N"),
+    dict(
+        nc="NSIDC-0780_SeaIceRegions_EASE2-N3.125km_v1.0.nc",
+        out="ease2.dat",
+        nx=5760,
+        ny=5760,
+        dx=3125.0,
+        x_min=-9_000_000.0,
+        y_max=9_000_000.0,
+        projection="EASE2-N",
+    ),
+    dict(
+        nc="NSIDC-0780_SeaIceRegions_PS-N3.125km_v1.0.nc",
+        out="ps.dat",
+        nx=2432,
+        ny=3584,
+        dx=3125.0,
+        x_min=-3_850_000.0,
+        y_max=5_850_000.0,
+        projection="PS-N",
+    ),
 ]
 
 
@@ -49,7 +61,9 @@ def convert(job: dict) -> None:
 
     proc = subprocess.Popen(
         ["ncdump", "-v", "sea_ice_region_surface_mask", str(src)],
-        stdout=subprocess.PIPE, text=True, bufsize=1 << 16,
+        stdout=subprocess.PIPE,
+        text=True,
+        bufsize=1 << 16,
     )
 
     try:

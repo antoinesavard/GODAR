@@ -23,13 +23,13 @@ PLOTS_DIR = REPO / "plots" / "plot" / "packing"
 domain = (1e5, 5e4)  # fallback (used when mask_file is None)
 mask_file = "masks/channel.sdf"
 ice_extent_file = None
-n = 10000
-mu = 1000
+n = 20000
+mu = 800
 sigma = 3
 r_min = 200
 r_max = 4000
 dist_name = "pareto"
-expno = 12
+expno = 11
 max_attempts = 3000
 small_threshold = 400  # below this, switch to neighbor
 # -------------------------------------
@@ -412,7 +412,9 @@ if ice_mask is not None:
 
 print(f"rendering figure ({len(positions)} circles)...")
 for (x, y), r in zip(positions, accepted_radii):
-    ax.add_patch(plt.Circle((x, y), r, color="crimson", alpha=0.5, zorder=1))
+    ax.add_patch(
+        plt.Circle((x, y), r, color="xkcd:bright orange", alpha=0.5, zorder=1)
+    )
 
 ax.set_aspect("equal")
 mean_r_km = float(np.mean(accepted_radii)) / 1e3
