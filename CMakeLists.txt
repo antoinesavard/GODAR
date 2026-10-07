@@ -60,7 +60,7 @@ add_executable(${PROJECT_NAME} ${MODEL_SRC_FILES})
 
 # Include directories for Fortran INCLUDE statements (.h)
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/model/inc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/model/inc
     ${MPI_Fortran_INCLUDE_DIRS}
     ${NETCDF_INCLUDE_DIR}
     ${CORETRAN_INCLUDE_DIR}

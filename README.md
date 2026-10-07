@@ -100,19 +100,25 @@ When working on clusters, you will usually encounter scheduler like slurm. In th
 The input_file is a simple file to pass along to the main program when executing that can take the following arguments in this order:
 
 - NEED`[bool]   input namelist`
+- OPT `[str]    namelist name`
 - NEED`[bool]   input restart`
 - OPT `[int]    restart version`
 - OPT `[int]    restart time`
 - NEED`[int]    exp version`
+- NEED`[int]    number of particles`
 - NEED`[int]    number of threads`
+
+The number of particles must match the number of lines in the initial condition files (or the number of values per line in the output files when restarting). The restart time is the line to restart from in the output files of the restart version.
 
 ### How to modify the parameters in GODAR
 
 All physical and numerical parameters as well as options are contained in the namelist.nml file. Therefore, if you want to play with the physics, you can simply change the values in this file without recompiling the code; this permits the use of batch job using an appropriate bash script that modifies the parameters that you want. If you forget the default parameters, they are all set in the `get_default` subroutine in the par_get.f90 file. You can also opt to not use the namelist by setting the read namelist option to false in the input file.
 
-The only parameters that are set at compilation are in the `model/inc/parameter.h` file. They are: the number of particles (because we use this value for setting the lenght of all arrays), the size of the domain (for future developement where we will superimpose a grid over the domain to have spatially varying forcings), and the rank of the master thread. We are curently working on a way to work around this issue. (Probably using the input files and allocatable arrays in modules.)
+The number of particles is not set at compilation: it is read from the input file, and all the arrays are allocated at run time (`model/src/mod_alloc.f90`), so the same executable works for any number of particles. The only compile-time constants left are in `model/src/mod_parameter.f90`: the size of the legacy rectangular domain (used when no mask is given) and the rank of the master process.
 
-The input files are setting the run informations: experiment number, whether to use the namelist or not, whether restarting from a previous experiement or not, etc. (This is why we think setting the particle number in there would be good.)
+The memory needed per MPI process is about 100n² bytes for n particles, because the state kept for each pair of particles between time steps (contact history and bonds) is stored in n×n arrays. For example, 3 000 particles need about 0.9 GB per process and 10 000 particles about 10 GB, so set the memory of your jobs accordingly.
+
+The input files are setting the run informations: experiment number, whether to use the namelist or not, whether restarting from a previous experiement or not, the number of particles, etc.
 
 ### How to run large number of simulations using SLURM
 
@@ -153,20 +159,19 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
         - gfortranFLAGS.cmake
         - intelFLAGS.cmake
     - model/
-        - inc/
-            - CB_bond.h
-            - CB_const.h
-            - CB_diagnostics.h
-            - CB_forcings.h
-            - CB_mpi.h
-            - CB_numerics.h
-            - CB_options.h
-            - CB_thermo_dym.h
-            - CB_thermo_forcing.h
-            - CB_thermo_var.h
-            - CB_variables.h
-            - parameter.h
         - src/
+            - mod_alloc.f90          (allocation of all the module arrays)
+            - mod_bond.f90           (module bonds)
+            - mod_const.f90          (module const)
+            - mod_diagnostics.f90    (module diagnostics)
+            - mod_forcings.f90       (module forcings)
+            - mod_kind_parameter.f90 (module kind_parameter)
+            - mod_mpi.f90            (module mpi_var)
+            - mod_options.f90        (module options)
+            - mod_pair.f90           (module pairs)
+            - mod_parameter.f90      (module parameters)
+            - mod_thermo_var.f90     (module thermo_var)
+            - mod_variables.f90      (module variables)
             - bonds.f90
             - boundaries.f90
             - compaction.f90
@@ -186,6 +191,7 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
             - reset.f90
             - ridging.f90
             - stepper.f90
+            - test.f90
             - thermo.f90
     - pkg
         - datetime/
@@ -198,6 +204,8 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
         - kdtree/
             - global_kdtree.f90
             - kdtree_utils.f90
+        - mask/
+            - mask_io.f90
         - mpi/
             - mpi_counts_mod.f90
     - tools/
