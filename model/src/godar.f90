@@ -8,11 +8,13 @@ program godar
     use mpi_counts_mod, only: init_mpi_counts
     use mask_io, only: load_sdf
 
+    use parameters
+    use const
+    use mpi_var
+    use alloc, only: allocate_all, deallocate_all
+
     implicit none
 
-    include "parameter.h"
-    include "CB_const.h"
-    include "CB_mpi.h"
 
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
@@ -78,13 +80,20 @@ program godar
         read  *, expno 
         print *, expno 
         write(expno_str,'(i2.2)') expno
-        write(n_str,'(i0)') n
 
         ! number of particles
-        print *, 'Number of particles is this simulation:'
+        print *, 'Number of particles in this simulation?'
+        read  *, n
         print *, n
-        
+        write(n_str,'(i0)') n
+
     end if
+
+    ! broadcast n to all ranks so they can allocate their module arrays
+    call mpi_bcast(n, 1, mpi_integer, master, mpi_comm_world, ierr)
+
+    ! allocate all per-particle module arrays on every rank
+    call allocate_all(n)
 
     call get_default
     
@@ -235,6 +244,9 @@ program godar
         '' 
     end if
 
+    ! release the per-particle module arrays
+    call deallocate_all
+
     call mpi_finalize(ierr)
-    
+
 end program godar

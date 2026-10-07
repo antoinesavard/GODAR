@@ -60,5 +60,5 @@ def plot_mask(name: str):
 
 
 if __name__ == "__main__":
-    for name in ("ease2", "ps", "channel"):
-        plot_mask(name)
+    for path in sorted(MASKS_DIR.glob("*.dat")):
+        plot_mask(path.stem)

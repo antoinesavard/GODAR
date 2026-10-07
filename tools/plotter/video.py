@@ -32,32 +32,31 @@ breaks_style = "dot"  # "dot": original midpoint dot, "line": segment between ce
 # possible plots (all mutually exclusive)
 bond_num_plot = False  # plots number of bonds per particle
 bond_ratio_plot = False  # plots the ratio of fractured bonds per particle, weighted by the size of the particle
-thickness = False  # plots thickness fields
+thickness = True  # plots thickness fields
 stress = False  # plots the stress as facecolor rather than just white
-stress_invariant = 10  # J1 or J2 invariant
-velocity_x = True  # plots the x-component of velocity
+stress_invariant = 1  # J1 or J2 invariant
+velocity_x = False  # plots the x-component of velocity
+velocity_y = False  # plots the y-component of velocity
 
 # what you want to produce
 video = True
 image = False
 
 # mask background overlay, overides the axis limits
-mask_overlay = False  # draw the mask under the particles
-mask_overlay_file = "channel.dat"  # filename inside masks/
+mask_overlay = True  # draw the mask under the particles
+mask_overlay_file = "nares_strait.dat"  # filename inside masks/
 
 # coming from sim
-dt = 1e-2  # tstep size in sim
+dt = 5e-2  # tstep size in sim
 comp = 5e4  # compression in sim
 
 # miscalleneous
-output_dir = "../output/BIG_SIM_20260518/"
+output_dir = "../output/NARES_STRAIT/"  # BIG_SIM_20260518
 sf = 1e3  # conversion ratio m <-> km
 compression = 1  # data compression of videos
 start = 0  # starting frame
-stop = 43  # stopping frame
-cbar_horizontal_placement = (
-    -0.01
-)  # horizontal placement of the colorbar in the image, in fraction of the axis width
+stop = None  # stopping frame
+cbar_horizontal_placement = 0.015  # gap between rightmost subplot and the colorbar (fraction of figure width)
 
 # ----------------------------------------------------------------------
 
@@ -97,6 +96,7 @@ filestfx = tuf.list_files(output_dir, "tfx", expno)
 filestfy = tuf.list_files(output_dir, "tfy", expno)
 filesmom = tuf.list_files(output_dir, "mom", expno)
 filesu = tuf.list_files(output_dir, "u", expno) if velocity_x else None
+filesv = tuf.list_files(output_dir, "v", expno) if velocity_y else None
 
 # loading the files in memory
 x, y, r, h, t, o, b, tfx, tfy, mom = (
@@ -113,6 +113,16 @@ x, y, r, h, t, o, b, tfx, tfy, mom = (
 )
 if velocity_x:
     u = tuf.multiload(output_dir, filesu, 0, n)
+if velocity_y:
+    v = tuf.multiload(output_dir, filesv, 0, n)
+
+# capture full (unsliced) series so break detection runs from frame 0
+# regardless of start/stop/compression
+if bonds_broken:
+    x_full = tuf.check_dim(x / sf)
+    y_full = tuf.check_dim(y / sf)
+    r_full = tuf.check_dim(r / sf)
+    b_full = tuf.check_dim(b, 1)
 
 # compressing the files
 x = x[start:stop:compression] / sf
@@ -127,6 +137,8 @@ tfy = tfy[start:stop:compression]
 mom = mom[start:stop:compression]
 if velocity_x:
     u = u[start:stop:compression] * 100.0  # m/s -> cm/s
+if velocity_y:
+    v = v[start:stop:compression] * 100.0  # m/s -> cm/s
 
 # check dimensions of the data
 x = tuf.check_dim(x)
@@ -141,6 +153,8 @@ tfy = tuf.check_dim(tfy)
 mom = tuf.check_dim(mom)
 if velocity_x:
     u = tuf.check_dim(u)
+if velocity_y:
+    v = tuf.check_dim(v)
 
 # massaging
 t = np.degrees(t)
@@ -163,9 +177,13 @@ breaks_i = np.empty(0, dtype=np.int64)
 breaks_j = np.empty(0, dtype=np.int64)
 if bonds_broken:
     print("Precomputing broken-bond events...")
-    order = np.argsort(coords[0], kind="stable")
-    sc = coords[:, order]
-    T_frames = b.shape[0]
+    coords_full = b_full.coords
+    order = np.argsort(coords_full[0], kind="stable")
+    sc = coords_full[:, order]
+    # Break detection runs over [0, stop)
+    T_frames = (
+        b_full.shape[0] if stop is None else min(int(stop), b_full.shape[0])
+    )
     frame_starts = np.searchsorted(sc[0], np.arange(T_frames + 1))
 
     bk_list, bpx_list, bpy_list, brv_list = [], [], [], []
@@ -183,23 +201,19 @@ if bonds_broken:
         if broken:
             ij = np.array(list(broken))
             ii, jj = ij[:, 0], ij[:, 1]
-            r_i = r[k, ii]
-            r_j = r[k, jj]
-            dx = x[k, jj] - x[k, ii]
-            dy = y[k, jj] - y[k, ii]
-            px = x[k, ii] + r_i / (r_i + r_j) * dx
-            py = y[k, ii] + r_i / (r_i + r_j) * dy
-            # Long-window velocity gradient: average |v_j - v_i| from the break
-            # frame to the end of the simulation. We measure the change in
-            # separation vector between frame k and the final frame, divided by
-            # the elapsed frame count. Sustained shear/divergence scores high;
-            # jitter that reverses scores low.
+            r_i = r_full[k, ii]
+            r_j = r_full[k, jj]
+            dx = x_full[k, jj] - x_full[k, ii]
+            dy = y_full[k, jj] - y_full[k, ii]
+            px = x_full[k, ii] + r_i / (r_i + r_j) * dx
+            py = y_full[k, ii] + r_i / (r_i + r_j) * dy
+            # Velocity gradient
             k_end = T_frames - 1
             duration = k_end - k
             if duration > 0:
-                sep_dx_end = x[k_end, jj] - x[k_end, ii]
-                sep_dy_end = y[k_end, jj] - y[k_end, ii]
-                sep_dx_k = dx  # x[k, jj] - x[k, ii], already computed above
+                sep_dx_end = x_full[k_end, jj] - x_full[k_end, ii]
+                sep_dy_end = y_full[k_end, jj] - y_full[k_end, ii]
+                sep_dx_k = dx
                 sep_dy_k = dy
                 rel_vel = (
                     np.sqrt(
@@ -341,6 +355,10 @@ if velocity_x:
     cmap = plt.get_cmap("coolwarm")
     u_cm, mapper = map_to_color_velocity_x(u, cmap=cmap)
 
+if velocity_y:
+    cmap = plt.get_cmap("coolwarm")
+    v_cm, mapper = map_to_color_velocity_x(v, cmap=cmap)
+
 if stress:
     # load
     tsigxx, tsigyy, tsigxy, tsigyx = (
@@ -435,9 +453,13 @@ def update_broken_dots(artist, k):
     if breaks_k.size == 0:
         clear()
         return
+    # k is a sliced display frame; map to the full-series frame index
+    # that break detection used. breaks_k holds full-series frame
+    # indices.
+    full_k = start + k * compression
     keep = (
-        (breaks_k > k - decay_frames)
-        & (breaks_k <= k)
+        (breaks_k > full_k - decay_frames)
+        & (breaks_k <= full_k)
         & (breaks_rel_vel >= breaks_min_rel_vel)
     )
     if not np.any(keep):
@@ -447,21 +469,21 @@ def update_broken_dots(artist, k):
     jj = breaks_j[keep]
     kk = breaks_k[keep]
 
-    # positions: live or frozen depending on breaks_track_midpoint
+    # positions: live (from full series at full_k) or frozen at the break frame
     if breaks_track_midpoint:
-        x_i = x[k, ii]
-        y_i = y[k, ii]
-        x_j = x[k, jj]
-        y_j = y[k, jj]
+        x_i = x_full[full_k, ii]
+        y_i = y_full[full_k, ii]
+        x_j = x_full[full_k, jj]
+        y_j = y_full[full_k, jj]
     else:
-        x_i = x[kk, ii]
-        y_i = y[kk, ii]
-        x_j = x[kk, jj]
-        y_j = y[kk, jj]
+        x_i = x_full[kk, ii]
+        y_i = y_full[kk, ii]
+        x_j = x_full[kk, jj]
+        y_j = y_full[kk, jj]
 
     # radii: always taken at the break frame so the segment length is fixed
-    r_i = r[kk, ii]
-    r_j = r[kk, jj]
+    r_i = r_full[kk, ii]
+    r_j = r_full[kk, jj]
 
     if breaks_style == "dot":
         if breaks_track_midpoint:
@@ -482,7 +504,8 @@ def update_broken_dots(artist, k):
         if breaks_style == "line":
             # frozen length = inter-center distance at the break frame
             seg_len = np.sqrt(
-                (x[kk, jj] - x[kk, ii]) ** 2 + (y[kk, jj] - y[kk, ii]) ** 2
+                (x_full[kk, jj] - x_full[kk, ii]) ** 2
+                + (y_full[kk, jj] - y_full[kk, ii]) ** 2
             )
             half_len = 0.5 * seg_len
             # midpoint between live centers; segment oriented along live i->j
@@ -540,7 +563,7 @@ def apply_mask_overlay(ax):
         (y_max - ny * dx) / sf,
         y_max / sf,
     )
-    cmap = ListedColormap(["#d2b48c", "#cfe5f7"])  # land=tan, water=light blue
+    cmap = ListedColormap(["#d2b48c", "#0a3060"])  # land=tan, water=dark blue
     ax.imshow(
         grid,
         origin="upper",
@@ -555,25 +578,29 @@ def apply_mask_overlay(ax):
     ax.set_ylim(extent[2], extent[3])
 
 
-def fit_figure_to_axes(fig, ax, base_width=8, pad=0.1):
+def fit_figure_to_axes(fig, ax, base_width=8, pad=0.02):
     # Grow the figure on each side
     axes = ax if isinstance(ax, (list, tuple)) else [ax]
     xmin, xmax = axes[0].get_xlim()
     ymin, ymax = axes[0].get_ylim()
     aspect = abs((ymax - ymin) / (xmax - xmin))
-    fig.set_size_inches(base_width, len(axes) * base_width * aspect)
+    # Single axis or vertical stack: scale up height by axis count.
+    # Horizontal stack: scale up width by axis count instead.
+    if len(axes) <= 1 or stack_vertical:
+        fig.set_size_inches(base_width, len(axes) * base_width * aspect)
+    else:
+        fig.set_size_inches(len(axes) * base_width / aspect, base_width)
     fig.canvas.draw()
 
     tight_bb = fig.get_tightbbox(fig.canvas.get_renderer())
     fw, fh = fig.get_size_inches()
 
-    overflow_l = max(0.0, -tight_bb.x0) + pad
-    overflow_r = max(0.0, tight_bb.x1 - fw) + pad
-    overflow_b = max(0.0, -tight_bb.y0) + pad
-    overflow_t = max(0.0, tight_bb.y1 - fh) + pad
-
-    new_w = fw + overflow_l + overflow_r
-    new_h = fh + overflow_b + overflow_t
+    # Shrink the figure to *just* the tight bbox + a small pad on each side,
+    # rather than preserving matplotlib's default left/bottom gridspec margin.
+    new_w = (tight_bb.x1 - tight_bb.x0) + 2 * pad
+    new_h = (tight_bb.y1 - tight_bb.y0) + 2 * pad
+    shift_x = -tight_bb.x0 + pad
+    shift_y = -tight_bb.y0 + pad
 
     new_positions = []
     for a in fig.axes:
@@ -584,8 +611,8 @@ def fit_figure_to_axes(fig, ax, base_width=8, pad=0.1):
         old_h_in = pos.height * fh
         new_positions.append(
             [
-                (old_x_in + overflow_l) / new_w,
-                (old_y_in + overflow_b) / new_h,
+                (old_x_in + shift_x) / new_w,
+                (old_y_in + shift_y) / new_h,
                 old_w_in / new_w,
                 old_h_in / new_h,
             ]
@@ -595,6 +622,27 @@ def fit_figure_to_axes(fig, ax, base_width=8, pad=0.1):
     for a, p in zip(fig.axes, new_positions):
         a.set_position(p)
     fig.canvas.draw()
+
+    # Snap auxiliary axes to the position of the right axis
+    main_ids = {id(a) for a in axes}
+    extras = [a for a in fig.axes if id(a) not in main_ids]
+    if extras:
+        rightmost = axes[-1].get_position()
+        if stack_vertical and len(axes) >= 2:
+            topmost = axes[0].get_position()
+            cax_y0, cax_h = rightmost.y0, topmost.y1 - rightmost.y0
+        else:
+            cax_y0, cax_h = rightmost.y0, rightmost.y1 - rightmost.y0
+        for a in extras:
+            a.set_position(
+                [
+                    rightmost.x1 + max(0.0, cbar_horizontal_placement),
+                    cax_y0,
+                    a.get_position().width,
+                    cax_h,
+                ]
+            )
+        fig.canvas.draw()
 
 
 def init_figure(
@@ -629,25 +677,59 @@ def init_figure(
     return fig, ax, cax
 
 
+def _displayed_extent():
+    """
+    Return (width, height) of the data area that will actually be shown.
+    When mask_overlay is on, apply_mask_overlay later overwrites xlim/ylim with the mask raster's extent, so use the mask dimensions. Otherwise fall back to the xaxis_limits/yaxis_limits knobs.
+    """
+    if mask_overlay:
+        path = _MASKS_DIR / mask_overlay_file
+        with open(path) as f:
+            h = f.readline().split()
+            nx_m, ny_m = int(h[0]), int(h[1])
+        return float(nx_m), float(ny_m)
+    return float(xaxis_limits), float(yaxis_limits)
+
+
+_disp_w, _disp_h = _displayed_extent()
+stack_vertical = _disp_w >= _disp_h  # True: 2 rows; False: 2 cols
+
+
 def init_figure_image(
     trans=False,
     colors=0,
 ):
-    fig = plt.figure(figsize=(8, 16 * yaxis_limits / xaxis_limits), dpi=300)
-    gs = fig.add_gridspec(2, 1, width_ratios=[1], wspace=0.05)
-    ax0 = fig.add_subplot(gs[0, 0])
-    ax1 = fig.add_subplot(gs[1, 0], sharex=ax0)
+    if stack_vertical:
+        fig = plt.figure(figsize=(8, 16 * _disp_h / _disp_w), dpi=300)
+        gs = fig.add_gridspec(2, 1, width_ratios=[1], wspace=0.05)
+        ax0 = fig.add_subplot(gs[0, 0])
+        ax1 = fig.add_subplot(gs[1, 0], sharex=ax0)
+    else:
+        fig = plt.figure(figsize=(16 * _disp_w / _disp_h, 8), dpi=300)
+        gs = fig.add_gridspec(1, 2, height_ratios=[1], wspace=0.05)
+        ax0 = fig.add_subplot(gs[0, 0])
+        ax1 = fig.add_subplot(gs[0, 1], sharey=ax0)
 
     # anchor the colorbar to ax1
     if colors >= 1:
-        cax = fig.add_axes(
-            [
-                ax1.get_position().x1 + cbar_horizontal_placement,
-                ax1.get_position().y0,
-                0.02,
-                ax0.get_position().y1 - ax1.get_position().y0,
-            ]
-        )
+        if stack_vertical:
+            cax = fig.add_axes(
+                [
+                    ax1.get_position().x1 + cbar_horizontal_placement,
+                    ax1.get_position().y0,
+                    0.02,
+                    ax0.get_position().y1 - ax1.get_position().y0,
+                ]
+            )
+        else:
+            cax = fig.add_axes(
+                [
+                    ax1.get_position().x1 + cbar_horizontal_placement,
+                    ax1.get_position().y0,
+                    0.02,
+                    ax1.get_position().y1 - ax1.get_position().y0,
+                ]
+            )
     else:
         cax = None
 
@@ -657,23 +739,43 @@ def init_figure_image(
         fig.patch.set_facecolor("None")
 
     # ticks
-    ax0.tick_params(
-        which="both",
-        direction="out",
-        bottom=True,
-        top=False,
-        left=True,
-        right=False,
-        labelleft=True,
-        labelbottom=False,
-    )
-    ax1.tick_params(
-        bottom=True,
-        top=False,
-        left=True,
-        right=False,
-        labelleft=True,
-    )
+    if stack_vertical:
+        ax0.tick_params(
+            which="both",
+            direction="out",
+            bottom=True,
+            top=False,
+            left=True,
+            right=False,
+            labelleft=True,
+            labelbottom=False,
+        )
+        ax1.tick_params(
+            bottom=True,
+            top=False,
+            left=True,
+            right=False,
+            labelleft=True,
+        )
+    else:
+        ax0.tick_params(
+            which="both",
+            direction="out",
+            bottom=True,
+            top=False,
+            left=True,
+            right=False,
+            labelleft=True,
+            labelbottom=True,
+        )
+        ax1.tick_params(
+            bottom=True,
+            top=False,
+            left=True,
+            right=False,
+            labelleft=False,
+            labelbottom=True,
+        )
     ax = [ax0, ax1]
 
     return fig, ax, cax
@@ -685,7 +787,12 @@ def init_figure_image(
 if video:
     fig, ax, cax = init_figure(
         trans,
-        stress + bond_num_plot + bond_ratio_plot + thickness + velocity_x,
+        stress
+        + bond_num_plot
+        + bond_ratio_plot
+        + thickness
+        + velocity_x
+        + velocity_y,
     )
     ax.set_ylabel(
         r"$y$ [km]",
@@ -763,6 +870,17 @@ if video:
             va="top",
             position=(0, 0.9),
         )
+    elif velocity_y:
+        ax.set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
+        cb.set_label(
+            "$v$ [cm/s]",
+            rotation=0,
+            multialignment="left",
+            ha="left",
+            va="top",
+            position=(0, 0.9),
+        )
 
     # bonds_broken overlay is independent of the disk-coloring modes above
     if bonds_broken:
@@ -803,21 +921,38 @@ if video:
 elif image:
     fig, ax, cax = init_figure_image(
         trans,
-        stress + bond_num_plot + bond_ratio_plot + thickness + velocity_x,
+        stress
+        + bond_num_plot
+        + bond_ratio_plot
+        + thickness
+        + velocity_x
+        + velocity_y,
     )
-    ax[0].set_ylabel(
-        r"$y$ [km]",
-        rotation=0,
-        multialignment="left",
-        ha="right",
-    )
-    ax[1].set_ylabel(
-        r"$y$ [km]",
-        rotation=0,
-        multialignment="left",
-        ha="right",
-    )
-    ax[1].set_xlabel(r"$x$ [km]")
+    if stack_vertical:
+        # both subplots show y label
+        ax[0].set_ylabel(
+            r"$y$ [km]",
+            rotation=0,
+            multialignment="left",
+            ha="right",
+        )
+        ax[1].set_ylabel(
+            r"$y$ [km]",
+            rotation=0,
+            multialignment="left",
+            ha="right",
+        )
+        ax[1].set_xlabel(r"$x$ [km]")
+    else:
+        # both subplots show x label
+        ax[0].set_ylabel(
+            r"$y$ [km]",
+            rotation=0,
+            multialignment="left",
+            ha="right",
+        )
+        ax[0].set_xlabel(r"$x$ [km]")
+        ax[1].set_xlabel(r"$x$ [km]")
 
     # limits of the plot in kilometers
     ax[0].set_xlim(-xoffset, xaxis_limits - xoffset)
@@ -861,12 +996,6 @@ elif image:
         cb = fig.colorbar(
             mapper, cax=cax, orientation="vertical", use_gridspec=True
         )
-        # cb.set_ticks(
-        #     ticks=np.arange(0, np.max(bond_ratio) + 1, (np.max(bond_ratio) + 1)),
-        #     labels=np.arange(
-        #         0, np.max(bond_ratio) + 1, (np.max(bond_ratio) + 1), dtype=int
-        #     ),
-        # )
         cb.set_label(
             "Weighted\nfractured\nbonds",
             rotation=0,
@@ -882,14 +1011,7 @@ elif image:
         cb = fig.colorbar(
             mapper, cax=cax, orientation="vertical", extend="max"
         )
-        cb.set_label(
-            "Thickness [m]",
-            rotation=90,
-            multialignment="left",
-            ha="center",
-            va="top",
-            position=(0, 0.5),
-        )
+        cb.set_label("Thickness [m]", rotation=90)
 
     elif stress:
         ax[0].set_facecolor("white")
@@ -907,35 +1029,36 @@ elif image:
         ax[0].set_facecolor("white")
         ax[1].set_facecolor("white")
         cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
-        cb.set_label(
-            "$u$ [cm/s]",
-            rotation=90,
-            multialignment="left",
-            ha="center",
-            va="top",
-            position=(0, 0.5),
-        )
+        cb.set_label("$u$ [cm/s]", rotation=90)
+    elif velocity_y:
+        ax[0].set_facecolor("white")
+        ax[1].set_facecolor("white")
+        cb = fig.colorbar(mapper, cax=cax, orientation="vertical")
+        cb.set_label("$v$ [cm/s]", rotation=90)
 
-    # bonds_broken overlay is independent of the disk-coloring modes above
+    # bonds_broken overlay is independent of the disk-coloring modes
     if bonds_broken:
-        if breaks_style == "dot":
-            xrange = ax[1].get_xlim()[1] - ax[1].get_xlim()[0]
-            scale = 10.0 / xrange
-            marker_size = 250.0 * scale**2
-            broken_scatter = ax[1].scatter(
-                [],
-                [],
-                c="xkcd:midnight blue",
-                s=marker_size,
-                edgecolors="none",
-                marker="o",
-                zorder=5,
-            )
-        else:
-            broken_scatter = LineCollection(
-                [], colors="xkcd:midnight blue", linewidths=1.0, zorder=5
-            )
-            ax[1].add_collection(broken_scatter)
+        broken_scatters = []
+        for sub_ax in ax:
+            if breaks_style == "dot":
+                xrange = sub_ax.get_xlim()[1] - sub_ax.get_xlim()[0]
+                scale = 10.0 / xrange
+                marker_size = 250.0 * scale**2
+                sc = sub_ax.scatter(
+                    [],
+                    [],
+                    c="xkcd:midnight blue",
+                    s=marker_size,
+                    edgecolors="none",
+                    marker="o",
+                    zorder=5,
+                )
+            else:
+                sc = LineCollection(
+                    [], colors="xkcd:midnight blue", linewidths=1.0, zorder=5
+                )
+                sub_ax.add_collection(sc)
+            broken_scatters.append(sc)
 
     # keep track of time in the figure
     time0 = fig.text(
@@ -979,6 +1102,7 @@ def init(ax, time):
             or thickness
             or stress
             or velocity_x
+            or velocity_y
         ):
             continue
         if bonds_bool:
@@ -1020,6 +1144,9 @@ def animate(k, time):
         if velocity_x:
             disk.set_facecolor(u_cm[k, i])
             disk.set_linewidth(0)
+        if velocity_y:
+            disk.set_facecolor(v_cm[k, i])
+            disk.set_linewidth(0)
         rad.xy = p
         rad.angle = t[k, i]
         rad.set_width(r[k, i])
@@ -1034,6 +1161,7 @@ def animate(k, time):
             or thickness
             or stress
             or velocity_x
+            or velocity_y
         ):
             continue
         if bonds_bool:
@@ -1065,14 +1193,34 @@ def animate(k, time):
         update_broken_dots(broken_scatter, k)
 
     time.set_text(
-        r"$t = {}\>$hour".format(
-            round(dt * comp * compression * (k + 1) / 60 / 60)
+        r"$t = {:.0f}\>$hour".format(
+            dt * comp * (start + k * compression) / 3600.0
         )
     )
 
     if k == 0 or k == r.shape[0] - 1:
-        fig.savefig("../../plots/plot/collision{}-{}.png".format(expno, k + 1))
-        fig.savefig("../../plots/plot/collision{}-{}.pdf".format(expno, k + 1))
+        fig.savefig(
+            "../../plots/plot/collision{}-{}.png".format(expno, k + 1),
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
+        fig.savefig(
+            "../../plots/plot/collision{}-{}.pdf".format(expno, k + 1),
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
+        fig.savefig(
+            "../../plots/plot/collision{}-{}_trans.png".format(expno, k + 1),
+            transparent=True,
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
+        fig.savefig(
+            "../../plots/plot/collision{}-{}_trans.pdf".format(expno, k + 1),
+            transparent=True,
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
 
     return disks, radii, bonds
 
@@ -1084,6 +1232,7 @@ def imaginate(
     k,
     time,
     ax,
+    scatter=None,
 ):
     print("Initial drawing in process")
     for i in range(x.shape[-1]):
@@ -1106,6 +1255,10 @@ def imaginate(
             disk.set_facecolor(u_cm[k, i])
             disk.set_linewidth(0)
 
+        if velocity_y:
+            disk.set_facecolor(v_cm[k, i])
+            disk.set_linewidth(0)
+
         if clean is True:
             rad.set_visible(False)
 
@@ -1120,6 +1273,7 @@ def imaginate(
             or thickness
             or stress
             or velocity_x
+            or velocity_y
         ):
             continue
 
@@ -1142,11 +1296,11 @@ def imaginate(
 
     # broken-bond dots
     if bonds_broken and not (bond_num_plot or bond_ratio_plot):
-        update_broken_dots(broken_scatter, k)
+        update_broken_dots(scatter, k)
 
     time.set_text(
-        r"$t = {}\>$hour".format(
-            round(dt * comp * compression * (k + 1) / 60 / 60)
+        r"$t = {:.0f}\>$hour".format(
+            dt * comp * (start + k * compression) / 3600.0
         )
     )
 
@@ -1185,7 +1339,34 @@ if video:
     )
 
 if image:
-    imaginate(0, time0, ax[0])
-    imaginate(x.shape[0] - 1, time1, ax[1])
-    fig.savefig("../../plots/plot/collision{}-startstop.png".format(expno))
-    fig.savefig("../../plots/plot/collision{}-startstop.pdf".format(expno))
+    imaginate(
+        0, time0, ax[0], scatter=broken_scatters[0] if bonds_broken else None
+    )
+    imaginate(
+        x.shape[0] - 1,
+        time1,
+        ax[1],
+        scatter=broken_scatters[1] if bonds_broken else None,
+    )
+    fig.savefig(
+        "../../plots/plot/collision{}-startstop.png".format(expno),
+        bbox_inches="tight",
+        pad_inches=0.02,
+    )
+    fig.savefig(
+        "../../plots/plot/collision{}-startstop.pdf".format(expno),
+        bbox_inches="tight",
+        pad_inches=0.02,
+    )
+    fig.savefig(
+        "../../plots/plot/collision{}-startstop_trans.png".format(expno),
+        transparent=True,
+        bbox_inches="tight",
+        pad_inches=0.02,
+    )
+    fig.savefig(
+        "../../plots/plot/collision{}-startstop_trans.pdf".format(expno),
+        transparent=True,
+        bbox_inches="tight",
+        pad_inches=0.02,
+    )

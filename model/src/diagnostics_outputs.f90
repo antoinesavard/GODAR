@@ -1,12 +1,13 @@
 subroutine sea_ice_post (tstep, expno_str)
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-	include "CB_bond.h"
-    include "CB_diagnostics.h"
 
     integer :: i, j
     integer, intent(in) :: tstep
@@ -16,7 +17,10 @@ subroutine sea_ice_post (tstep, expno_str)
     character(len=20) :: filetfx, filetfy, filefcx, filefcy, filefbx, &
                          filefby, filem, filemc, filemb
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
-    character(len=20) :: filetp, fileangle, filedamage
+    character(len=20) :: filetp, fileangle, filedamage, filebeam
+
+    ! bending angles of a bond and overlap of a pair
+    double precision :: thetarelb_ji, thetarelb_ij, deltan_ji
 
     ! diagnostics variables
     num_bonds = 0
@@ -53,6 +57,7 @@ subroutine sea_ice_post (tstep, expno_str)
     filetp = "output/tp." // trim(adjustl(expno_str))
     fileangle = "output/angle." // trim(adjustl(expno_str))
     filedamage = "output/damage." // trim(adjustl(expno_str))
+    filebeam = "output/beam." // trim(adjustl(expno_str))
 
     ! ! writing in the files
     ! ! physical properties
@@ -146,6 +151,8 @@ subroutine sea_ice_post (tstep, expno_str)
     open (33, file = fileangle, position = 'append', status = 'unknown')
     ! damage
     open (34, file = filedamage, position = 'append', status = 'unknown')
+    ! beam state, for restarts
+    open (35, file = filebeam, position = 'append', status = 'unknown')
 
 
     ! write on the files
@@ -160,12 +167,25 @@ subroutine sea_ice_post (tstep, expno_str)
 	do i = 1, n
         do j = 1, n
             if (bond(j, i) == 1) then
+                ! bending angles, as in bond_forces_timoshenko
+                thetarelb_ji = -(theta(i) - alpha_total(j,i) - theta_offset(j,i))
+                thetarelb_ij = -(theta(j) - alpha_total(j,i) - theta_offset(i,j))
+
                 write(18,*) int(tstep / comp), j, i
                 write(34,*) int(tstep / comp), j, i, damageb(j,i)
+                write(35,*) int(tstep / comp), j, i, lb(j,i), rb(j,i), &
+                            hb(j,i), thetarelb_ji, thetarelb_ij
                 num_bonds = num_bonds + 1
             end if
-            if ( deltan(j,i) .gt. 0 ) then
-                write(33,*) int(tstep / comp), j, i, atan2( y(j) - y(i), x(j) - x(i) ) * 180d0 / pi
+
+            ! contacts between active particles (lower triangle),
+            ! overlap recomputed from the positions
+            if ( j .gt. i .and. active(i) .and. active(j) ) then
+                deltan_ji = r(i) + r(j) - sqrt( ( x(i) - x(j) ) ** 2 + &
+                                                ( y(i) - y(j) ) ** 2 )
+                if ( deltan_ji .gt. 0 ) then
+                    write(33,*) int(tstep / comp), j, i, atan2( y(j) - y(i), x(j) - x(i) ) * 180d0 / pi
+                end if
             end if
         end do
 	end do
@@ -185,7 +205,7 @@ subroutine sea_ice_post (tstep, expno_str)
     write(31,*) ( tsigyx(i),	i=1, n )
     write(32,*) ( tp(i),	i=1, n )
 
-    do i = 10, 34
+    do i = 10, 35
         close(i)
     end do
 

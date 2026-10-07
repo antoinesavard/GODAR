@@ -1,12 +1,13 @@
 subroutine get_default
     
+    use parameters
+    use const
+    use bonds
+    use forcings
+    use options
+
     implicit none
 
-    include "parameter.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
 
 
     !-------------------------------------------------------------------
@@ -64,7 +65,7 @@ subroutine get_default
     poiss_ratio     =  33d-2       ! poisson ratio nu
     friction_coeff  =  7d-1        ! friction coefficient mu
     rest_coeff      =  88d-2       ! coefficient of restitution
-    sigmanc_crit    =  1d6         ! critical normal stress
+    sigmanc_crit    =  1d6         ! critical normal stress [Pa/m]
 
     ! effective contact modulus
     ec   =  e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
@@ -86,7 +87,7 @@ subroutine get_default
     dmax         = 9d-1
     dtd          = 1d0
     dth          = 1d5
-    phi_int      = 30d0 * pi / 180d0
+    phi_int      = 30d0               ! internal friction angle [deg]
 
     !-------------------------------------------------------------------
     !           Winds and currents forcings
@@ -120,13 +121,14 @@ end subroutine get_default
 
 subroutine read_namelist (namelist_name)
 
+    use parameters
+    use const
+    use bonds
+    use forcings
+    use options
+
     implicit none
 
-    include "parameter.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
     
     integer :: nml_error, filenb
     logical :: exist
@@ -279,6 +281,5 @@ subroutine read_namelist (namelist_name)
     ec = e_modul / ( 2 * ( 1 - poiss_ratio ** 2 ) )
     gc = e_modul / ( 4 * ( 1 - poiss_ratio ) * ( 2 + poiss_ratio ) )
     beta = -1d0 * log(rest_coeff) / sqrt( log(rest_coeff) ** 2 + pi ** 2 )
-    phi_int = phi_int * pi / 180d0 
 
 end subroutine read_namelist

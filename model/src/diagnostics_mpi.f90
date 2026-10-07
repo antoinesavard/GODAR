@@ -2,11 +2,12 @@ subroutine diag_reduction (diag)
 
     use mpi_f08
 
+    use parameters
+    use diagnostics
+    use mpi_var
+
     implicit none
 
-    include "parameter.h"
-    include "CB_diagnostics.h"
-    include "CB_mpi.h"
 
     character(*), intent(in) :: diag
 
@@ -41,11 +42,12 @@ subroutine diag_broadcast (diag)
 
     use mpi_f08
 
+    use parameters
+    use diagnostics
+    use mpi_var
+
     implicit none
 
-    include "parameter.h"
-    include "CB_diagnostics.h"
-    include "CB_mpi.h"
 
     character(*), intent(in) :: diag
 

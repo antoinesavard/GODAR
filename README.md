@@ -1,6 +1,6 @@
 # GODAR
 
-## Granular flOes for Discrete Arctic Rheology: DEM for sea ice modeling
+## Granular flOe Dynamics for seA ice Rheology
 
 ### What does GODAR do?
 
@@ -38,7 +38,7 @@ After these steps, you should be good to go.
 
 Next you will need to install a few things. There are a few things that needs to be done before you can compile and run this code. First off, the KdTree algorithm used in this program comes from coretran, so you need to install coretran on your machine. Coretran is available on Github at the following link: <https://github.com/leonfoks/coretran>.
 
-I would suggest to follow the detailed instructions provided in coretran's readme as it well written and easy to use. I would recommend that coretran be installed close to where `GODAR/` is, e.g.: `GODAR/../coretran`. To do this, enter the following commands:
+I would suggest to follow the detailed instructions provided in coretran's readme as it is well written and easy to use. I would recommend that coretran be installed close to where `GODAR/` is, e.g.: `GODAR/../coretran`. To do this, enter the following commands:
 
 ```bash
 git clone git@github.com:leonfoks/coretran.git

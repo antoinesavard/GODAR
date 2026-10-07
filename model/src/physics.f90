@@ -1,32 +1,35 @@
-subroutine coulomb (j, i, ktc, gamt)
+subroutine coulomb (j, i, p, ktc, gamt)
+
+    use parameters
+    use variables
+    use const
+    use options
+    use pairs, only: pair_t
 
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_options.h"
 
     integer, intent(in) :: i, j
+    type(pair_t), intent(inout) :: p
     double precision, intent(in) :: ktc, gamt
 
 	! ensures slipping if fct is too big (kinetic friction)
     ! this is applied both on center of mass and moment
-    if ( abs( fct(j,i) ) > friction_coeff * abs( fcn(j,i) ) ) then
+    if ( abs( p%fct ) > friction_coeff * abs( p%fcn ) ) then
 
-        fct(j,i) = - friction_coeff * abs( fcn(j,i) ) * &
-                    sign(1d0, velt(j,i))
-        fcr(j,i) = fct(j,i)
-        
+        p%fct = - friction_coeff * abs( p%fcn ) * &
+                    sign(1d0, p%velt)
+        p%fcr = p%fct
+
         if ( slipping .eqv. .true. ) then
-            deltat(j,i) = (fct(j,i) + gamt * velt(j,i)) / ktc
+            deltat(j,i) = (p%fct + gamt * p%velt) / ktc
         end if
 
     ! static friction is not applied on center of mass, it only
     ! creates a moment
     else
 
-        fcr(j,i) = fct(j,i)
+        p%fcr = p%fct
 
     end if
     
@@ -35,17 +38,18 @@ end subroutine coulomb
 
 subroutine coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc)
 
+    use parameters
+    use variables
+    use const
+    use options
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_options.h" 
 
     integer, intent(in) :: i
     double precision, intent(in) :: velt_bc
     double precision, intent(in) :: ktc, gamt
-    double precision, intent(out) :: deltat_bc
+    double precision, intent(inout) :: deltat_bc
 
 	! ensures slipping if force_t is too big (kinetic friction)
     ! this is applied both on center of mass and moment
@@ -70,120 +74,127 @@ subroutine coulomb_bc (i, velt_bc, ktc, gamt, deltat_bc)
 end subroutine coulomb_bc
 
 
-subroutine rel_pos_vel (j, i)
+subroutine rel_pos_vel (j, i, p)
+
+    use parameters
+    use variables
+    use const
+    use pairs, only: pair_t
 
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     integer, intent(in) :: i, j
+    type(pair_t), intent(inout) :: p
 
     ! distance between particles are
-    dist(j,i) = ( sqrt(                              &
+    p%dist = ( sqrt(                                 &
 						( x(i) - x(j) ) ** 2 +       &
 						( y(i) - y(j) ) ** 2         &
 						)                            &
 				)
 
     ! Components of unit vector ei=(cosa,sina) are:
-	cosa(j,i) = ( x(j) - x(i) ) / dist(j,i)
-	
-	sina(j,i) = ( y(j) - y(i) ) / dist(j,i)
+	p%cosa = ( x(j) - x(i) ) / p%dist
 
-    ! angle between particle pair and reference axis (x-axis)
-    alpha(j,i) = atan2( sina(j,i), cosa(j,i) )
+	p%sina = ( y(j) - y(i) ) / p%dist
 
 	! relative angular velocity
-	omegarel(j,i) = ( omega(j) - omega(i) )
+	p%omegarel = ( omega(j) - omega(i) )
 
 	! Normal components of the relative velocities:
-	veln(j,i) = ( u(j) - u(i) ) * cosa(j,i) +     &
-				( v(j) - v(i) ) * sina(j,i)
+	p%veln = ( u(j) - u(i) ) * p%cosa +     &
+				( v(j) - v(i) ) * p%sina
 
 	! Center components of the relative velocities:
-    veltb(j,i) = -( u(j) - u(i) ) * sina(j,i) +   &
-                 ( v(j) - v(i) ) * cosa(j,i)
+    p%veltb = -( u(j) - u(i) ) * p%sina +   &
+                 ( v(j) - v(i) ) * p%cosa
 
     ! Tangential components of the relative velocities:
-    velt(j,i) = veltb(j,i) - ( omega(i) * r(i) + omega(j) * r(j) )
+    p%velt = p%veltb - ( omega(i) * r(i) + omega(j) * r(j) )
 
 	! normal overlap (displacement) deltan >=0
-	deltan(j,i)  =  r(i) + r(j) - dist(j,i)
+	p%deltan  =  r(i) + r(j) - p%dist
     
 end subroutine rel_pos_vel
 
 
-subroutine contact_local_to_global (j, i)
+subroutine contact_local_to_global (j, i, p)
 
-    implicit none 
+    use parameters
+    use variables
+    use const
+    use pairs, only: pair_t
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
+    implicit none
+
 
     integer, intent(in) :: i, j
+    type(pair_t), intent(in) :: p
 
     ! update contact force on particle i by particle j
-    fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i)
-    fcy(i) = fcy(i) - fcn(j,i) * sina(j,i)
+    fcx(i) = fcx(i) - p%fcn * p%cosa
+    fcy(i) = fcy(i) - p%fcn * p%sina
 
-    ! update moment on particule i by particule j due to tangent contact 
-    mc(i) = mc(i) - r(i) * fct(j,i) - mcc(j,i)
+    ! update moment on particule i by particule j due to tangent contact
+    mc(i) = mc(i) - r(i) * p%fct - p%mcc
 
     ! Newton's third law
     ! update contact force on particle j by particle i
-    fcx(j) = fcx(j) + fcn(j,i) * cosa(j,i)
-    fcy(j) = fcy(j) + fcn(j,i) * sina(j,i)
+    fcx(j) = fcx(j) + p%fcn * p%cosa
+    fcy(j) = fcy(j) + p%fcn * p%sina
 
-    ! update moment on particule j by particule i due to tangent contact 
-    mc(j) = mc(j) - r(j) * fct(j,i) - mcc(j,i)
+    ! update moment on particule j by particule i due to tangent contact
+    mc(j) = mc(j) - r(j) * p%fct - p%mcc
 
 end subroutine contact_local_to_global
 
 
-subroutine bond_local_to_global (j, i)
+subroutine bond_local_to_global (j, i, p)
 
-    implicit none 
+    use parameters
+    use variables
+    use bonds
+    use const
+    use pairs, only: pair_t
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_bond.h"
-    include "CB_const.h"
+    implicit none
+
 
     integer, intent(in) :: i, j
+    type(pair_t), intent(in) :: p
 
     ! update force on particle i by j due to bond
-    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i) +    &
-                        fbt(j,i) * sina(j,i)
-    fby(i) = fby(i) - fbn(j,i) * sina(j,i) -    &
-                        fbt(j,i) * cosa(j,i)
+    fbx(i) = fbx(i) - p%fbn * p%cosa +    &
+                        p%fbt * p%sina
+    fby(i) = fby(i) - p%fbn * p%sina -    &
+                        p%fbt * p%cosa
 
     ! update moment on particule i by j to to bond
-    mb(i) = mb(i) - r(i) * fbt(j,i) - mbb(j, i)
+    mb(i) = mb(i) - r(i) * p%fbt - p%mbb_ji
 
     ! Newton's third law
     ! update force on particle j by i due to bond
-    fbx(j) = fbx(j) + fbn(j,i) * cosa(j,i) -    &
-                        fbt(j,i) * sina(j,i)
-    fby(j) = fby(j) + fbn(j,i) * sina(j,i) +    &
-                        fbt(j,i) * cosa(j,i)
+    fbx(j) = fbx(j) + p%fbn * p%cosa -    &
+                        p%fbt * p%sina
+    fby(j) = fby(j) + p%fbn * p%sina +    &
+                        p%fbt * p%cosa
 
 
     ! update moment on particule j by i due to bond
-    mb(j) = mb(j) - r(j) * fbt(j,i) - mbb(j, i)
+    mb(j) = mb(j) - r(j) * p%fbt - p%mbb_ji
 
 end subroutine bond_local_to_global
 
 
 subroutine floe_properties(i)
 
+    use parameters
+    use const
+    use variables
+
     implicit none
 
-    include "parameter.h"
-    include "CB_const.h"
-    include "CB_variables.h"
 
     integer, intent(in) :: i
 

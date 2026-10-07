@@ -113,4 +113,4 @@ for j in range(len(adn)):
             f.write(str(oline))
             f.write("\n")
 
-    print("Done with line {}/{}".format(j+1,len(adn)))
+    print("Done with line {}/{}".format(j + 1, len(adn)))

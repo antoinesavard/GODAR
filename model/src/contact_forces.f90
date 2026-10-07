@@ -1,14 +1,17 @@
-subroutine contact_forces (j, i)
+subroutine contact_forces (j, i, p)
+
+    use parameters
+    use variables
+    use const
+    use bonds
+    use options
+    use pairs, only: pair_t
 
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_options.h"
 
     integer, intent(in) :: i, j
+    type(pair_t), intent(inout) :: p
 
     double precision :: m_redu, r_redu, hmin
     double precision :: fit
@@ -16,18 +19,18 @@ subroutine contact_forces (j, i)
     double precision :: krc, gamr, mrolling
 
     ! compression has delta_t > 0
-    deltat(j,i) = -velt(j,i) * dt + deltat(j,i)
-    
+    deltat(j,i) = -p%velt * dt + deltat(j,i)
+
     ! this is the whole length of contact
     ! clamp arg of sqrt to >=0: under -ffast-math the cancellation
     ! r_i^2 - delta_ij^2 can flip slightly negative near deltan->0+
     ! (i.e. nearly-touching contacts), producing NaN that cascades
-    delt_ridge(j,i) = 2 * sqrt( max( r(i) ** 2 - ( (dist(j,i) ** 2 - &
-                    r(j) ** 2 + r(i) ** 2) / (2 * dist(j,i)) ) ** 2, &
+    p%delt_ridge = 2 * sqrt( max( r(i) ** 2 - ( (p%dist ** 2 - &
+                    r(j) ** 2 + r(i) ** 2) / (2 * p%dist) ) ** 2, &
                     0d0 ) )
 
     ! relative angle
-    thetarelc(j,i) = -omegarel(j,i) * dt + thetarelc(j,i)
+    thetarelc(j,i) = -p%omegarel * dt + thetarelc(j,i)
 
     ! reduced variables
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
@@ -37,55 +40,55 @@ subroutine contact_forces (j, i)
 
     ! stiffness
     knc    = pi * ec * hmin  *                  &
-                fit( deltan(j,i) * r_redu /     &
+                fit( p%deltan * r_redu /        &
                 ( 2 * hmin ** 2 ) )
 
     ktc    = 6d0 * gc / ec * knc
 
-    krc    = knc * delt_ridge(j,i) ** 2 / 12
+    krc    = knc * p%delt_ridge ** 2 / 12
 
     ! damping
     gamn   = 2d0 * beta * sqrt( knc * m_redu )
 
     gamt   = 2d0 * beta * sqrt( 2d0/3d0 * ktc * m_redu )
 
-    gamr   = gamn * delt_ridge(j,i) ** 2 / 12
+    gamr   = gamn * p%delt_ridge ** 2 / 12
 
     ! compute the normal/tangent force
-    fcn(j,i) = max(knc * deltan(j,i) - gamn * veln(j,i), 0d0)
+    p%fcn = max(knc * p%deltan - gamn * p%veln, 0d0)
 
-    fct(j,i) = ktc * deltat(j,i) - gamt * velt(j,i)
+    p%fct = ktc * deltat(j,i) - gamt * p%velt
 
     ! verify if we are in the plastic case or not
     if ( ridging .eqv. .true. ) then
-        if ( sigmanc_crit * hmin .le. fcn(j,i) / delt_ridge(j,i) &
+        if ( sigmanc_crit * hmin .le. p%fcn / p%delt_ridge &
         / hmin ) then
-            
-            call plastic_contact (j, i, m_redu, hmin, ktc, krc, &
+
+            call plastic_contact (j, i, p, m_redu, hmin, ktc, krc, &
                                     gamn, gamt, gamr)
 
         end if
     end if
 
 	! make sure that disks are slipping if not enough normal force
-    call coulomb (j, i, ktc, gamt)
+    call coulomb (j, i, p, ktc, gamt)
 
     if ( bond (j, i) .eq. 0 ) then
         ! moments due to rolling
-        mrolling = krc * thetarelc(j, i) - gamr * omegarel(j, i)
+        mrolling = krc * thetarelc(j, i) - gamr * p%omegarel
 
         ! ensures no rolling if moment is too big
-        if ( abs( thetarelc(j, i) ) > 2 * abs(fcn(j,i)) / knc / &
-            delt_ridge(j,i) ) then
-                
+        if ( abs( thetarelc(j, i) ) > 2 * abs(p%fcn) / knc / &
+            p%delt_ridge ) then
+
             mrolling = 0d0
             !mrolling = abs(fcn(j,i)) * deltat(j,i) / 6 * &
                         !sign(1d0, omegarel(j,i))
-        
+
         end if
 
         ! total moment due to rolling
-        mcc(j, i) = mrolling 
+        p%mcc = mrolling
     end if
 
 end subroutine contact_forces
@@ -103,13 +106,14 @@ subroutine contact_bc (i, dir1, dir2, bd)
     !   dir2 (int): bottom/left (0) or top/right (1)
     !   bd   (int): one (1) or two (2) walls
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use options
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_options.h"
 
     integer, intent(in) :: i
     integer, intent(in) :: dir1, dir2, bd
@@ -255,13 +259,14 @@ subroutine contact_bc_mask (i, cosa_bc, sina_bc, deltan_bc)
     ! (cosa_bc, sina_bc) and penetration deltan_bc. Single tangential
     ! history slot per particle, reusing deltat_bc1 and theta_bc1.
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use options
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_options.h"
 
     integer, intent(in) :: i
     double precision, intent(in) :: cosa_bc, sina_bc, deltan_bc
@@ -324,11 +329,12 @@ end subroutine contact_bc_mask
 
 double precision function fit (xi)
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     double precision, intent(in)  :: xi
     double precision :: p1, p2, p3, q1, q2

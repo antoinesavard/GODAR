@@ -1,19 +1,22 @@
 subroutine ini_get (restart, expno_str_r, nt_r)
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-	include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_diagnostics.h"
 
 	integer, intent(in) :: restart, nt_r
 	character(2), intent(in) :: expno_str_r
     integer :: iostat
 
     integer :: i, j, k
+    logical :: beam_exists
+    character(len=32) :: Beamfile
 
 	! load restart files
 	if ( restart .eq. 1 ) then
@@ -30,6 +33,7 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         Vfile = 'output/v.' // trim(adjustl(expno_str_r))
         Bfile = 'output/bond.' // trim(adjustl(expno_str_r))
         Damfile = 'output/damage.' // trim(adjustl(expno_str_r))
+        Beamfile = 'output/beam.' // trim(adjustl(expno_str_r))
 		
         ! last timestep data index
 		k = int(nt_r)
@@ -125,9 +129,18 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         end do
         close(110)
 
-        ! read sparse bond data at timestep k
-        call read_sparse_restart(Bfile, k, 3)
-        call read_sparse_restart(Damfile, k, 4)
+        ! read sparse bond data at the same output as the positions:
+        ! line k of the files above is output index k - 1
+        call read_sparse_restart(Bfile, k - 1, 3)
+        call read_sparse_restart(Damfile, k - 1, 4)
+
+        ! bond geometry and bending angles (not in older outputs)
+        inquire(file = Beamfile, exist = beam_exists)
+        if (beam_exists) then
+            call read_sparse_restart(Beamfile, k - 1, 8)
+        else
+            write(*,*) 'No beam file found: bonds restart stress-free'
+        end if
 
         ! open(111, file = Bfile, status='old')
         ! do j = 1, (n + 1) * (k - 1)
@@ -173,6 +186,9 @@ subroutine ini_get (restart, expno_str_r, nt_r)
             v(i)      =  0d0
         end do
 
+        ! no bonds yet: bond_creation sets the damage of new bonds to 0
+        damageb = 1d0
+
     end if
 
     do i = 1, n
@@ -204,30 +220,12 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         pc(i)  = 0d0
         pb(i)  = 0d0
 
-        ! initial forces and moments in the contact plane
+        ! initial contact history
         do j = 1, n
-            fcn(j,i)  =  0d0
-            fct(j,i)  =  0d0
-            fcr(j,i)  =  0d0
-            mbb(j,i)  =  0d0
-            mcc(j,i)  =  0d0
-            fbn(j,i)  =  0d0
-            fbt(j,i)  =  0d0
             ! relative angular position is 0 at first
             thetarelc(j,i) = 0d0
-            thetarelb(j,i) = 0d0
             ! tangential compression at contact
             deltat(j,i) = 0d0
-            ! bond elongation et deflection
-            deltanb(j,i) = 0d0
-            deltatb(j,i) = 0d0
-            ! sheltering coefficient
-            hsfa(j, i) = 1d0
-            hsfw(j, i) = 1d0
-            ! contact area
-            ac(j, i) = 0d0
-            ! bond damage
-            damageb(j, i) = 1d0
         end do
 
         ! boundary
@@ -253,63 +251,62 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 end subroutine ini_get
 
 
-subroutine read_sparse_restart(filename, last_tstep, var_type)
+subroutine read_sparse_restart(filename, out_idx, var_type)
+
+    ! Reads the bonds saved at output index out_idx from a sparse file.
+    ! var_type is the number of values per line:
+    !   3: bond   (idx, j, i)
+    !   4: damage (idx, j, i, damageb)
+    !   8: beam   (idx, j, i, lb, rb, hb, thetarelb(j,i), thetarelb(i,j))
     
+    use parameters
+    use bonds
+
     implicit none
 
-    include "parameter.h"
-    include "CB_bond.h"
 
     character, intent(in) :: filename*32
-    integer, intent(in) :: last_tstep
-    integer, intent(in) :: var_type ! number of variables per line
+    integer, intent(in) :: out_idx
+    integer, intent(in) :: var_type
 
-    integer :: i, j, tstep
+    integer :: i, j, idx
     integer :: iostat
-    integer :: current_tstep
+    double precision :: vals(5)
 
-    current_tstep = -1
+    if ( var_type /= 3 .and. var_type /= 4 .and. var_type /= 8 ) then
+        write(*,*) "Error: var_type should be 3, 4 or 8 in read_sparse_restart subroutine"
+        stop
+    end if
+
+    ! pairs that are not listed at out_idx have no bond
+    if ( var_type == 3 ) bond = 0
+    if ( var_type == 4 ) damageb = 1d0
 
     open(unit=111, file=filename, status='old', action='read')
 
-    if ( var_type == 3 )then
-    
-        do
-            read(111, *, iostat=iostat) tstep, j, i
-            if (iostat /= 0) exit
-            if (tstep == last_tstep + 1) exit
+    do
+        read(111, *, iostat=iostat) idx, j, i, vals(1:var_type-3)
+        if (iostat /= 0) exit
 
-            ! New timestep detected
-            if (tstep /= current_tstep) then
-                bond = 0
-                current_tstep = tstep
-            end if
+        ! the file is ordered by output index
+        if (idx > out_idx) exit
+        if (idx < out_idx) cycle
 
+        select case (var_type)
+        case (3)
             bond(j, i) = 1
+        case (4)
+            damageb(j, i) = vals(1)
+        case (8)
+            lb(j, i)        = vals(1)
+            rb(j, i)        = vals(2)
+            hb(j, i)        = vals(3)
+            ! bending angles, turned into offsets by bond_restore
+            theta_offset(j, i) = vals(4)
+            theta_offset(i, j) = vals(5)
+        end select
 
-        end do
-
-    else if ( var_type == 4 ) then
-
-        do
-            read(111, *, iostat=iostat) tstep, j, i, damageb(j,i)
-            if (iostat /= 0) exit
-            if (tstep == last_tstep + 1) exit
-
-            ! New timestep detected
-            if (tstep /= current_tstep) then
-                damageb = 0d0
-                current_tstep = tstep
-            end if
-
-        end do
-
-    else 
-
-        write(*,*) "Error: var_type should be 3 or 4 in read_sparse_restart subroutine"
-        stop
-        
-    end if
+    end do
 
     close(111)
     

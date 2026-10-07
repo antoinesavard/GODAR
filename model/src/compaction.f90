@@ -4,11 +4,12 @@
 
 subroutine compaction
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     integer :: i
     double precision :: xraw(n), yraw(n), rraw(n), hraw(n)

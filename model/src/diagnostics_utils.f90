@@ -2,12 +2,13 @@ subroutine write_file_1D(array, path, description, units, expno_str, var, tstep)
 
     use netcdf
 
+    use parameters
+    use variables
+    use const
+    use bonds
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
 
     double precision, intent(in) :: array(n)
     character(len=20), intent(in) :: path
@@ -82,12 +83,13 @@ subroutine write_file_int_2D(array, path, description, units, expno_str, var, ts
 
     use netcdf
 
+    use parameters
+    use variables
+    use const
+    use bonds
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
 
     integer, intent(in) :: array(n,n)
     character(len=20), intent(in) :: path

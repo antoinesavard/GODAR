@@ -1,11 +1,12 @@
 subroutine velocity
 
+    use parameters
+    use variables
+    use const
+    use bonds
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
 
     ! Velocity Verlet: u^{n+1} = u^{n+1/2} + 0.5*a^{n+1}*dt
     ! (called after force computation; u is at step n+1/2)
@@ -20,11 +21,12 @@ end subroutine velocity
 
 subroutine position
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     ! each thread has its own copy of the acceleration, so each thread
     ! can compute its own u and x without needing to synchronize with
@@ -49,11 +51,12 @@ end subroutine position
 
 subroutine verlet_history
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     ! store current acceleration for next step
     ! each thread has its own copy of the acceleration, so each thread

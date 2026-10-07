@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(godar LANGUAGES Fortran)
 
@@ -33,7 +33,7 @@ foreach(subdir ${PKG_SUBDIRS})
             add_library(${modname} ${MOD_SRC})
             # Include paths for Fortran modules
             target_include_directories(${modname} PUBLIC
-                ${CMAKE_CURRENT_SOURCE_DIR}/model/inc
+#                ${CMAKE_CURRENT_SOURCE_DIR}/model/inc
                 ${CMAKE_Fortran_MODULE_DIRECTORY}
                 ${subdir}
                 ${MPI_Fortran_INCLUDE_DIRS}

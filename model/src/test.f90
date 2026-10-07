@@ -1,12 +1,13 @@
 subroutine normal_forces (setup, tstep)
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
 
     character (*), intent(in) :: setup
     integer, intent(in) :: tstep
@@ -41,11 +42,12 @@ end subroutine normal_forces
 
 subroutine gravity
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     double precision :: fg, angle
     integer :: i

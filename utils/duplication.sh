@@ -187,6 +187,11 @@ prompt_for_inputs() {
         fi
     done
     echo ""
+
+    # n_part="USER INPUT"
+    read -rp "Enter the number of particles: " n_part
+    echo "Each run will use ${n_part} particles."
+    echo ""
 }
 
 #---------------------------------------------------------
@@ -473,6 +478,7 @@ for i in "${!exp_tmp[@]}"; do
 ${exp_tmp[i]}${generic}      namelist name
 0                   input restart
 ${exp_tmp[i]}                  exp version
+${n_part}                  number of particles
 ${cores}                  number of threads
 EOL
 
@@ -491,6 +497,7 @@ ${exp_tmp[i]}${generic}      namelist name
 ${exp_base_boost[i]}                  restart exp
 ${time}                restart time
 ${exp_tmp[i]}                  exp version
+${n_part}                  number of particles
 ${cores}                  number of threads
 EOL
 

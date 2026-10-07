@@ -4,4 +4,5 @@ namelist.nml        namelist name
 XX                  restart exp
 XX                  restart time    
 XX                  exp version
+NN                  number of particles
 01                  number of threads

@@ -6,16 +6,17 @@ subroutine broadcasting_ini (thread_requested, restart)
     use mask_io, only: nx_mask, ny_mask, dx_mask, x_origin, y_origin, &
                        Lx, Ly, mask_proj, sdf
 
+    use parameters
+    use const
+    use mpi_var
+    use variables
+    use bonds
+    use options
+    use forcings
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_const.h"
-    include "CB_mpi.h"
-    include "CB_variables.h"
-    include "CB_bond.h"
-    include "CB_options.h"
-    include "CB_forcings.h"
-    include "CB_diagnostics.h"
 
     integer, intent(inout) :: thread_requested, restart
     
@@ -59,6 +60,19 @@ subroutine broadcasting_ini (thread_requested, restart)
     call mpi_bcast(damageb, n * n, mpi_double_precision,&
                     master, mpi_comm_world, ierr)
 
+    ! bond geometry and saved bending angles (in theta_offset until
+    ! bond_restore), only read from the output files on restart
+    if (restart .eq. 1) then
+        call mpi_bcast(lb, n * n, mpi_double_precision,     &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(rb, n * n, mpi_double_precision,     &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(hb, n * n, mpi_double_precision,     &
+                        master, mpi_comm_world, ierr)
+        call mpi_bcast(theta_offset, n * n, mpi_double_precision,   &
+                        master, mpi_comm_world, ierr)
+    end if
+
     !-------------------------------------------------------------------
     ! constants broadcast
     !-------------------------------------------------------------------
@@ -76,20 +90,8 @@ subroutine broadcasting_ini (thread_requested, restart)
     !-------------------------------------------------------------------
     call mpi_bcast(thetarelc, n * n, mpi_double_precision,        &
                     master, mpi_comm_world, ierr)
-    call mpi_bcast(thetarelb, n * n, mpi_double_precision,        &
-                    master, mpi_comm_world, ierr)
     call mpi_bcast(deltat, n * n, mpi_double_precision,           &
                     master, mpi_comm_world, ierr)
-    call mpi_bcast(deltanb, n * n, mpi_double_precision,          &
-                    master, mpi_comm_world, ierr)
-    call mpi_bcast(deltatb, n * n, mpi_double_precision,          &
-                    master, mpi_comm_world, ierr)
-    call mpi_bcast(hsfa, n * n, mpi_double_precision,             &
-                    master, mpi_comm_world, ierr)
-    call mpi_bcast(hsfw, n * n, mpi_double_precision,             &
-                    master, mpi_comm_world, ierr)
-    call mpi_bcast(ac, n * n, mpi_double_precision,               &
-                    master, mpi_comm_world, ierr)      
 
     !-------------------------------------------------------------------
     ! boundary variables broadcast
@@ -261,39 +263,25 @@ end subroutine broadcasting_ini
 
 subroutine broadcast_shape
 
-    ! this routine broadcasts the shape variables (h, r, hfa, hfw)
-    ! and reduce the minimum freeboard heights across all processes
-    ! so that each process has the global minima for ridging calculation
-    ! at each time step
+    ! this routine reduces the minimum sheltering heights and the
+    ! overlap volume ridged during the step across all processes, so
+    ! that every process applies the same shape changes to all the
+    ! particles (apply_ridging) and the shapes stay identical everywhere
 
     use mpi_f08
-    use mpi_counts_mod, only: counts, displs
+    use mpi_counts_mod, only: counts
+
+    use parameters
+    use forcings
+    use mpi_var
+    use variables
+    use options
 
     implicit none
 
-    include "parameter.h"
-    include "CB_forcings.h"
-    include "CB_mpi.h"
-    include "CB_variables.h"
-    include "CB_options.h"
 
     ! local variables
-    double precision, allocatable :: local_h(:), local_r(:)
-    double precision, allocatable :: local_hfa(:), local_hfw(:)
     double precision, allocatable :: recv_min_a(:), recv_min_w(:)
-
-    ! allocations
-    allocate(local_h(local_n))
-    allocate(local_r(local_n))
-
-    allocate(local_hfa(local_n))
-    allocate(local_hfw(local_n))
-
-    local_hfw = hfw(first_iter:last_iter)
-    local_hfa = hfa(first_iter:last_iter)
-
-    local_r = r(first_iter:last_iter)
-    local_h = h(first_iter:last_iter)
 
     if ( shelter .eqv. .true. ) then
         ! allocate recv buffers
@@ -310,41 +298,16 @@ subroutine broadcast_shape
         ! place received minima into hsfX_min_r at the local positions
         hsfa_min_r(local_disp+1 : local_disp + local_n) = recv_min_a
         hsfw_min_r(local_disp+1 : local_disp + local_n) = recv_min_w
-    end if
 
-    ! thickness and radius
-    call mpi_allgatherv(local_h,                                  &
-                        local_n, mpi_double_precision,            &
-                        h, counts, displs, mpi_double_precision,  &
-                        mpi_comm_world, ierr )
-
-    call mpi_allgatherv(local_r,                                  &
-                        local_n, mpi_double_precision,            &
-                        r, counts, displs, mpi_double_precision,  &
-                        mpi_comm_world, ierr )
-
-    ! freeboard heights
-    call mpi_allgatherv(local_hfa,                                  &
-                        local_n, mpi_double_precision,              &
-                        hfa, counts, displs, mpi_double_precision,  &
-                        mpi_comm_world, ierr )
-
-    call mpi_allgatherv(local_hfw,                                  &
-                        local_n, mpi_double_precision,              &
-                        hfw, counts, displs, mpi_double_precision,  &
-                        mpi_comm_world, ierr )
-
-    ! deallocation
-    deallocate(local_h)
-    deallocate(local_r)
-
-    deallocate(local_hfa)
-    deallocate(local_hfw)
-
-    ! deallocate recv buffers
-    if ( shelter .eqv. .true. ) then
+        ! deallocate recv buffers
         deallocate(recv_min_a)
         deallocate(recv_min_w)
+    end if
+
+    ! overlap volume ridged by the pairs of all ranks
+    if ( ridging .eqv. .true. ) then
+        call mpi_allreduce(MPI_IN_PLACE, dvol, n,                   &
+                mpi_double_precision, mpi_sum, mpi_comm_world, ierr)
     end if
 
 end subroutine broadcast_shape
@@ -358,56 +321,77 @@ subroutine broadcast_total_forces
 
     use mpi_f08
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+    use options
+    use mpi_var
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
-    include "CB_mpi.h"
-    include "CB_diagnostics.h"
 
-    ! total forces
-    call mpi_allreduce( &
-    tfx_r, tfx, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
+    integer :: i, a, idx, field_num
+    double precision, allocatable :: buf(:)
 
-    call mpi_allreduce( &
-    tfy_r, tfy, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
+    ! 3 fields (total forces and moment), plus 4 stress and 1 pressure
+    ! fields only when those diagnostics are on. Each rank filled its
+    ! own particles only (the others are 0), so the sum gathers them
+    field_num = 3
+    if ( flag_diag_stress .eqv. .true. ) field_num = field_num + 4
+    if ( flag_diag_pressure .eqv. .true. ) field_num = field_num + 1
 
-    call mpi_allreduce( &
-    m_r, m, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
+    allocate(buf(field_num * n))
 
-    ! total stresses
-    call mpi_allreduce( &
-    tsigxx_r, tsigxx, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
-    
-    call mpi_allreduce( &
-    tsigyy_r, tsigyy, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
+    ! all the fields of particle 1, then of particle 2, ...
+    do i = 1, n
+        idx = (i - 1) * field_num
+        a = 1    ; buf(idx + a) = tfx_r(i)
+        a = a + 1; buf(idx + a) = tfy_r(i)
+        a = a + 1; buf(idx + a) = m_r(i)
 
-    call mpi_allreduce( &
-    tsigxy_r, tsigxy, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
+        if ( flag_diag_stress .eqv. .true. ) then
+            a = a + 1; buf(idx + a) = tsigxx_r(i)
+            a = a + 1; buf(idx + a) = tsigyy_r(i)
+            a = a + 1; buf(idx + a) = tsigxy_r(i)
+            a = a + 1; buf(idx + a) = tsigyx_r(i)
+        end if
 
-    call mpi_allreduce( &
-    tsigyx_r, tsigyx, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
+        if ( flag_diag_pressure .eqv. .true. ) then
+            a = a + 1; buf(idx + a) = tp_r(i)
+        end if
+    end do
 
-    ! total pressure
-    call mpi_allreduce( &
-    tp_r, tp, n, mpi_double_precision, &
-    mpi_sum, mpi_comm_world, ierr)
+    ! total forces, moments, stresses and pressure in one message
+    call mpi_allreduce(MPI_IN_PLACE, buf, field_num * n,           &
+            mpi_double_precision, mpi_sum, mpi_comm_world, ierr)
 
-    ! sync activity flag
+    do i = 1, n
+        idx = (i - 1) * field_num
+        a = 1    ; tfx(i) = buf(idx + a)
+        a = a + 1; tfy(i) = buf(idx + a)
+        a = a + 1; m(i)   = buf(idx + a)
+
+        if ( flag_diag_stress .eqv. .true. ) then
+            a = a + 1; tsigxx(i) = buf(idx + a)
+            a = a + 1; tsigyy(i) = buf(idx + a)
+            a = a + 1; tsigxy(i) = buf(idx + a)
+            a = a + 1; tsigyx(i) = buf(idx + a)
+        end if
+
+        if ( flag_diag_pressure .eqv. .true. ) then
+            a = a + 1; tp(i) = buf(idx + a)
+        end if
+    end do
+
+    deallocate(buf)
+
+    ! particles that left the domain on any rank (remove_exited)
     call mpi_allreduce( &
-    MPI_IN_PLACE, active, n, mpi_logical, &
-    mpi_land, mpi_comm_world, ierr)
+    MPI_IN_PLACE, exited, n, mpi_logical, &
+    mpi_lor, mpi_comm_world, ierr)
 
 
 end subroutine broadcast_total_forces
@@ -422,16 +406,17 @@ subroutine force_reduction
 
     use mpi_f08
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+    use options
+    use mpi_var
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
-    include "CB_mpi.h"
-    include "CB_diagnostics.h"
 
     ! contact
     call mpi_allreduce( &
@@ -590,22 +575,28 @@ subroutine force_reduction_fast
     use mpi_f08
     use mpi_counts_mod
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+    use options
+    use mpi_var
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
-    include "CB_mpi.h"
-    include "CB_diagnostics.h"
 
     integer :: i, a, k, idx
-    integer :: total_elems, my_recvcount
-    integer, parameter :: field_num = 35
+    integer :: total_elems, my_recvcount, field_num
     integer, allocatable :: recvcounts(:)
     double precision, allocatable :: sendbuf(:), recvbuf(:)
+
+    ! 17 force fields, plus 12 stress and 6 pressure fields only when
+    ! those diagnostics are on
+    field_num = 17
+    if ( flag_diag_stress .eqv. .true. ) field_num = field_num + 12
+    if ( flag_diag_pressure .eqv. .true. ) field_num = field_num + 6
 
     total_elems = field_num * n
 
@@ -650,28 +641,32 @@ subroutine force_reduction_fast
         a = a + 1; sendbuf(idx + a) = fy_bc(i)
         a = a + 1; sendbuf(idx + a) = m_bc(i)
 
-        a = a + 1; sendbuf(idx + a) = sigxx(i)
-        a = a + 1; sendbuf(idx + a) = sigyy(i)
-        a = a + 1; sendbuf(idx + a) = sigxy(i)
-        a = a + 1; sendbuf(idx + a) = sigyx(i)
+        if ( flag_diag_stress .eqv. .true. ) then
+            a = a + 1; sendbuf(idx + a) = sigxx(i)
+            a = a + 1; sendbuf(idx + a) = sigyy(i)
+            a = a + 1; sendbuf(idx + a) = sigxy(i)
+            a = a + 1; sendbuf(idx + a) = sigyx(i)
 
-        a = a + 1; sendbuf(idx + a) = sigxx_bc(i)
-        a = a + 1; sendbuf(idx + a) = sigyy_bc(i)
-        a = a + 1; sendbuf(idx + a) = sigxy_bc(i)
-        a = a + 1; sendbuf(idx + a) = sigyx_bc(i)
+            a = a + 1; sendbuf(idx + a) = sigxx_bc(i)
+            a = a + 1; sendbuf(idx + a) = sigyy_bc(i)
+            a = a + 1; sendbuf(idx + a) = sigxy_bc(i)
+            a = a + 1; sendbuf(idx + a) = sigyx_bc(i)
 
-        a = a + 1; sendbuf(idx + a) = sigxx_aw(i)
-        a = a + 1; sendbuf(idx + a) = sigyy_aw(i)
-        a = a + 1; sendbuf(idx + a) = sigxy_aw(i)
-        a = a + 1; sendbuf(idx + a) = sigyx_aw(i)
+            a = a + 1; sendbuf(idx + a) = sigxx_aw(i)
+            a = a + 1; sendbuf(idx + a) = sigyy_aw(i)
+            a = a + 1; sendbuf(idx + a) = sigxy_aw(i)
+            a = a + 1; sendbuf(idx + a) = sigyx_aw(i)
+        end if
 
-        a = a + 1; sendbuf(idx + a) = tac(i)
-        a = a + 1; sendbuf(idx + a) = tab(i)
-        a = a + 1; sendbuf(idx + a) = pc(i)
-        a = a + 1; sendbuf(idx + a) = pb(i)
+        if ( flag_diag_pressure .eqv. .true. ) then
+            a = a + 1; sendbuf(idx + a) = tac(i)
+            a = a + 1; sendbuf(idx + a) = tab(i)
+            a = a + 1; sendbuf(idx + a) = pc(i)
+            a = a + 1; sendbuf(idx + a) = pb(i)
 
-        a = a + 1; sendbuf(idx + a) = ta_bc(i)
-        a = a + 1; sendbuf(idx + a) = p_bc(i)
+            a = a + 1; sendbuf(idx + a) = ta_bc(i)
+            a = a + 1; sendbuf(idx + a) = p_bc(i)
+        end if
     end do
 
     ! each rank provides full sendbuf of size total_elems
@@ -708,28 +703,32 @@ subroutine force_reduction_fast
         a = a + 1; fy_bc_r(k) = recvbuf(idx + a)
         a = a + 1; m_bc_r(k)  = recvbuf(idx + a)
 
-        a = a + 1; sigxx_r(k) = recvbuf(idx + a)
-        a = a + 1; sigyy_r(k) = recvbuf(idx + a)
-        a = a + 1; sigxy_r(k) = recvbuf(idx + a)
-        a = a + 1; sigyx_r(k) = recvbuf(idx + a)
+        if ( flag_diag_stress .eqv. .true. ) then
+            a = a + 1; sigxx_r(k) = recvbuf(idx + a)
+            a = a + 1; sigyy_r(k) = recvbuf(idx + a)
+            a = a + 1; sigxy_r(k) = recvbuf(idx + a)
+            a = a + 1; sigyx_r(k) = recvbuf(idx + a)
 
-        a = a + 1; sigxx_bc_r(k) = recvbuf(idx + a)
-        a = a + 1; sigyy_bc_r(k) = recvbuf(idx + a)
-        a = a + 1; sigxy_bc_r(k) = recvbuf(idx + a)
-        a = a + 1; sigyx_bc_r(k) = recvbuf(idx + a)
+            a = a + 1; sigxx_bc_r(k) = recvbuf(idx + a)
+            a = a + 1; sigyy_bc_r(k) = recvbuf(idx + a)
+            a = a + 1; sigxy_bc_r(k) = recvbuf(idx + a)
+            a = a + 1; sigyx_bc_r(k) = recvbuf(idx + a)
 
-        a = a + 1; sigxx_aw_r(k) = recvbuf(idx + a)
-        a = a + 1; sigyy_aw_r(k) = recvbuf(idx + a)
-        a = a + 1; sigxy_aw_r(k) = recvbuf(idx + a)
-        a = a + 1; sigyx_aw_r(k) = recvbuf(idx + a)
+            a = a + 1; sigxx_aw_r(k) = recvbuf(idx + a)
+            a = a + 1; sigyy_aw_r(k) = recvbuf(idx + a)
+            a = a + 1; sigxy_aw_r(k) = recvbuf(idx + a)
+            a = a + 1; sigyx_aw_r(k) = recvbuf(idx + a)
+        end if
 
-        a = a + 1; tac_r(k) = recvbuf(idx + a)
-        a = a + 1; tab_r(k) = recvbuf(idx + a)
-        a = a + 1; pc_r(k)  = recvbuf(idx + a)
-        a = a + 1; pb_r(k)  = recvbuf(idx + a)
+        if ( flag_diag_pressure .eqv. .true. ) then
+            a = a + 1; tac_r(k) = recvbuf(idx + a)
+            a = a + 1; tab_r(k) = recvbuf(idx + a)
+            a = a + 1; pc_r(k)  = recvbuf(idx + a)
+            a = a + 1; pb_r(k)  = recvbuf(idx + a)
 
-        a = a + 1; ta_bc_r(k) = recvbuf(idx + a)
-        a = a + 1; p_bc_r(k)  = recvbuf(idx + a)
+            a = a + 1; ta_bc_r(k) = recvbuf(idx + a)
+            a = a + 1; p_bc_r(k)  = recvbuf(idx + a)
+        end if
     end do
 
     deallocate(sendbuf)
@@ -744,11 +743,12 @@ subroutine gather_bonds_to_master()
     use mpi_f08
     use mpi_counts_mod
 
+    use parameters
+    use mpi_var
+    use bonds
+
     implicit none
 
-    include "parameter.h"
-    include "CB_mpi.h"
-    include "CB_bond.h"
 
     integer :: i, j, k, idx
     integer :: num_local_bonds, num_total_bonds
@@ -756,7 +756,12 @@ subroutine gather_bonds_to_master()
     integer, allocatable :: bond_recvcounts(:), bond_displs(:)
     integer, allocatable :: all_i(:), all_j(:)
     integer, allocatable :: all_bond_counts(:)
-    double precision, allocatable :: local_damage(:), all_damage(:)
+    integer, allocatable :: state_recvcounts(:), state_displs(:)
+
+    ! per-bond state, in this order: damageb, lb, rb, hb,
+    ! alpha_total(j,i), theta_offset(j,i), theta_offset(i,j)
+    integer, parameter :: nstate = 7
+    double precision, allocatable :: local_state(:,:), all_state(:,:)
 
     !------------------------------------------------------------
     ! Count local bonds
@@ -774,7 +779,7 @@ subroutine gather_bonds_to_master()
     ! Store local bond pairs
     !------------------------------------------------------------
     allocate(local_i(num_local_bonds), local_j(num_local_bonds))
-    allocate(local_damage(num_local_bonds))
+    allocate(local_state(nstate, num_local_bonds))
 
     idx = 0
     do i = first_iter, last_iter
@@ -783,7 +788,11 @@ subroutine gather_bonds_to_master()
                 idx = idx + 1
                 local_i(idx) = i
                 local_j(idx) = j
-                local_damage(idx) = damageb(j, i)
+                local_state(:, idx) = [ damageb(j, i), lb(j, i),      &
+                                        rb(j, i), hb(j, i),           &
+                                        alpha_total(j, i),            &
+                                        theta_offset(j, i),           &
+                                        theta_offset(i, j) ]
             end if
         end do
     end do
@@ -815,7 +824,14 @@ subroutine gather_bonds_to_master()
 
         allocate(all_i(num_total_bonds))
         allocate(all_j(num_total_bonds))
-        allocate(all_damage(num_total_bonds))
+        allocate(all_state(nstate, num_total_bonds))
+
+        ! the state buffers hold nstate values per bond
+        allocate(state_recvcounts(n_ranks))
+        allocate(state_displs(n_ranks))
+
+        state_recvcounts = nstate * bond_recvcounts
+        state_displs     = nstate * bond_displs
     end if
 
     !------------------------------------------------------------
@@ -833,29 +849,46 @@ subroutine gather_bonds_to_master()
                      0, mpi_comm_world, ierr)
 
     !------------------------------------------------------------
-    ! Gatherv the damage values
+    ! Gatherv the bond state values
     !------------------------------------------------------------
-    call mpi_gatherv(local_damage, num_local_bonds,                   &
-                     mpi_double_precision, all_damage,                &
-                     bond_recvcounts, bond_displs,                    &
+    call mpi_gatherv(local_state, nstate * num_local_bonds,           &
+                     mpi_double_precision, all_state,                 &
+                     state_recvcounts, state_displs,                  &
                      mpi_double_precision, 0, mpi_comm_world, ierr)
 
     !------------------------------------------------------------
     ! Master rank now has all_i(k), all_j(k) for k=1..num_total_bonds
-    ! and can reconstruct the full bond and damageb arrays
+    ! and can reconstruct the full bond and bond state arrays
     !------------------------------------------------------------
     if (rank .eq. master) then
+        ! clear the columns owned by the other ranks, so that bonds
+        ! broken there are removed before rebuilding from the list
+        bond(:, 1:first_iter-1) = 0
+        bond(:, last_iter+1:n)  = 0
+
         do k = 1, num_total_bonds
-            bond(all_j(k), all_i(k)) = 1
-            damageb(all_j(k), all_i(k)) = all_damage(k)
+            i = all_i(k)
+            j = all_j(k)
+
+            bond(j, i)         = 1
+            damageb(j, i)      = all_state(1, k)
+            lb(j, i)           = all_state(2, k)
+            rb(j, i)           = all_state(3, k)
+            hb(j, i)           = all_state(4, k)
+            alpha_total(j, i)  = all_state(5, k)
+            theta_offset(j, i) = all_state(6, k)
+            theta_offset(i, j) = all_state(7, k)
         end do
     end if
 
     ! deallocate
     deallocate(local_i, local_j)
+    deallocate(local_state)
     if (rank .eq. master) then
         deallocate(bond_recvcounts, bond_displs)
+        deallocate(state_recvcounts, state_displs)
         deallocate(all_i, all_j)
+        deallocate(all_state)
     end if
 
 end subroutine gather_bonds_to_master

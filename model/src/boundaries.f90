@@ -1,11 +1,12 @@
 subroutine verify_bc (i)
 
+    use parameters
+    use variables
+    use const
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_diagnostics.h"
 
     integer, intent(in) :: i
     
@@ -101,13 +102,13 @@ subroutine verify_bc_mask (i)
 
     use mask_io, only: sdf_at, sdf_grad, sdf_outside
 
+    use parameters
+    use variables
+    use const
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_diagnostics.h"
 
     integer, intent(in) :: i
 
@@ -121,12 +122,10 @@ subroutine verify_bc_mask (i)
 
     d = sdf_at(x(i), y(i))
 
-    ! open-boundary exit: particle left domain -> tag inactive,
-    ! break all bonds involving i
+    ! open-boundary exit: particle left domain -> flag it. It becomes
+    ! inactive and loses its bonds after the force loop (remove_exited)
     if (d > outside_thr) then
-        active(i) = .false.
-        bond(:, i) = 0
-        bond(i, :) = 0
+        exited(i) = .true.
         call reset_boundary (i, 0)
         return
     end if
@@ -156,15 +155,44 @@ subroutine verify_bc_mask (i)
 end subroutine verify_bc_mask
 
 
-subroutine check_wall_mask (i, cosa_bc, sina_bc, deltan_bc)
+subroutine remove_exited
+
+    ! Particles flagged in verify_bc_mask become inactive and lose all
+    ! their bonds. Called after the force loop on every rank (exited is
+    ! synchronised in broadcast_total_forces), so that no thread or
+    ! rank is still using these bonds.
+
+    use parameters
+    use variables
+    use bonds
 
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_diagnostics.h"
-    include "CB_options.h"
+
+    integer :: i
+
+    do i = 1, n
+        if (exited(i)) then
+            active(i) = .false.
+            bond(:, i) = 0
+            bond(i, :) = 0
+            exited(i) = .false.
+        end if
+    end do
+
+end subroutine remove_exited
+
+
+subroutine check_wall_mask (i, cosa_bc, sina_bc, deltan_bc)
+
+    use parameters
+    use variables
+    use const
+    use diagnostics
+    use options
+
+    implicit none
+
 
     integer, intent(in) :: i
     double precision, intent(in) :: cosa_bc, sina_bc, deltan_bc
@@ -218,13 +246,14 @@ end subroutine check_wall_mask
 
 subroutine check_wall(i, dir1, dir2, bd)
 
+    use parameters
+    use variables
+    use const
+    use diagnostics
+    use options
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_diagnostics.h"
-    include "CB_options.h"
 
     integer, intent(in) :: i, dir1, dir2, bd
 

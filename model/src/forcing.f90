@@ -10,14 +10,15 @@ subroutine winds_currents (i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
+    use parameters
+    use variables
+    use const
+    use forcings
+    use diagnostics
+    use mpi_var
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_forcings.h"
-    include "CB_diagnostics.h"
-    include "CB_mpi.h"
 
     integer, intent(in) :: i
 
@@ -38,14 +39,15 @@ subroutine forcing (i)
 ! stress formula. The sheltering coefficients are also applied here.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    use parameters
+    use variables
+    use const
+    use forcings
+    use diagnostics
+    use mpi_var
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_forcings.h"
-    include "CB_diagnostics.h"
-    include "CB_mpi.h"
 
     integer, intent(in) :: i
 
@@ -159,29 +161,32 @@ subroutine forcing (i)
 end subroutine forcing
 
 
-subroutine sheltering (j, i)
+subroutine sheltering (j, i, p)
+
+    use parameters
+    use forcings
+    use variables
+    use pairs, only: pair_t
 
     implicit none
 
-    include "parameter.h"
-    include "CB_forcings.h"
-    include "CB_variables.h"
 
     integer, intent(in) :: i, j
+    type(pair_t), intent(inout) :: p
 
     double precision :: S_shelter
 
     ! sheltering height from air and water
-    hsfa(i, j) = S_shelter(hfa(i), hfa(j), deltan(j,i), cosa(j,i), &
-                    sina(j,i), ua_i(i), va_i(i))
-    hsfw(i, j) = S_shelter(hfw(i), hfw(j), deltan(j,i), cosa(j,i), &
-                    sina(j,i), uw_i(i), vw_i(i))
+    p%hsfa_ij = S_shelter(hfa(i), hfa(j), p%deltan, p%cosa, &
+                    p%sina, ua_i(i), va_i(i))
+    p%hsfw_ij = S_shelter(hfw(i), hfw(j), p%deltan, p%cosa, &
+                    p%sina, uw_i(i), vw_i(i))
 
     ! sheltering for the reverse direction
-    hsfa(j, i) = S_shelter(hfa(j), hfa(i), deltan(j,i), -cosa(j,i), &
-                    -sina(j,i), ua_i(i), va_i(i))
-    hsfw(j, i) = S_shelter(hfw(j), hfw(i), deltan(j,i), -cosa(j,i), &
-                    -sina(j,i), uw_i(i), vw_i(i))
+    p%hsfa_ji = S_shelter(hfa(j), hfa(i), p%deltan, -p%cosa, &
+                    -p%sina, ua_i(i), va_i(i))
+    p%hsfw_ji = S_shelter(hfw(j), hfw(i), p%deltan, -p%cosa, &
+                    -p%sina, uw_i(i), vw_i(i))
 
 end subroutine sheltering
 
@@ -190,11 +195,12 @@ subroutine coriolis (i)
 
     use mask_io, only: nx_mask, lat_at
 
+	use parameters
+	use variables
+	use const
+
 	implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
 	integer, intent(in) :: i
     double precision :: omega_earth, lat_i
@@ -247,9 +253,10 @@ end function heaviside
 
 double precision function S_shelter (hfi, hfj, deltan, cosa, sina, uf, vf)
 
+    use const
+
     implicit none
 
-    include "CB_const.h"
 
     double precision, intent(in) :: hfi, hfj, deltan
     double precision, intent(in) :: uf, vf, cosa, sina

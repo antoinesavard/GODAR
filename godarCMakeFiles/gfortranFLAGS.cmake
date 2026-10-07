@@ -4,9 +4,9 @@
 message(STATUS "Getting gfortran flags")
 
 # Set flags for all build types
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC -fbackslash")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fbackslash")
 
-set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -funroll-all-loops -finline-functions -ffast-math -w")
+set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -funroll-all-loops -finline-functions -ffast-math -march=native -w")
 
 # on APPLE, it is possible that -static doesn't work
 set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS} -g -Og -static -fbacktrace -fcheck=all -Wall -Wno-tabs")

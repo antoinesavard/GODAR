@@ -1,46 +1,51 @@
 subroutine reset_contact (j, i)
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     integer, intent(in) :: j, i
 
     thetarelc(j,i)  = 0d0
     deltat(j,i)     = 0d0
-    delt_ridge(j,i) = 0d0
 
 end subroutine reset_contact
 
 
-subroutine reset_bond (j, i)
-
-    implicit none
-
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-
-    integer, intent(in) :: j, i
-
-    thetarelb(j,i) = 0d0
-    thetarelb(i,j) = 0d0
-    deltanb(j,i)   = 0d0
-    deltatb(j,i)   = 0d0
-
-end subroutine reset_bond
+! Not used: only needed by bond_forces_surface and bond_forces_euler
+! (commented out in bonds.f90), which accumulate these between steps.
+!
+! subroutine reset_bond (j, i)
+!
+!     use parameters
+!     use variables
+!     use const
+!     use bonds
+!
+!     implicit none
+!
+!
+!     integer, intent(in) :: j, i
+!
+!     thetarelb(j,i) = 0d0
+!     thetarelb(i,j) = 0d0
+!     deltanb(j,i)   = 0d0
+!     deltatb(j,i)   = 0d0
+!
+! end subroutine reset_bond
 
 
 subroutine reset_boundary (i, bd)
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
     integer, intent(in) :: i, bd
 
@@ -72,16 +77,17 @@ end subroutine reset_boundary
 
 subroutine reset_forces
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+    use options
+    use mpi_var
+    use diagnostics
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
-    include "CB_mpi.h"
-    include "CB_diagnostics.h"
 
     integer :: i
 
@@ -123,6 +129,8 @@ subroutine reset_forces
         ! boundary pressure
         p_bc(i)  = 0d0
         ta_bc(i) = 0d0
+        ! ridged overlap volume
+        dvol(i)  = 0d0
 
         ! mpi reduce
         ! contact
@@ -180,22 +188,20 @@ end subroutine reset_forces
 
 subroutine reset_shelter
 
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+    use options
+    use mpi_var
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
-    include "CB_mpi.h"
 
-    ! reinitialize sheltering height
-    if ( shelter .eqv. .true. ) then
-        hsfa = 1d0
-        hsfw = 1d0
-    end if
-    
+    ! hsfa/hsfw are not reset: sheltering sets each pair's values
+    ! right before they are used
+
     ! mpi
     hsfa_min_r = 1d0
     hsfw_min_r = 1d0

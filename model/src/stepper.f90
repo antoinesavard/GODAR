@@ -8,18 +8,20 @@ subroutine stepper (tstep, restart)
     use dArgDynamicArray_Class, only: dArgDynamicArray
     use m_strings, only: str
     use global_kdtree
+    use kdtree_utils, only: tree_building, tree_cleanup
     use mask_io, only: nx_mask
 
-    implicit none
+    use parameters
+    use variables
+    use const
+    use bonds
+    use forcings
+    use options
+    use mpi_var
+    use diagnostics
+    use pairs, only: pair_t
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
-    include "CB_mpi.h"
-    include "CB_diagnostics.h"
+    implicit none
 
     integer :: i, j, k
     integer, intent(in) :: tstep, restart
@@ -27,7 +29,11 @@ subroutine stepper (tstep, restart)
     type(KdTreeSearch) :: search
     type(dArgDynamicArray) :: da
 
-    ! sheltering coeff per thread arrays
+    ! values computed for the current pair (j,i)
+    type(pair_t) :: p
+
+    ! sheltering coeff per thread arrays, (particle, thread) so that
+    ! each thread writes in its own column
     integer :: thread_num, thread_id
     double precision, allocatable :: local_hsfa_min_thread(:,:)
     double precision, allocatable :: local_hsfw_min_thread(:,:)
@@ -36,8 +42,8 @@ subroutine stepper (tstep, restart)
     thread_num = omp_get_max_threads()
 
     if ( shelter .eqv. .true. ) then
-        allocate(local_hsfa_min_thread(thread_num, n))
-        allocate(local_hsfw_min_thread(thread_num, n))
+        allocate(local_hsfa_min_thread(n, thread_num))
+        allocate(local_hsfw_min_thread(n, thread_num))
 
         local_hsfa_min_thread = 1.0d0
         local_hsfw_min_thread = 1.0d0
@@ -56,7 +62,7 @@ subroutine stepper (tstep, restart)
     end if
 
     ! Build the tree
-    call tree_building(tstep, xtree, ytree)
+    call tree_building(tstep, int(ntree), xtree, ytree)
 
     ! reset the forces and sheltering height
     call reset_forces
@@ -69,7 +75,7 @@ subroutine stepper (tstep, restart)
 	! loop through all j particles and compute interactions
 
     !$omp parallel &
-    !$omp private(i,j,da, thread_id) &
+    !$omp private(i,j,da, thread_id, p) &
     !$omp reduction(+:fcx,fcy,mc,fbx,fby,mb) &
     !&&#ifdef DIAG
     !$omp reduction(+:sigxx,sigyy,sigxy,sigyx) &
@@ -100,42 +106,50 @@ subroutine stepper (tstep, restart)
             if (.not. active(j)) cycle
 
 			! compute relative position and velocity
-            call rel_pos_vel (j, i)
+            p = pair_t()
+            call rel_pos_vel (j, i, p)
 
 			! bond initialization
             if ( tstep .eq. 0 .and. restart .ne. 1 ) then
                 if ( cohesion .eqv. .true. ) then
-                    call bond_creation (j, i)
+                    call bond_creation (j, i, p)
                 end if
 			end if
 
+            ! bond restoration from the restart files
+            if ( tstep .eq. 0 .and. restart .eq. 1 ) then
+                if ( bond(j, i) .eq. 1 ) then
+                    call bond_restore (j, i, p)
+                end if
+            end if
+
             ! verify if two particles are colliding
-            if ( deltan(j,i) .gt. 0 ) then
+            if ( p%deltan .gt. 0 ) then
 
 !               call dilation (j, i) ! to implement
              
-                call contact_forces (j, i)
+                call contact_forces (j, i, p)
 !               call bond_creation (j, i) ! to implement
                 
                 ! change coordinate system
 				! update contact force on particle i by particle j
-                fcx(i) = fcx(i) - fcn(j,i) * cosa(j,i) +    &
-                                        fcr(j,i) * sina(j,i)
-                fcy(i) = fcy(i) - fcn(j,i) * sina(j,i) -    &
-                                        fcr(j,i) * cosa(j,i)
+                fcx(i) = fcx(i) - p%fcn * p%cosa +    &
+                                        p%fcr * p%sina
+                fcy(i) = fcy(i) - p%fcn * p%sina -    &
+                                        p%fcr * p%cosa
 
-                ! update moment on particule i by particule j due to tangent contact 
-                mc(i) = mc(i) - r(i) * fct(j,i) - mcc(j,i)
+                ! update moment on particule i by particule j due to tangent contact
+                mc(i) = mc(i) - r(i) * p%fct - p%mcc
 
                 ! Newton's third law
                 ! update contact force on particle j by particle i
-                fcx(j) = fcx(j) + fcn(j,i) * cosa(j,i) -    &
-                                        fcr(j,i) * sina(j,i)
-                fcy(j) = fcy(j) + fcn(j,i) * sina(j,i) +    &
-                                        fcr(j,i) * cosa(j,i)
+                fcx(j) = fcx(j) + p%fcn * p%cosa -    &
+                                        p%fcr * p%sina
+                fcy(j) = fcy(j) + p%fcn * p%sina +    &
+                                        p%fcr * p%cosa
 
-                ! update moment on particule j by particule i due to tangent contact 
-                mc(j) = mc(j) - r(j) * fct(j,i) + mcc(j,i)
+                ! update moment on particule j by particule i due to tangent contact
+                mc(j) = mc(j) - r(j) * p%fct + p%mcc
 
                 if ( flag_diag_pressure .eqv. .true. ) then
                     ! compute the average pressure inside particle i
@@ -144,15 +158,19 @@ subroutine stepper (tstep, restart)
                     ! P_i = \sum_{c} Fcn_{ij} * a_{ij} / \sum_{c} a_{ij}
                     !
                     !---------------------------------------------------
-                    ! local area
-                    ac(j,i) = delt_ridge(j, i) * min(h(i), h(j))
-                    ! total contact area
-                    tac(i)  = tac(i) + ac(j, i)
-                    ! pressure from contacts
-                    pc(i)   = pc(i) - fcn(j, i) * ac(j, i)
-                    ! symmetric part
-                    tac(j) = tac(j) + ac(j, i)
-                    pc(j)  = pc(j) - fcn(j, i) * ac(j ,i)
+                    block
+                        double precision :: ac_ij
+
+                        ! local area
+                        ac_ij = p%delt_ridge * min(h(i), h(j))
+                        ! total contact area
+                        tac(i)  = tac(i) + ac_ij
+                        ! pressure from contacts
+                        pc(i)   = pc(i) - p%fcn * ac_ij
+                        ! symmetric part
+                        tac(j) = tac(j) + ac_ij
+                        pc(j)  = pc(j) - p%fcn * ac_ij
+                    end block
                 end if
 
             else
@@ -164,31 +182,31 @@ subroutine stepper (tstep, restart)
 			! compute forces from bonds between particle i and j
 			if ( bond (j, i) .eq. 1 ) then
 
-				call bond_forces_timoshenko (j, i)
-				call bond_breaking (j, i)
+				call bond_forces_timoshenko (j, i, p)
+				call bond_breaking (j, i, p)
 
                 if ( bond (j, i) .eq. 1 ) then
 
                     ! change coordinate system
                     ! update force on particle i by j due to bond
-                    fbx(i) = fbx(i) - fbn(j,i) * cosa(j,i) +    &
-                                        fbt(j,i) * sina(j,i)
-                    fby(i) = fby(i) - fbn(j,i) * sina(j,i) -    &
-                                        fbt(j,i) * cosa(j,i)
+                    fbx(i) = fbx(i) - p%fbn * p%cosa +    &
+                                        p%fbt * p%sina
+                    fby(i) = fby(i) - p%fbn * p%sina -    &
+                                        p%fbt * p%cosa
 
                     ! update moment on particule i by j to to bond
-                    mb(i) = mb(i) + mbb(j, i)
+                    mb(i) = mb(i) + p%mbb_ji
 
                     ! Newton's third law
                     ! update force on particle j by i due to bond
-                    fbx(j) = fbx(j) + fbn(j,i) * cosa(j,i) -    &
-                                        fbt(j,i) * sina(j,i)
-                    fby(j) = fby(j) + fbn(j,i) * sina(j,i) +    &
-                                        fbt(j,i) * cosa(j,i)
+                    fbx(j) = fbx(j) + p%fbn * p%cosa -    &
+                                        p%fbt * p%sina
+                    fby(j) = fby(j) + p%fbn * p%sina +    &
+                                        p%fbt * p%cosa
 
 
                     ! update moment on particule j by i due to bond
-                    mb(j) = mb(j) + mbb(i, j)
+                    mb(j) = mb(j) + p%mbb_ij
 
                     if ( flag_diag_pressure .eqv. .true. ) then
                         ! compute the average pressure inside particle i
@@ -200,36 +218,32 @@ subroutine stepper (tstep, restart)
                         ! total bond area
                         tab(i)  = tab(i) + sb(j, i)                   
                         ! pressure from bonds
-                        pb(i)   = pb(i) - fbn(j, i) * sb(j, i)     
+                        pb(i)   = pb(i) - p%fbn * sb(j, i)     
                         
                         ! symmetric part
                         tab(j) = tab(j) + sb(j, i)
-                        pb(j)  = pb(j) - fbn(j, i) * sb(j, i)
+                        pb(j)  = pb(j) - p%fbn * sb(j, i)
                     end if
 
                 end if
-
-            else
-
-                call reset_bond (j, i)
 
 			end if
 
 			! compute sheltering height for particule j on particle i for air and water drag
             ! you have to check both sides of the matrix because it is not symmetric
             if ( shelter .eqv. .true. ) then
-                call sheltering(j, i)
+                call sheltering(j, i, p)
 
                 ! update local minimum value here because of reduction
-                local_hsfa_min_thread(thread_id, i) = min( &
-                    local_hsfa_min_thread(thread_id, i), hsfa(j,i) )
-                local_hsfa_min_thread(thread_id, j) = min( &
-                    local_hsfa_min_thread(thread_id, j), hsfa(i,j) )
+                local_hsfa_min_thread(i, thread_id) = min( &
+                    local_hsfa_min_thread(i, thread_id), p%hsfa_ji )
+                local_hsfa_min_thread(j, thread_id) = min( &
+                    local_hsfa_min_thread(j, thread_id), p%hsfa_ij )
 
-                local_hsfw_min_thread(thread_id, i) = min( &
-                    local_hsfw_min_thread(thread_id, i), hsfw(j,i) )
-                local_hsfw_min_thread(thread_id, j) = min( &
-                    local_hsfw_min_thread(thread_id, j), hsfw(i,j) )
+                local_hsfw_min_thread(i, thread_id) = min( &
+                    local_hsfw_min_thread(i, thread_id), p%hsfw_ji )
+                local_hsfw_min_thread(j, thread_id) = min( &
+                    local_hsfw_min_thread(j, thread_id), p%hsfw_ij )
             end if
 
             !-------------------------------------------------------
@@ -245,21 +259,27 @@ subroutine stepper (tstep, restart)
             !-------------------------------------------------------
                 block
                     double precision :: force_mag, ri_f, rj_f
-                    force_mag = sqrt(fcn(j,i) ** 2 + fct(j,i) ** 2) + &
-                                + sqrt(fbn(j,i) ** 2 + fbt(j,i) ** 2)
+
+                    ! contact forces only count while the pair touches
+                    force_mag = sqrt(p%fbn ** 2 + p%fbt ** 2)
+                    if ( p%deltan .gt. 0 ) then
+                        force_mag = force_mag + &
+                                    sqrt(p%fcn ** 2 + p%fct ** 2)
+                    end if
+
                     ri_f = r(i) * force_mag
                     rj_f = r(j) * force_mag
 
-                    sigxx(i) = sigxx(i) - ri_f * cosa(j,i) * cosa(j,i)
-                    sigyy(i) = sigyy(i) - ri_f * sina(j,i) * sina(j,i)
-                    sigxy(i) = sigxy(i) - ri_f * sina(j,i) * cosa(j,i)
-                    sigyx(i) = sigyx(i) - ri_f * cosa(j,i) * sina(j,i)
+                    sigxx(i) = sigxx(i) - ri_f * p%cosa * p%cosa
+                    sigyy(i) = sigyy(i) - ri_f * p%sina * p%sina
+                    sigxy(i) = sigxy(i) - ri_f * p%sina * p%cosa
+                    sigyx(i) = sigyx(i) - ri_f * p%cosa * p%sina
 
                     ! Newton's third law equivalent for stress
-                    sigxx(j) = sigxx(j) - rj_f * cosa(j,i) * cosa(j,i)
-                    sigyy(j) = sigyy(j) - rj_f * sina(j,i) * sina(j,i)
-                    sigxy(j) = sigxy(j) - rj_f * sina(j,i) * cosa(j,i)
-                    sigyx(j) = sigyx(j) - rj_f * cosa(j,i) * sina(j,i)
+                    sigxx(j) = sigxx(j) - rj_f * p%cosa * p%cosa
+                    sigyy(j) = sigyy(j) - rj_f * p%sina * p%sina
+                    sigxy(j) = sigxy(j) - rj_f * p%sina * p%cosa
+                    sigyx(j) = sigyx(j) - rj_f * p%cosa * p%sina
                 end block
             end if
 
@@ -280,8 +300,8 @@ subroutine stepper (tstep, restart)
     if ( shelter .eqv. .true. ) then
         do thread_id = 1, thread_num
             do i = 1, n
-                local_hsfa_min(i) = min(local_hsfa_min(i), local_hsfa_min_thread(thread_id, i))
-                local_hsfw_min(i) = min(local_hsfw_min(i), local_hsfw_min_thread(thread_id, i))
+                local_hsfa_min(i) = min(local_hsfa_min(i), local_hsfa_min_thread(i, thread_id))
+                local_hsfw_min(i) = min(local_hsfw_min(i), local_hsfw_min_thread(i, thread_id))
             end do
         end do
 
@@ -289,8 +309,11 @@ subroutine stepper (tstep, restart)
         deallocate(local_hsfw_min_thread)
     end if
 
-    ! broadcast the updated shape and shelter coeff.
+    ! reduce the shelter coeff. and the ridged overlap volume
     call broadcast_shape
+
+    ! apply the ridging shape changes, identically on every rank
+    call apply_ridging
 
     !$omp parallel do
     ! compute the total forcing from winds, currents and coriolis
@@ -302,7 +325,7 @@ subroutine stepper (tstep, restart)
     !$omp end parallel do
 
     ! deallocate tree memory
-    call tree_cleanup(tstep)
+    call tree_cleanup(tstep, int(ntree))
 
     ! reduce all the force variables
     call force_reduction_fast
@@ -332,6 +355,9 @@ subroutine stepper (tstep, restart)
 
     ! broadcast forces to all so that the nodes can each update their x and u
     call broadcast_total_forces
+
+    ! deactivate the particles that left the domain, on every rank
+    call remove_exited
 
     ! forces for experiments
 !    call normal_forces("ridging", tstep)

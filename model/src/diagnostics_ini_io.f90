@@ -1,12 +1,13 @@
 subroutine clear_posts (expno_str)
 
+    use parameters
+    use variables
+    use const
+
     implicit none
 
-    include "parameter.h"
-    include "CB_variables.h"
-    include "CB_const.h"
 
-    integer :: i, stat(26)
+    integer :: i, stat(27)
 	character(len=2), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
                          filet, fileo, fileb 
@@ -14,7 +15,7 @@ subroutine clear_posts (expno_str)
                          filefby, filem, filemc, filemb
     character(len=20) :: filetsigxx, filetsigyy, filetsigxy, filetsigyx
     character(len=20) :: filetp, fileangle, filedamage
-    character(len=20) :: fileinfo
+    character(len=20) :: fileinfo, filebeam
 
     ! position and state files
 	filex = "output/x." // trim(adjustl(expno_str))
@@ -52,6 +53,9 @@ subroutine clear_posts (expno_str)
     ! info file
     fileinfo = "output/info." // trim(adjustl(expno_str))
 
+    ! beam state file
+    filebeam = "output/beam." // trim(adjustl(expno_str))
+
     ! open the files
     ! position and state
 	open (10, file = filex, iostat = stat(1), status = 'old')
@@ -87,9 +91,11 @@ subroutine clear_posts (expno_str)
     open (34, file = filedamage, iostat = stat(25), status = 'old')
     ! info
     open (35, file = fileinfo, iostat = stat(26), status = 'old')
+    ! beam state
+    open (36, file = filebeam, iostat = stat(27), status = 'old')
 
     ! delete them
-    do i = 10, 35
+    do i = 10, 36
         if (stat(i-9) .eq. 0) then
 			close(i, status = 'delete') 
 		else 
@@ -102,13 +108,14 @@ end subroutine clear_posts
 
 subroutine info (expno_str, restart)
 
+    use parameters
+    use const
+    use bonds
+    use forcings
+    use options
+
     implicit none
 
-    include "parameter.h"
-    include "CB_const.h"
-    include "CB_bond.h"
-    include "CB_forcings.h"
-    include "CB_options.h"
 
     character(len=4), intent(in) :: expno_str
     integer, intent(in) :: restart
