@@ -1,0 +1,60 @@
+{
+    "tolerances": {
+        "exact": {
+            "description": "bit-for-bit identical",
+            "files": {"*": [0, 0]}
+        },
+        "parallel": {
+            "description": "[atol, rtol] per file, rtol relative to the largest value of the reference; for runs that differ only by the order of the floating-point sums (MPI ranks, OpenMP threads, machine, compiler); measured differences after 200 steps are about 1e-16 to 1e-15 relative; null = not compared (contacts at the threshold)",
+            "files": {"*": [0, 1e-9], "angle": null}
+        }
+    },
+
+    "cases": {
+        "TEST": {
+            "description": "CHANNEL 08 initial conditions (6261 floes), bonds, wind, sheltering, diagnostics, mask",
+            "namelist": "TEST.nml",
+            "n": 6261,
+            "runs": {
+                "ref":     {"ranks": 1, "threads": 1},
+                "mpi2":    {"ranks": 2, "threads": 1},
+                "omp4":    {"ranks": 1, "threads": 4},
+                "nodiag":  {"ranks": 1, "threads": 1,
+                            "set": {"flag_diag_stress": ".false.",
+                                    "flag_diag_pressure": ".false."}},
+                "restart": {"ranks": 1, "threads": 1,
+                            "set": {"nt": "1d1", "comp": "1d1"},
+                            "restart_from": "ref", "restart_line": 2}
+            },
+            "checks": [
+                {"type": "reference", "run": "ref", "tolerance": "parallel"},
+                {"type": "same", "runs": ["ref", "mpi2"], "tolerance": "parallel"},
+                {"type": "same", "runs": ["ref", "omp4"], "tolerance": "parallel"},
+                {"type": "same", "runs": ["ref", "nodiag"], "tolerance": "exact",
+                 "files": ["x", "y", "u", "v", "theta", "omega", "r", "h",
+                           "tfx", "tfy", "mom", "bond", "damage", "beam", "angle"]},
+                {"type": "restart", "run": "restart", "tolerance": "exact",
+                 "files": ["x", "y", "u", "v", "theta", "omega", "r", "h",
+                           "bond", "damage", "beam", "angle"]},
+                {"type": "mass", "run": "ref", "max_rel_change": 1e-10}
+            ]
+        },
+
+        "TESTSNAP": {
+            "description": "CHANNEL 08 at output line 33 (6261 floes, jammed), contacts, ridging, walls",
+            "namelist": "TESTSNAP.nml",
+            "n": 6261,
+            "runs": {
+                "ref":  {"ranks": 1, "threads": 1},
+                "mpi2": {"ranks": 2, "threads": 1},
+                "omp4": {"ranks": 1, "threads": 4}
+            },
+            "checks": [
+                {"type": "reference", "run": "ref", "tolerance": "parallel"},
+                {"type": "same", "runs": ["ref", "mpi2"], "tolerance": "parallel"},
+                {"type": "same", "runs": ["ref", "omp4"], "tolerance": "parallel"},
+                {"type": "mass", "run": "ref", "max_rel_change": 1e-10}
+            ]
+        }
+    }
+}

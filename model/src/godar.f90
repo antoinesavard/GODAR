@@ -12,6 +12,7 @@ program godar
     use const
     use mpi_var
     use alloc, only: allocate_all, deallocate_all
+    use timers, only: timer_on, timer_off, timer_report, t_output
 
     implicit none
 
@@ -19,7 +20,7 @@ program godar
     integer :: tstep
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, thread_requested
-    double precision :: tic, tac, toc
+    double precision :: tic, tac, toc, loop_time
     character(len=4) :: expno_str, expno_str_r
     character(len=16) :: namelist_name
     character(10) :: n_str
@@ -207,7 +208,9 @@ program godar
         call stepper (tstep, restart)
 
         if (modulo(tstep, int(comp)) .eq. 0) then
-            
+
+            call timer_on(t_output)
+
             ! gather the bond locations
             call gather_bonds_to_master
            
@@ -221,19 +224,29 @@ program godar
                 print '(A, ES10.3, A)', &
                     " Time for last output: ", tac - toc, ' s'
                 toc = omp_get_wtime()
-            
+
             end if
+
+            call timer_off(t_output)
         end if
 
     end do
 
+    loop_time = 0d0
+
     if ( rank .eq. master ) then
         tac = omp_get_wtime()
+        loop_time = tac - tic
 
         print *, "--------------------------------------------------"
         print '(A, F0.3, A)', &
             " Total simulation time: ", tac - tic, ' s'
+    end if
 
+    ! time of each phase of the loop (on every rank: min and max)
+    call timer_report(loop_time)
+
+    if ( rank .eq. master ) then
         print '(a)', &
         '',&
         '|--------------------------------------------------------|',&

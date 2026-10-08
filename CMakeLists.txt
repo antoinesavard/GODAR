@@ -76,6 +76,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 # ====================================================
+# Regression tests (cd build && ctest --output-on-failure)
+# ====================================================
+enable_testing()
+add_subdirectory(tests)
+
+# ====================================================
 # Install targets
 # ====================================================
 install(TARGETS godar

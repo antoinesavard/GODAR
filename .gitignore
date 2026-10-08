@@ -68,3 +68,6 @@ config.log
 # masks: keep only the source .nc files; everything else is derived
 masks/*
 !masks/*.nc
+
+# regression tests: runs and timings (references and inputs are kept)
+/tests/work/

@@ -4,11 +4,8 @@ subroutine stepper (tstep, restart)
     use omp_lib
     use m_allocate, only: allocate
     use m_deallocate, only: deallocate
-    use m_KdTree, only: KdTree, KdTreeSearch
-    use dArgDynamicArray_Class, only: dArgDynamicArray
     use m_strings, only: str
-    use global_kdtree
-    use kdtree_utils, only: tree_building, tree_cleanup
+    use kdtree_utils, only: neighbours, build_neighbours, neighbours_outdated
     use mask_io, only: nx_mask
 
     use parameters
@@ -20,14 +17,13 @@ subroutine stepper (tstep, restart)
     use mpi_var
     use diagnostics
     use pairs, only: pair_t
+    use timers, only: timer_on, timer_off, t_integ, &
+    t_tree,t_pairs, t_forcing, t_comm
 
     implicit none
 
     integer :: i, j, k
     integer, intent(in) :: tstep, restart
-    double precision, dimension(n) :: xtree, ytree
-    type(KdTreeSearch) :: search
-    type(dArgDynamicArray) :: da
 
     ! values computed for the current pair (j,i)
     type(pair_t) :: p
@@ -52,17 +48,22 @@ subroutine stepper (tstep, restart)
     ! Velocity Verlet: advance positions before force computation
     ! (tree and contacts will be evaluated at x^{n+1})
     if ( tstep .ge. 1 ) then
+        call timer_on(t_integ)
         call position
+        call timer_off(t_integ)
     end if
 
-    ! Check whether tree parameters needs update or not
-    if ( mod(tstep, int(ntree)) == 0 ) then
-        xtree = x
-        ytree = y
+    ! neighbour lists: the particles j > i within r(i) + rtree, rebuilt
+    ! every ntree steps, or earlier if a particle moved more than half of
+    ! the margin rtree - max(r) (a pair not listed could then touch)
+    call timer_on(t_tree)
+    if ( mod(tstep, int(ntree)) == 0 .or. &
+         neighbours_outdated(x, y, rtree - maxval(r)) ) then
+        call build_neighbours(x, y, r + rtree, first_iter, last_iter)
     end if
+    call timer_off(t_tree)
 
-    ! Build the tree
-    call tree_building(tstep, int(ntree), xtree, ytree)
+    call timer_on(t_pairs)
 
     ! reset the forces and sheltering height
     call reset_forces
@@ -75,7 +76,7 @@ subroutine stepper (tstep, restart)
 	! loop through all j particles and compute interactions
 
     !$omp parallel &
-    !$omp private(i,j,da, thread_id, p) &
+    !$omp private(i,j, thread_id, p) &
     !$omp reduction(+:fcx,fcy,mc,fbx,fby,mb) &
     !&&#ifdef DIAG
     !$omp reduction(+:sigxx,sigyy,sigxy,sigyx) &
@@ -90,18 +91,10 @@ subroutine stepper (tstep, restart)
         ! calculate the winds and currents applied on particle i
         call winds_currents(i)
 
-        ! Find all the particles j near i
-        da = search%kNearest(tree, x, y, xQuery = x(i), &
-                            yQuery = y(i), radius = r(i) + rtree)
-                            
-        ! loop over the nearest neighbors except the first because this is the particle i
-        do k = 1, size(da%i%values) - 1
-            j = da%i%values(k + 1)
-
-            ! only compute lower triangular matrices
-            if (i .ge. j) then
-                cycle
-            end if
+        ! loop over the neighbours j > i of particle i (lower triangular
+        ! matrices only)
+        do k = 1, size(neighbours(i)%j)
+            j = neighbours(i)%j(k)
 
             if (.not. active(j)) cycle
 
@@ -309,12 +302,19 @@ subroutine stepper (tstep, restart)
         deallocate(local_hsfw_min_thread)
     end if
 
+    call timer_off(t_pairs)
+
     ! reduce the shelter coeff. and the ridged overlap volume
+    call timer_on(t_comm)
     call broadcast_shape
+    call timer_off(t_comm)
 
     ! apply the ridging shape changes, identically on every rank
+    call timer_on(t_integ)
     call apply_ridging
+    call timer_off(t_integ)
 
+    call timer_on(t_forcing)
     !$omp parallel do
     ! compute the total forcing from winds, currents and coriolis
     do i = first_iter, last_iter
@@ -323,12 +323,12 @@ subroutine stepper (tstep, restart)
         call coriolis(i)
     end do
     !$omp end parallel do
-
-    ! deallocate tree memory
-    call tree_cleanup(tstep, int(ntree))
+    call timer_off(t_forcing)
 
     ! reduce all the force variables
+    call timer_on(t_comm)
     call force_reduction_fast
+    call timer_off(t_comm)
 
     ! sum all forces together on particule i
     do i = first_iter, last_iter
@@ -354,7 +354,9 @@ subroutine stepper (tstep, restart)
     end do
 
     ! broadcast forces to all so that the nodes can each update their x and u
+    call timer_on(t_comm)
     call broadcast_total_forces
+    call timer_off(t_comm)
 
     ! deactivate the particles that left the domain, on every rank
     call remove_exited
@@ -365,9 +367,11 @@ subroutine stepper (tstep, restart)
 
     ! Velocity Verlet: update velocities after force computation
     ! (tstep=1 is Euler initialization; tstep>=2 is Verlet)
+    call timer_on(t_integ)
     if ( tstep .ge. 1 ) then
         call velocity
     end if
     call verlet_history
+    call timer_off(t_integ)
 
 end subroutine stepper

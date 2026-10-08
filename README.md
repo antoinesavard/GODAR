@@ -132,6 +132,27 @@ Third, you simply run the slurm file the previous program created in `/jobs`. Th
 
 Finally, when your jobs have finished running, you can run `./run_video.sh video_args.dat` to create all the videos.
 
+### How to test GODAR
+
+The `tests/` folder contains regression tests, to check that a change to the code does not change the results. After compiling, run them with
+
+```bash
+cd build && ctest --output-on-failure
+```
+
+or directly with `python tests/run_tests.py` (add `--case TEST` for one case, `-v` to see every comparison). They only need Python 3 (no extra package) and `mpirun`, take about a minute, and need about 2 GB of memory per MPI process.
+
+There are two cases, both with the 6261 floes of the CHANNEL experiment: `TEST` starts from its initial conditions (bonds, winds, sheltering, diagnostics, mask), and `TESTSNAP` from its state at output line 33, when the ice is jammed in the channel (contacts, ridging, walls). Each case runs godar a few times (1 and 2 MPI processes, 1 and 4 OpenMP threads, diagnostics on and off, a restart) and checks that:
+
+- the outputs match the stored references in `tests/reference/`;
+- runs that only differ by the number of MPI processes or OpenMP threads give the same results;
+- turning the diagnostics off, or restarting, does not change the results at all (bit for bit);
+- the ice mass is conserved.
+
+Runs on several processes or threads add up the forces in a different order, which changes the last digits of the results. These comparisons use a relative tolerance of 1e-9 (the differences are about 1e-15 after the 200 steps of a test), small enough to catch any real change of the physics. The references were made on macOS (Apple M3, GNU Fortran 16.2, Open MPI 5.0); other machines and compilers also only change the last digits. The runs and tolerances are set in `tests/cases.json`.
+
+If you change the physics on purpose, the reference check fails: once you are sure the new results are right, store them with `python tests/run_tests.py --update-reference` and commit them with the reason of the change. The run times of each test session are appended to `tests/work/timings.csv`, to follow the performance of the code over time.
+
 ### How to improve GODAR
 
 Godar is a very simple model. Here are some ideas to explore, or that we want to include in the future:
@@ -208,6 +229,13 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
             - mask_io.f90
         - mpi/
             - mpi_counts_mod.f90
+    - tests/
+        - CMakeLists.txt
+        - cases.json             (test cases, runs, checks and tolerances)
+        - run_tests.py
+        - files/                 (initial conditions and mask of the tests)
+        - namelist/
+        - reference/             (reference outputs of each case)
     - tools/
         - analysis/
             - monte_carlo.py
