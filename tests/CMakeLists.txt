@@ -27,3 +27,12 @@ foreach(case IN LISTS GODAR_TEST_CASES)
     # each case uses several GB of memory and all the cores: one at a time
     set_tests_properties(${case} PROPERTIES RESOURCE_LOCK godar TIMEOUT 3600)
 endforeach()
+
+# benchmark of all the cases (about 5 minutes), compared with the stored
+# baseline of the machine if there is one; only run with
+#     cd build && ctest -C bench -R bench --verbose
+add_test(NAME bench CONFIGURATIONS bench
+    COMMAND ${GODAR_PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/run_bench.py
+            --godar $<TARGET_FILE:${PROJECT_NAME}>
+            ${GODAR_MPIEXEC_ARG})
+set_tests_properties(bench PROPERTIES RESOURCE_LOCK godar TIMEOUT 7200)

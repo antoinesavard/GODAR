@@ -1,13 +1,19 @@
 #######################################
 #   PACKING
-# Recursively places particles either
-# in a rectangular domain or inside the
+# Places particles either in a
+# rectangular domain or inside the
 # water region of a signed-distance-field
-# mask, following a prescribed floe size
-# distribution.
+# mask (and of a sea ice extent), either
+# following a prescribed floe size
+# distribution (methods touching and
+# random), or with sizes filling the
+# gaps (method fill). See packing.py for
+# the touching and fill methods.
 #######################################
 
+import argparse
 import pathlib
+import sys
 import time
 
 import numpy as np
@@ -19,19 +25,59 @@ FILES_DIR = REPO / "files"
 PLOTS_DIR = REPO / "plots" / "plot" / "packing"
 
 # -------------------------------------
-# parameters
+# parameters: the defaults below, or from the command line (--help)
+parser = argparse.ArgumentParser(description="pack particles in a "
+                                 "rectangular domain or in the water of a mask")
+parser.add_argument("--mask", default="masks/08channel.sdf",
+                    help="SDF mask, from the repository root ('' for the "
+                    "rectangular domain)")
+parser.add_argument("--ice-extent", default=None, help="ice extent mask (.dat)")
+parser.add_argument("--n", type=int, default=20000,
+                    help="number of particles to place")
+parser.add_argument("--method", default="touching",
+                    choices=["touching", "fill", "random"],
+                    help="touching: the radii of the distribution, from the "
+                    "largest, each in the tightest place where it fits, "
+                    "touching two others (fast); fill: radii filling the "
+                    "gaps, between r_min and r_max scaled so that the n "
+                    "particles fill the domain (densest, only r_max / r_min "
+                    "is used; random radii between r_max / 2 and r_max in "
+                    "the open areas); random: random positions, then next to "
+                    "other particles below small_threshold (slow, the "
+                    "particles do not touch). Default: touching")
+parser.add_argument("--dist", default="pareto",
+                    help="radii distribution: pareto, lognormal, normal, uniform")
+parser.add_argument("--mu", type=float, default=800)
+parser.add_argument("--sigma", type=float, default=3)
+parser.add_argument("--r-min", type=float, default=200)
+parser.add_argument("--r-max", type=float, default=4000)
+parser.add_argument("--coverage", type=float,
+                    help="scale the radii (with mu, r_min, r_max and "
+                    "small_threshold) so that the n particles cover this "
+                    "fraction of the available area")
+parser.add_argument("--expno", default="8", help="files x<expno>.dat, ...")
+parser.add_argument("--out", type=pathlib.Path, default=FILES_DIR,
+                    help="folder of the files (default: files/)")
+parser.add_argument("--max-attempts", type=int, default=3000)
+parser.add_argument("--small-threshold", type=float, default=400,
+                    help="below this radius, place next to other particles")
+parser.add_argument("--seed", type=int,
+                    help="seed of the random numbers (default: random)")
+parser.add_argument("--no-plot", action="store_true", help="no figure")
+args = parser.parse_args()
+
 domain = (1e5, 5e4)  # fallback (used when mask_file is None)
-mask_file = "masks/08channel.sdf"
-ice_extent_file = None
-n = 20000
-mu = 800
-sigma = 3
-r_min = 200
-r_max = 4000
-dist_name = "pareto"
-expno = 8
-max_attempts = 3000
-small_threshold = 400  # below this, switch to neighbor
+mask_file = args.mask or None
+ice_extent_file = args.ice_extent
+n = args.n
+mu = args.mu
+sigma = args.sigma
+r_min = args.r_min
+r_max = args.r_max
+dist_name = args.dist
+expno = args.expno
+max_attempts = args.max_attempts
+small_threshold = args.small_threshold  # below this, switch to neighbor
 # -------------------------------------
 
 
@@ -45,7 +91,8 @@ def load_sdf(path):
         x_min = float(h[3])
         y_max = float(h[4])
         proj = h[5]
-        sdf = np.loadtxt(f, dtype=np.float32).reshape(ny, nx)
+        sdf = np.fromstring(f.read(), dtype=np.float64, sep=" ") \
+            .astype(np.float32).reshape(ny, nx)
     # file rows are top-to-bottom (y=y_max first); flip so row 0 = bottom
     sdf = sdf[::-1, :]
     return dict(
@@ -262,7 +309,8 @@ def load_dat_mask(path):
         x_min = float(h[3])
         y_max = float(h[4])
         proj = h[5]
-        grid = np.loadtxt(f, dtype=np.uint8).reshape(ny, nx)
+        grid = np.fromstring(f.read(), dtype=np.float64, sep=" ") \
+            .astype(np.uint8).reshape(ny, nx)
     return dict(
         grid=grid[::-1, :],
         nx=nx,
@@ -335,6 +383,9 @@ def overlay_ice_extent(ax, ice_mask):
 # ----------------------------------------------------------------
 t0 = time.time()
 
+if args.seed is not None:
+    np.random.seed(args.seed)
+
 if mask_file:
     print(f"loading SDF mask: {mask_file}")
     mask = load_sdf(REPO / mask_file)
@@ -361,40 +412,119 @@ if ice_extent_file:
 else:
     ice_mask = None
 
-print(
-    f"generating {n} radii ({dist_name}, mu={mu}, sigma={sigma}, "
-    f"r in [{r_min}, {r_max}] m)"
-)
-radii = generate_radii(
-    n, dist=dist_name, params=(mu, sigma), r_min=r_min, r_max=r_max
-)
-print(
-    f"  -> min={radii.min():.1f}, max={radii.max():.1f}, "
-    f"mean={radii.mean():.1f} m"
-)
+if args.method == "fill":
+    print(
+        f"filling the gaps with {n} particles, r_max / r_min = "
+        f"{r_max / r_min:g}"
+    )
+else:
+    print(
+        f"generating {n} radii ({dist_name}, mu={mu}, sigma={sigma}, "
+        f"r in [{r_min}, {r_max}] m)"
+    )
+    radii = generate_radii(
+        n, dist=dist_name, params=(mu, sigma), r_min=r_min, r_max=r_max
+    )
+    print(
+        f"  -> min={radii.min():.1f}, max={radii.max():.1f}, "
+        f"mean={radii.mean():.1f} m"
+    )
 
-print(
-    f"packing (max_attempts={max_attempts}, small_threshold={small_threshold})..."
-)
+if args.coverage and args.method != "fill":
+    # same shape of distribution, sizes scaled so that the n particles
+    # cover the requested fraction of the available area
+    scale = np.sqrt(
+        args.coverage
+        * available_area(mask, ice_mask, domain)
+        / (np.pi * np.sum(radii**2))
+    )
+    radii *= scale
+    mu, r_min, r_max, small_threshold = (
+        v * scale for v in (mu, r_min, r_max, small_threshold)
+    )
+    print(
+        f"  -> scaled by {scale:.3f} to cover {args.coverage * 100:.0f}% of "
+        f"the available area: min={radii.min():.1f}, max={radii.max():.1f}, "
+        f"mean={radii.mean():.1f} m"
+    )
+
 t_pack = time.time()
-positions, accepted_radii = pack_particles(
-    radii,
-    mask=mask,
-    ice_mask=ice_mask,
-    domain_size=domain,
-    small_threshold=small_threshold,
-    max_attempts=max_attempts,
-)
+if args.method == "random":
+    print(
+        f"packing (max_attempts={max_attempts}, "
+        f"small_threshold={small_threshold})..."
+    )
+    positions, accepted_radii = pack_particles(
+        radii,
+        mask=mask,
+        ice_mask=ice_mask,
+        domain_size=domain,
+        small_threshold=small_threshold,
+        max_attempts=max_attempts,
+    )
+    pf = packing_fraction(accepted_radii, mask, ice_mask, domain)
+else:
+    import packing
+
+    if mask is not None:
+        dom = packing.Domain(
+            mask["sdf"], mask["dx"], mask["x_origin"], mask["y_origin"]
+        )
+    else:
+        dom = packing.Domain.rectangle(*domain)
+    if ice_mask is not None:
+        # the particles stay inside the ice extent
+        dom = dom.inside(
+            ice_mask["grid"],
+            ice_mask["dx"],
+            ice_mask["x_origin"],
+            ice_mask["y_origin"],
+        )
+    if args.method == "touching":
+        print("packing, touching each other...")
+        positions, accepted_radii, area = packing.pack_sizes(dom, radii)
+    else:
+        print("packing, filling the gaps...")
+        positions, accepted_radii, area = packing.pack_fill(
+            dom, n, r_max / r_min, seed=np.random.randint(2**31 - 1)
+        )
+        r_min, r_max = accepted_radii.min(), accepted_radii.max()
+    pf = np.pi * np.sum(accepted_radii**2) / area
 print(
     f"packed {len(positions)} / {n} particles in {time.time() - t_pack:.1f} s "
     f"({100*len(positions)/n:.1f}% accepted)"
 )
 
-pf = packing_fraction(accepted_radii, mask, ice_mask, domain)
 title_extra = f"packing fraction = {pf * 100:.2f}%"
 if mask is not None:
     title_extra = f"{mask['proj']}  |  " + title_extra
 print(f"packing fraction: {pf * 100:.2f}% of available area")
+
+# save
+# ---------------------------------------------------------------
+args.out.mkdir(parents=True, exist_ok=True)
+
+np.savetxt(args.out / f"r{expno}.dat", accepted_radii, fmt="%16.16f")
+np.savetxt(args.out / f"x{expno}.dat", positions[:, 0], fmt="%16.16f")
+np.savetxt(args.out / f"y{expno}.dat", positions[:, 1], fmt="%16.16f")
+np.savetxt(
+    args.out / f"h{expno}.dat", np.ones_like(accepted_radii), fmt="%16.16f"
+)
+np.savetxt(
+    args.out / f"omega{expno}.dat",
+    np.zeros_like(accepted_radii),
+    fmt="%16.16f",
+)
+np.savetxt(
+    args.out / f"theta{expno}.dat",
+    np.zeros_like(accepted_radii),
+    fmt="%16.16f",
+)
+print(f"wrote {args.out}/{{x,y,r,h,omega,theta}}{expno}.dat")
+
+if args.no_plot:
+    print(f"done in {time.time() - t0:.1f} s total")
+    raise SystemExit
 
 # figure
 # -------------------------------------------------------------
@@ -418,9 +548,14 @@ for (x, y), r in zip(positions, accepted_radii):
 
 ax.set_aspect("equal")
 mean_r_km = float(np.mean(accepted_radii)) / 1e3
+sizes = (
+    "sizes filling the gaps"
+    if args.method == "fill"
+    else f"dist={dist_name}(mu={mu:g}, sigma={sigma:g})"
+)
 params_line = (
-    f"expno={expno} | dist={dist_name}(mu={mu}, sigma={sigma}) | "
-    f"r in [{r_min/1e3:g}, {r_max/1e3:g}] km | mean r = {mean_r_km:.2f} km"
+    f"expno={expno} | {args.method} | {sizes} | "
+    f"r in [{r_min/1e3:.3g}, {r_max/1e3:.3g}] km | mean r = {mean_r_km:.2f} km"
 )
 ax.set_title(
     f"{len(positions)} placed / {n} total | {title_extra}\n{params_line}",
@@ -433,30 +568,19 @@ ymin, ymax = ax.get_ylim()
 base_w = 8
 fig.set_size_inches(base_w, base_w * abs((ymax - ymin) / (xmax - xmin)))
 
-# save
+# save the figure
 # ---------------------------------------------------------------
-FILES_DIR.mkdir(parents=True, exist_ok=True)
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
-np.savetxt(FILES_DIR / f"r{expno}.dat", accepted_radii, fmt="%16.16f")
-np.savetxt(FILES_DIR / f"x{expno}.dat", positions[:, 0], fmt="%16.16f")
-np.savetxt(FILES_DIR / f"y{expno}.dat", positions[:, 1], fmt="%16.16f")
-np.savetxt(
-    FILES_DIR / f"h{expno}.dat", np.ones_like(accepted_radii), fmt="%16.16f"
-)
-np.savetxt(
-    FILES_DIR / f"omega{expno}.dat",
-    np.zeros_like(accepted_radii),
-    fmt="%16.16f",
-)
-np.savetxt(
-    FILES_DIR / f"theta{expno}.dat",
-    np.zeros_like(accepted_radii),
-    fmt="%16.16f",
-)
-
 fig.savefig(PLOTS_DIR / f"{expno}.png", bbox_inches="tight", dpi=200)
-print(f"wrote files/{{x,y,r,h,omega,theta}}{expno}.dat")
 print(f"wrote plots/plot/packing/{expno}.png")
+
+# floe size distribution
+sys.path.insert(0, str(REPO / "tools" / "plotter"))
+from fsd import fsd_figure
+
+fig_fsd = fsd_figure([accepted_radii], [f"{expno} ({len(accepted_radii)} floes)"])
+fig_fsd.savefig(PLOTS_DIR / f"{expno}_fsd.png", bbox_inches="tight", dpi=200)
+print(f"wrote plots/plot/packing/{expno}_fsd.png")
 print(f"done in {time.time() - t0:.1f} s total")
 plt.show()

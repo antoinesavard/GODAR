@@ -151,7 +151,50 @@ There are two cases, both with the 6261 floes of the CHANNEL experiment: `TEST` 
 
 Runs on several processes or threads add up the forces in a different order, which changes the last digits of the results. These comparisons use a relative tolerance of 1e-9 (the differences are about 1e-15 after the 200 steps of a test), small enough to catch any real change of the physics. The references were made on macOS (Apple M3, GNU Fortran 16.2, Open MPI 5.0); other machines and compilers also only change the last digits. The runs and tolerances are set in `tests/cases.json`.
 
-If you change the physics on purpose, the reference check fails: once you are sure the new results are right, store them with `python tests/run_tests.py --update-reference` and commit them with the reason of the change. The run times of each test session are appended to `tests/work/timings.csv`, to follow the performance of the code over time.
+If you change the physics on purpose, the reference check fails: once you are sure the new results are right, store them with `python tests/run_tests.py --update-reference` and commit them with the reason of the change. The run times and peak memory of each test session are appended to `tests/work/timings.csv`.
+
+### How to benchmark GODAR
+
+At the end of every run, godar prints the time spent in each phase of the time steps (neighbour lists, forces between particles, forcing, MPI communication, time integration, outputs), with the minimum and maximum over the MPI processes: a large difference between them means that the processes wait for each other.
+
+`tests/run_bench.py` times godar on the test cases with longer runs (1000 steps by default), and gives for each configuration of MPI processes and OpenMP threads the median time, the speedup and the parallel efficiency, the peak memory, and the time of each phase:
+
+```bash
+python tests/run_bench.py                                # 1 process, 1 thread
+python tests/run_bench.py --case TESTSNAP --threads 1,2,4,8
+python tests/run_bench.py --baseline /path/to/other/godar
+```
+
+The last line compares two executables, e.g. before and after a change: their runs alternate, so that both see the same state of the machine, and the ratio of their times is given for each pair of runs. This is the most reliable comparison, because the speed of a machine varies by 10 to 20 % from one moment to the next (temperature, other programs).
+
+`--save-baseline` stores the times of a session as the baseline of the machine in `tests/bench/baselines/`; later sessions on the same machine are compared with it, and warn when more than 10 % slower. Use it on a machine where nothing else runs, e.g. a compute node of a cluster (`--machine` names it, since the node names vary). The benchmark can also be run from the build folder with `ctest -C bench -R bench --verbose`. The results of every session are appended to `tests/work/bench/bench.csv`.
+
+#### Larger problems: the ARCTIC case
+
+The test cases are too small for a cluster. `--particles` runs the ARCTIC case instead: floes filling the NSIDC sea ice extent of March 2015 on the polar stereographic grid (PS-N, 3.125 km). Their sizes fill the gaps between them, from r_min to 20 r_min as in the CHANNEL experiment (random between 10 and 20 r_min in the open areas, so that the largest floes do not form a lattice), with r_min set by the number of floes so that they always fill the extent (91 to 94 % of its area is covered, more with more floes: disks always leave gaps, here smaller than r_min, mostly along the coast and the edge of the extent). `python tools/plotter/fsd.py <r files>` plots the floe size distributions. The search radius, the bond limit and the time step scale with r_min (`tests/namelist/ARCTIC.nml`). Each floe then has the same neighbours whatever their number, so the work of a time step grows like the number of floes.
+
+The masks and the floes are not in the repository. `tests/bench/make_arctic.py` builds them with the scripts of `tools/` the first time a number of floes is asked: `masks/ps.dat` and `masks/ps.sdf` from the NSIDC-0780 sea ice regions (needs `ncdump`, numpy and scipy), the sea ice extent downloaded from NSIDC (needs Pillow), then the packing of the floes (`tools/init/initial_packing_position.py --method fill`, needs numba, a few seconds for 5000 floes). Compute nodes may lack these tools or the internet, so on a cluster build the cases beforehand (e.g. on a login node, or on your machine and copy them); they are kept in `tests/work/bench/cases/`:
+
+```bash
+python tests/bench/make_arctic.py --n 20000 --out tests/work/bench/cases/ARCTIC_20000
+python tests/run_bench.py --particles 20000 --threads 1,2,4,8
+```
+
+Strong scaling is the same number of floes on more and more cores. Weak scaling is the number of floes growing with the cores (the `part/core` column of the summary stays the same): the time should then stay the same.
+
+#### On a cluster (Slurm)
+
+Inside a Slurm allocation (`salloc` for an interactive session, or a job), each configuration nodes x processes per node x threads per process is launched with `srun`, one process per `--cpus-per-task` cores, and the threads are pinned to the cores (`OMP_PLACES=cores`, `OMP_PROC_BIND=close`; `--bind` changes it). The nodes, cores and memory available are read from Slurm, and the configurations that do not fit are skipped, in particular those that need more memory than a node has: each process holds about 100 n² bytes (160 GB for 40 000 floes), so with many floes only one process per node fits.
+
+```bash
+salloc --nodes=8 --exclusive --mem=0 --time=2:00:00 --account=...
+python tests/run_bench.py --particles 20000 --nodes 1,2,4,8 \
+    --ranks-per-node 1,2 --threads 32,64,128 --dry-run
+python tests/run_bench.py --particles 20000 --nodes 1,2,4,8 \
+    --ranks-per-node 1,2 --threads 32,64,128
+```
+
+`--dry-run` prints the commands and the memory of each configuration without running them.
 
 ### How to improve GODAR
 
@@ -224,15 +267,21 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
             - time_mod.f90
         - kdtree/
             - global_kdtree.f90
-            - kdtree_utils.f90
+            - kdtree_utils.f90       (kd-tree and neighbour lists)
         - mask/
             - mask_io.f90
         - mpi/
             - mpi_counts_mod.f90
+        - timers/
+            - timers.f90             (time of each phase of a time step)
     - tests/
         - CMakeLists.txt
         - cases.json             (test cases, runs, checks and tolerances)
         - run_tests.py
+        - run_bench.py
+        - bench/
+            - baselines/         (stored benchmark times per machine)
+            - make_arctic.py     (builds the ARCTIC case)
         - files/                 (initial conditions and mask of the tests)
         - namelist/
         - reference/             (reference outputs of each case)
@@ -240,17 +289,23 @@ Godar is a very simple model. Here are some ideas to explore, or that we want to
         - analysis/
             - monte_carlo.py
         - init/
+            - build_masks.py         (land masks from the NSIDC regions)
+            - build_sdf.py           (signed distance of the masks)
             - duplication_2nd_plate.py
             - gridded_placement.py
             - init2.py
+            - initial_packing_position.py (initial floes in a mask)
+            - packing.py             (dense packing, touching floes)
         - plotter/
             - figures.py
+            - fsd.py                 (floe size distribution)
             - video.py
             - void_ratios.py
         - tests/
             - scaling.py
             - test.py
         - utils/
+            - build_ice_extent.py    (NSIDC sea ice extent mask)
             - files.py
     - utils/
         - duplication.sh

@@ -28,11 +28,13 @@ import datetime
 import gzip
 import json
 import math
+import os
 import re
 import shutil
 import socket
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -140,28 +142,62 @@ def set_namelist(text, settings):
     return text
 
 
-def run_godar(args, work, nml, stdin, ranks):
-    """run godar in work, return (ok, message, loop time, wall time)"""
-    cmd = [str(args.godar)]
-    if args.mpiexec:
-        cmd = [args.mpiexec, "-n", str(ranks)] + cmd
-    elif ranks > 1:
-        return False, "--mpiexec is needed for several ranks", None, None
+def run_godar(args, work, nml, stdin, ranks, cmd=None, env=None):
+    """run godar in work, return (ok, message, loop time [s], wall time [s],
+    peak memory of the largest process [GB]). cmd: full launch command
+    (default: mpiexec -n ranks godar); env: extra environment variables"""
+    if cmd is None:
+        cmd = [str(args.godar)]
+        if args.mpiexec:
+            cmd = [args.mpiexec, "-n", str(ranks)] + cmd
+        elif ranks > 1:
+            return (False, "--mpiexec is needed for several ranks",
+                    None, None, None)
     log = work / f"log.{nml[:-4]}"
     start = time.time()
     with open(log, "w") as out:
-        proc = subprocess.run(cmd, input=stdin, text=True, cwd=work,
-                              stdout=out, stderr=subprocess.STDOUT,
-                              timeout=args.timeout)
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, text=True,
+                                cwd=work, stdout=out,
+                                stderr=subprocess.STDOUT,
+                                env=None if env is None
+                                else {**os.environ, **env})
+        timer = threading.Timer(args.timeout, proc.kill)
+        timer.start()
+        proc.stdin.write(stdin)
+        proc.stdin.close()
+        # wait4 also gives the peak resident memory of the largest process,
+        # the MPI processes started by mpirun included (bytes on macOS,
+        # kB on Linux; on macOS, memory compression makes it vary)
+        _, status, usage = os.wait4(proc.pid, 0)
+        timer.cancel()
+        proc.returncode = os.waitstatus_to_exitcode(status)
     wall = time.time() - start
+    memory = usage.ru_maxrss * (1 if sys.platform == "darwin" else 1024) / 1e9
     text = log.read_text(errors="replace")
     loop = re.search(r"Total simulation time:\s*([0-9.Ee+-]+)", text)
     if proc.returncode != 0 or loop is None:
-        return False, f"godar failed, see {log}", None, wall
+        return False, f"godar failed, see {log}", None, wall, memory
     # the model falls back on defaults when a namelist cannot be read
     if "error, default will be used" in text:
-        return False, f"namelist read error, see {log}", None, wall
-    return True, "", float(loop.group(1)), wall
+        return False, f"namelist read error, see {log}", None, wall, memory
+    return True, "", float(loop.group(1)), wall, memory
+
+
+def append_rows(path, header, rows):
+    """append rows to a csv file; a file with another header (written by
+    an older version of the scripts) is kept aside under a dated name"""
+    if path.exists():
+        with open(path, newline="") as f:
+            old = next(csv.reader(f), None)
+        if old != header:
+            path.rename(path.with_name(
+                f"{path.stem}.{datetime.date.today()}{path.suffix}"))
+    new_file = not path.exists()
+    with open(path, "a", newline="") as f:
+        writer = csv.writer(f)
+        if new_file:
+            writer.writerow(header)
+        writer.writerows(rows)
 
 
 def git_version():
@@ -210,8 +246,10 @@ def run_case(args, name, case, tolsets):
 
         print(f"  run {rname:8s} ({ranks} rank(s), {threads} thread(s))",
               end="", flush=True)
-        ok, msg, loop, wall = run_godar(args, work, nml, stdin, ranks)
-        print(f": {loop:.2f} s" if ok else f": FAILED, {msg}")
+        ok, msg, loop, wall, memory = run_godar(args, work, nml, stdin,
+                                                ranks)
+        print(f": {loop:.2f} s, {memory:.2f} GB" if ok
+              else f": FAILED, {msg}")
         if not ok:
             failed_runs.add(rname)
             results.append((f"run {rname}", False, [msg]))
@@ -219,7 +257,7 @@ def run_case(args, name, case, tolsets):
         steps = re.search(r"^\s*nt\s*=\s*([^!\s]+)", text, re.M | re.I)
         timings.append([name, rname, ranks, threads, case["n"],
                         int(float(steps.group(1).lower().replace("d", "e"))),
-                        f"{loop:.3f}", f"{wall:.3f}"])
+                        f"{loop:.3f}", f"{wall:.3f}", f"{memory:.3f}"])
 
     def out(rname, fname):
         return work / "output" / f"{fname}.{expno[rname]}"
@@ -330,16 +368,12 @@ def main():
 
     # run times, kept from one test session to the next
     log = args.work / "timings.csv"
-    new_file = not log.exists()
-    with open(log, "a", newline="") as f:
-        writer = csv.writer(f)
-        if new_file:
-            writer.writerow(["date", "version", "host", "case", "run",
-                             "ranks", "threads", "n", "steps",
-                             "loop_time_s", "wall_time_s"])
-        now = datetime.datetime.now().isoformat(timespec="seconds")
-        for row in all_timings:
-            writer.writerow([now, version, socket.gethostname()] + row)
+    now = datetime.datetime.now().isoformat(timespec="seconds")
+    append_rows(log, ["date", "version", "host", "case", "run", "ranks",
+                      "threads", "n", "steps", "loop_time_s", "wall_time_s",
+                      "peak_memory_GB"],
+                [[now, version, socket.gethostname()] + row
+                 for row in all_timings])
 
     if args.update_reference:
         print("\nreferences updated in tests/reference: commit them with "

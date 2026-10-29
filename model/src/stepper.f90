@@ -54,8 +54,8 @@ subroutine stepper (tstep, restart)
     end if
 
     ! neighbour lists: the particles j > i within r(i) + rtree, rebuilt
-    ! every ntree steps, or earlier if a particle moved more than half of
-    ! the margin rtree - max(r) (a pair not listed could then touch)
+    ! every ntree steps, or earlier if a particle moved more than half
+    ! of the margin rtree - max(r)
     call timer_on(t_tree)
     if ( mod(tstep, int(ntree)) == 0 .or. &
          neighbours_outdated(x, y, rtree - maxval(r)) ) then
