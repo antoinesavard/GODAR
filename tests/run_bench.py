@@ -389,6 +389,7 @@ def write_slurm_script(args):
     if args.partition:
         lines.append(f"#SBATCH --partition={args.partition}")
     lines += ["", "# environment of the cluster (modules, ...)"]
+    lines.append(f"export TOPDIR={shlex.quote(str(rt.ROOT.parent))}")
     if args.setup:
         lines += Path(args.setup).read_text().splitlines()
     lines += [

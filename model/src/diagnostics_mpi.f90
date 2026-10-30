@@ -1,6 +1,6 @@
 subroutine diag_reduction (diag)
 
-    use mpi_f08
+    use mpi
 
     use parameters
     use diagnostics
@@ -40,7 +40,7 @@ end subroutine diag_reduction
 
 subroutine diag_broadcast (diag)
 
-    use mpi_f08
+    use mpi
 
     use parameters
     use diagnostics

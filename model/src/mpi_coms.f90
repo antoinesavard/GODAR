@@ -2,7 +2,7 @@ subroutine broadcasting_ini (thread_requested, restart)
 ! this routine broadcasts the initialization variables
 ! to all the other mpi ranks
 
-    use mpi_f08
+    use mpi
     use mask_io, only: nx_mask, ny_mask, dx_mask, x_origin, y_origin, &
                        Lx, Ly, mask_proj, sdf
 
@@ -19,7 +19,7 @@ subroutine broadcasting_ini (thread_requested, restart)
 
 
     integer, intent(inout) :: thread_requested, restart
-    
+
     !-------------------------------------------------------------------
     ! openmp variable
     !-------------------------------------------------------------------
@@ -268,7 +268,7 @@ subroutine broadcast_shape
     ! that every process applies the same shape changes to all the
     ! particles (apply_ridging) and the shapes stay identical everywhere
 
-    use mpi_f08
+    use mpi
     use mpi_counts_mod, only: counts
 
     use parameters
@@ -319,7 +319,7 @@ subroutine broadcast_total_forces
     ! at the end of each time step so that each process can compute 
     ! their own time stepping using the total forces
 
-    use mpi_f08
+    use mpi
 
     use parameters
     use variables
@@ -404,7 +404,7 @@ subroutine force_reduction
     ! process combines their section into total forecs and moments.
     ! this is needed because the program uses Newton's third law.
 
-    use mpi_f08
+    use mpi
 
     use parameters
     use variables
@@ -572,7 +572,7 @@ end subroutine force_reduction
 
 subroutine force_reduction_fast
     
-    use mpi_f08
+    use mpi
     use mpi_counts_mod
 
     use parameters
@@ -740,7 +740,7 @@ end subroutine force_reduction_fast
 
 subroutine gather_bonds_to_master()
 
-    use mpi_f08
+    use mpi
     use mpi_counts_mod
 
     use parameters
