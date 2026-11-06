@@ -169,6 +169,12 @@ elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
 # ================================
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
     include(${CMAKE_MODULE_PATH}/godarCMakeFiles/crayFLAGS.cmake)
+
+# ================================
+# Set AMD Flang / LLVMFlang compile flags
+# ================================
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang" OR CMAKE_Fortran_COMPILER_ID MATCHES "Flang")
+    include(${CMAKE_MODULE_PATH}/godarCMakeFiles/amdflangFLAGS.cmake)
 endif()
 
 # ================================

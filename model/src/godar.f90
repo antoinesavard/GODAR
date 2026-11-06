@@ -4,7 +4,7 @@ program godar
     use datetime, only: datetime_delta_type, operator(+), operator(<), operator(==), operator(-)
     use datetime, only: str2dt, datetime_str_6, now, delta_str
     use omp_lib
-    use mpi_f08
+    use mpi
     use mpi_counts_mod, only: init_mpi_counts
     use mask_io, only: load_sdf
 
@@ -22,7 +22,7 @@ program godar
     integer :: proc_num, thread_num, thread_requested
     double precision :: tic, tac, toc, loop_time
     character(len=4) :: expno_str, expno_str_r
-    character(len=16) :: namelist_name
+    character(len=16), save :: namelist_name
     character(10) :: n_str
 
     ! execute godar only on master rank
