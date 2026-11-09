@@ -31,7 +31,7 @@ subroutine sea_ice_post (tstep, expno_str)
     !   ES24.16E3: 17 significant digits (exact round trip of a double),
     !              3-digit exponent so |exp| > 99 keeps its 'E'
     !   I0:        minimal-width integers
-    character(len=*), parameter :: fmt_r = 'ES24.16E3'
+    character(len=*), parameter :: fmt_r    = 'ES24.16E3'
     character(len=*), parameter :: fmt_row  = '(*(1X,' // fmt_r // '))'
     character(len=*), parameter :: fmt_bond = '(I0,1X,I0,1X,I0)'
     character(len=*), parameter :: fmt_dmg  = '(I0,1X,I0,1X,I0,1X,' // fmt_r // ')'
@@ -262,7 +262,7 @@ contains
             trim(filename), ", iostat = ", ios
             stop 1
         end if
-        
+
     end subroutine open_out
 
 end subroutine sea_ice_post

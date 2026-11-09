@@ -221,4 +221,6 @@ subroutine info (expno_str, restart)
     write(10,cfmt) 'Tfile   = ', Tfile
     write(10,cfmt) 'Ofile   = ', Ofile
 
+    close(10)
+
 end subroutine info
