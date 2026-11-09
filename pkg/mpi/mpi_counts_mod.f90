@@ -1,6 +1,6 @@
 module mpi_counts_mod
 
-    use mpi_f08, only: mpi_init, mpi_comm_rank, mpi_comm_size
+    use mpi, only: mpi_init, mpi_comm_rank, mpi_comm_size
 
     implicit none
 

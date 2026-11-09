@@ -22,6 +22,21 @@ subroutine sea_ice_post (tstep, expno_str)
     ! bending angles of a bond and overlap of a pair
     double precision :: thetarelb_ji, thetarelb_ij, deltan_ji
 
+    ! output step index written in the sparse files
+    integer :: idx
+
+    ! Explicit output formats. List-directed output (write(u,*)) is
+    ! processor dependent. These formats give the
+    ! same bytes with every compiler.
+    !   ES24.16E3: 17 significant digits (exact round trip of a double),
+    !              3-digit exponent so |exp| > 99 keeps its 'E'
+    !   I0:        minimal-width integers
+    character(len=*), parameter :: fmt_r = 'ES24.16E3'
+    character(len=*), parameter :: fmt_row  = '(*(1X,' // fmt_r // '))'
+    character(len=*), parameter :: fmt_bond = '(I0,1X,I0,1X,I0)'
+    character(len=*), parameter :: fmt_dmg  = '(I0,1X,I0,1X,I0,1X,' // fmt_r // ')'
+    character(len=*), parameter :: fmt_beam = '(I0,1X,I0,1X,I0,5(1X,' // fmt_r // '))'
+
     ! diagnostics variables
     num_bonds = 0
 
@@ -120,61 +135,62 @@ subroutine sea_ice_post (tstep, expno_str)
 
     ! opening the files
     ! position and state
-	open (10, file = filex, position = 'append', status = 'unknown')
-	open (11, file = filey, position = 'append', status = 'unknown')
-    open (12, file = fileu, position = 'append', status = 'unknown')
-	open (13, file = filev, position = 'append', status = 'unknown')
-	open (14, file = filer, position = 'append', status = 'unknown')
-	open (15, file = fileh, position = 'append', status = 'unknown')
-	open (16, file = filet, position = 'append', status = 'unknown')
-	open (17, file = fileo, position = 'append', status = 'unknown')
-	open (18, file = fileb, position = 'append', status = 'unknown')
+    call open_out(10, filex)
+    call open_out(11, filey)
+    call open_out(12, fileu)
+    call open_out(13, filev)
+    call open_out(14, filer)
+    call open_out(15, fileh)
+    call open_out(16, filet)
+    call open_out(17, fileo)
+    call open_out(18, fileb)
     ! forces
-    open (19, file = filetfx, position = 'append', status = 'unknown')
-	open (20, file = filetfy, position = 'append', status = 'unknown')
-    open (21, file = filefcx, position = 'append', status = 'unknown')
-	open (22, file = filefcy, position = 'append', status = 'unknown')
-	open (23, file = filefbx, position = 'append', status = 'unknown')
-	open (24, file = filefby, position = 'append', status = 'unknown')
+    call open_out(19, filetfx)
+    call open_out(20, filetfy)
+    call open_out(21, filefcx)
+    call open_out(22, filefcy)
+    call open_out(23, filefbx)
+    call open_out(24, filefby)
     ! moments
-	open (25, file = filem, position = 'append', status = 'unknown')
-	open (26, file = filemc, position = 'append', status = 'unknown')
-	open (27, file = filemb, position = 'append', status = 'unknown')
+    call open_out(25, filem)
+    call open_out(26, filemc)
+    call open_out(27, filemb)
     ! stresses
-    open (28, file = filetsigxx, position = 'append', status = 'unknown')
-    open (29, file = filetsigyy, position = 'append', status = 'unknown')
-    open (30, file = filetsigxy, position = 'append', status = 'unknown')
-    open (31, file = filetsigyx, position = 'append', status = 'unknown')
+    call open_out(28, filetsigxx)
+    call open_out(29, filetsigyy)
+    call open_out(30, filetsigxy)
+    call open_out(31, filetsigyx)
     ! pressure
-    open (32, file = filetp, position = 'append', status = 'unknown')
+    call open_out(32, filetp)
     ! angle
-    open (33, file = fileangle, position = 'append', status = 'unknown')
+    call open_out(33, fileangle)
     ! damage
-    open (34, file = filedamage, position = 'append', status = 'unknown')
+    call open_out(34, filedamage)
     ! beam state, for restarts
-    open (35, file = filebeam, position = 'append', status = 'unknown')
+    call open_out(35, filebeam)
 
+    ! write on the files: one record (line) per output step
+    write(10, fmt_row) ( x(i),     i=1, n )
+    write(11, fmt_row) ( y(i),     i=1, n )
+    write(12, fmt_row) ( u(i),     i=1, n )
+    write(13, fmt_row) ( v(i),     i=1, n )
+    write(14, fmt_row) ( r(i),     i=1, n )
+    write(15, fmt_row) ( h(i),     i=1, n )
+    write(16, fmt_row) ( theta(i), i=1, n )
+    write(17, fmt_row) ( omega(i), i=1, n )
 
-    ! write on the files
-	write(10,*) ( x(i),   	i=1, n )
-	write(11,*) ( y(i),    	i=1, n )
-    write(12,*) ( u(i),   	i=1, n )
-	write(13,*) ( v(i),    	i=1, n )
-	write(14,*) ( r(i),   	i=1, n )
-	write(15,*) ( h(i),  	i=1, n )
-	write(16,*) ( theta(i),	i=1, n )
-	write(17,*) ( omega(i),	i=1, n )
-	do i = 1, n
+    idx = int(tstep / comp)
+    do i = 1, n
         do j = 1, n
             if (bond(j, i) == 1) then
                 ! bending angles, as in bond_forces_timoshenko
                 thetarelb_ji = -(theta(i) - alpha_total(j,i) - theta_offset(j,i))
                 thetarelb_ij = -(theta(j) - alpha_total(j,i) - theta_offset(i,j))
 
-                write(18,*) int(tstep / comp), j, i
-                write(34,*) int(tstep / comp), j, i, damageb(j,i)
-                write(35,*) int(tstep / comp), j, i, lb(j,i), rb(j,i), &
-                            hb(j,i), thetarelb_ji, thetarelb_ij
+                write(18, fmt_bond) idx, j, i
+                write(34, fmt_dmg)  idx, j, i, damageb(j,i)
+                write(35, fmt_beam) idx, j, i, lb(j,i), rb(j,i), &
+                                    hb(j,i), thetarelb_ji, thetarelb_ij
                 num_bonds = num_bonds + 1
             end if
 
@@ -184,26 +200,29 @@ subroutine sea_ice_post (tstep, expno_str)
                 deltan_ji = r(i) + r(j) - sqrt( ( x(i) - x(j) ) ** 2 + &
                                                 ( y(i) - y(j) ) ** 2 )
                 if ( deltan_ji .gt. 0 ) then
-                    write(33,*) int(tstep / comp), j, i, atan2( y(j) - y(i), x(j) - x(i) ) * 180d0 / pi
+                    write(33, fmt_dmg) idx, j, i, &
+                        atan2( y(j) - y(i), x(j) - x(i) ) * 180d0 / pi
                 end if
             end if
         end do
-	end do
-	write(18,*)
-    write(19,*) ( tfx(i),   i=1, n )
-	write(20,*) ( tfy(i),   i=1, n )
-    write(21,*) ( fcx(i),  	i=1, n )
-	write(22,*) ( fcy(i),  	i=1, n )
-	write(23,*) ( fbx(i),   i=1, n )
-	write(24,*) ( fby(i),  	i=1, n )
-	write(25,*) ( m(i),	    i=1, n )
-	write(26,*) ( mc(i),	i=1, n )
-    write(27,*) ( mb(i),	i=1, n )
-    write(28,*) ( tsigxx(i),	i=1, n )
-    write(29,*) ( tsigyy(i),	i=1, n )
-    write(30,*) ( tsigxy(i),	i=1, n )
-    write(31,*) ( tsigyx(i),	i=1, n )
-    write(32,*) ( tp(i),	i=1, n )
+    end do
+    ! empty line separates output steps in the bond file
+    write(18, '(A)') ''
+
+    write(19, fmt_row) ( tfx(i),    i=1, n )
+    write(20, fmt_row) ( tfy(i),    i=1, n )
+    write(21, fmt_row) ( fcx(i),    i=1, n )
+    write(22, fmt_row) ( fcy(i),    i=1, n )
+    write(23, fmt_row) ( fbx(i),    i=1, n )
+    write(24, fmt_row) ( fby(i),    i=1, n )
+    write(25, fmt_row) ( m(i),      i=1, n )
+    write(26, fmt_row) ( mc(i),     i=1, n )
+    write(27, fmt_row) ( mb(i),     i=1, n )
+    write(28, fmt_row) ( tsigxx(i), i=1, n )
+    write(29, fmt_row) ( tsigyy(i), i=1, n )
+    write(30, fmt_row) ( tsigxy(i), i=1, n )
+    write(31, fmt_row) ( tsigyx(i), i=1, n )
+    write(32, fmt_row) ( tp(i),     i=1, n )
 
     do i = 10, 35
         close(i)
@@ -213,14 +232,37 @@ subroutine sea_ice_post (tstep, expno_str)
     if (tstep .eq. 0) then
         num_bonds_nm1 = num_bonds
     end if
-    print *, "Mean velocity: ", &
-    sqrt((sum(u) / n) ** 2 + (sum(v) / n)** 2), "m/s at", &
-    atan2(sum(v) / n, sum(u) / n) * 180d0 / pi, "deg"
-    print *, "RMS speed: ", sqrt(sum(u**2 + v**2) / n), "m/s"
-    print *, "Number of bonds: ", num_bonds
-    print *, "Number of bonds broken: ", num_bonds - num_bonds_nm1
+    write(*, '(A,ES3.5,A,F4.3,A)') " Mean velocity: ",          &
+        sqrt((sum(u) / n) ** 2 + (sum(v) / n)** 2), " m/s at ", &
+        atan2(sum(v) / n, sum(u) / n) * 180d0 / pi, " deg"
+    write(*, '(A,ES3.5,A)') " RMS speed: ", sqrt(sum(u**2 + v**2) / n), " m/s"
+    write(*, '(A,I0)') " Number of bonds: ", num_bonds
+    write(*, '(A,I0)') " Number of bonds broken: ", num_bonds - num_bonds_nm1
 
     ! update number of bonds at tstep-1 for next tstep
     num_bonds_nm1 = num_bonds
+
+contains
+
+    subroutine open_out(unit, filename)
+        ! Open an output file for appending
+
+        integer, intent(in) :: unit
+        character(len=*), intent(in) :: filename
+
+        integer :: ios
+
+        open(unit, file = filename, status = 'unknown', &
+             position = 'append', action = 'write',     &
+             access = 'sequential', form = 'formatted', &
+             recl = 25 * max(n, 1) + 256, iostat = ios)
+
+        if (ios /= 0) then
+            write(*, '(A,A,A,I0)') " Error opening ",   &
+            trim(filename), ", iostat = ", ios
+            stop 1
+        end if
+        
+    end subroutine open_out
 
 end subroutine sea_ice_post
