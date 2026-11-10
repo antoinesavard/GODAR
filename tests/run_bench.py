@@ -74,6 +74,11 @@ SRUN = (
 )
 MPIRUN = "{mpiexec} -n {ranks}"
 
+# GNU time, run by srun before godar, prints the peak memory of each
+# process in the log of the run, on a line starting with MAXRSS_TAG [kB]
+GNU_TIME = "/usr/bin/time"
+MAXRSS_TAG = "GODAR_MAXRSS_KB"
+
 # options only used to write the Slurm script, not passed to the job
 SLURM_OPTIONS = [
     "--slurm-script",
@@ -152,7 +157,12 @@ def launch_command(args, exe, config):
         threads=threads,
         mpiexec=args.mpiexec or "mpirun",
     )
-    return shlex.split(template.format(**fields)) + [str(exe)]
+    cmd = shlex.split(template.format(**fields))
+    # srun starts the processes on the compute nodes, where the memory
+    # they use is not seen from here: GNU time reports it in the log
+    if template == SRUN and Path(GNU_TIME).exists():
+        cmd += [GNU_TIME, "-f", f"{MAXRSS_TAG} %M"]
+    return cmd + [str(exe)]
 
 
 def thread_env(args, threads):
@@ -258,6 +268,10 @@ def time_run(exe, args, work, nml, stdin, config):
         re.M,
     )
     phases = {name: float(t) for name, t, _, _ in timers}
+    # peak memory of the largest process, from GNU time under srun
+    maxrss = re.findall(rf"^{MAXRSS_TAG} (\d+)", log, re.M)
+    if maxrss:
+        memory = max(int(kb) for kb in maxrss) * 1024 / 1e9
     imbalance = None
     for name, _, tmin, tmax in timers:
         if name == "pairs" and float(tmin) > 0:

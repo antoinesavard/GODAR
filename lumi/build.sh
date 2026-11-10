@@ -6,13 +6,12 @@ set -euo pipefail
 # on LUMI using amdflang via the mpifort wrapper.
 #
 # Run from any directory that contains src/ :
-#   bash src/lumi/build.sh                  # incremental build
-#   bash src/lumi/build.sh --clean-godar    # rebuild GODAR from scratch
+#   bash src/lumi/build.sh                  # rebuild GODAR from scratch
 #   bash src/lumi/build.sh --clean          # rebuild coretran and GODAR
 # ============================================================
 
 CLEAN_CORETRAN=0
-CLEAN_GODAR=0
+CLEAN_GODAR=1
 for _arg in "$@"; do
     case "${_arg}" in
         --clean)       CLEAN_CORETRAN=1; CLEAN_GODAR=1 ;;
@@ -76,6 +75,11 @@ fi
 echo "=== Activating Python virtual environment ==="
 source "${VENV_DIR}/bin/activate"
 echo "Python venv active: $(which python3) — $(python3 --version)"
+
+# packages that build the ARCTIC case of the benchmark (installed here,
+# on the login node: compute nodes may not reach the internet)
+python3 -m pip install --quiet --disable-pip-version-check \
+    numpy scipy numba Pillow matplotlib
 echo ""
  
 # ------------------------------------------------------------

@@ -143,7 +143,7 @@ ctest --output-on-failure -R '^TEST$'  # one case
 ctest -V                             # also shows the reports of the cases that pass
 ```
 
-They only need Python 3 (no extra package) and the MPI launcher found by CMake, take about a minute, and need about 2 GB of memory per MPI process. On LUMI, `sbatch src/lumi/ctest_debug.sh` (from the folder above `src/`) runs them on the debug partition.
+They only need Python 3 (no extra package) and the MPI launcher found by CMake, take about a minute, and need about 2 GB of memory per MPI process. On LUMI, `sbatch src/lumi/ctest_tests.sh` (from the folder above `src/`) runs them on the debug partition.
 
 There are two cases, both with the 6261 floes of the CHANNEL experiment: `TEST` starts from its initial conditions (bonds, winds, sheltering, diagnostics, mask), and `TESTSNAP` from its state at output line 33, when the ice is jammed in the channel (contacts, ridging, walls). Each case runs godar a few times (1 and 2 MPI processes, 1 and 4 OpenMP threads, diagnostics on and off, a restart) and checks that:
 
@@ -191,12 +191,15 @@ The last line compares two executables, e.g. before and after a change: their ru
 
 The test cases are too small for a cluster. `--particles` runs the ARCTIC case instead: floes filling the NSIDC sea ice extent of March 2015 on the polar stereographic grid (PS-N, 3.125 km). Their sizes fill the gaps between them, from r_min to 20 r_min as in the CHANNEL experiment (random between 10 and 20 r_min in the open areas, so that the largest floes do not form a lattice), with r_min set by the number of floes so that they always fill the extent (91 to 94 % of its area is covered, more with more floes: disks always leave gaps, here smaller than r_min, mostly along the coast and the edge of the extent). `python tools/plotter/fsd.py <r files>` plots the floe size distributions. The search radius, the bond limit and the time step scale with r_min (`tests/namelist/ARCTIC.nml`). Each floe then has the same neighbours whatever their number, so the work of a time step grows like the number of floes.
 
-The masks and the floes are not in the repository. `tests/bench/make_arctic.py` builds them with the scripts of `tools/` the first time a number of floes is asked: `masks/ps.dat` and `masks/ps.sdf` from the NSIDC-0780 sea ice regions (needs `ncdump`, numpy and scipy), the sea ice extent downloaded from NSIDC (needs Pillow), then the packing of the floes (`tools/init/initial_packing_position.py --method fill`, needs numba, a few seconds for 5000 floes). Compute nodes may lack these tools or the internet, so on a cluster build the cases beforehand (e.g. on a login node, or on your machine and copy them); they are kept in `tests/work/bench/cases/`:
+The masks and the floes are not in the repository. The ctest test `arctic_case` builds them with `tests/bench/make_arctic.py` and the scripts of `tools/`: `masks/ps.dat` and `masks/ps.sdf` from the NSIDC-0780 sea ice regions (needs `ncdump`, numpy and scipy), the sea ice extent downloaded from NSIDC (needs Pillow), then the packing of the floes (`tools/init/initial_packing_position.py --method fill`, needs numba, about 30 seconds for 5000 floes). They are kept (in `masks/` and `tests/work/bench/cases/`), and only built when missing. The test `arctic` runs `arctic_case` first, then times godar:
 
 ```bash
-python tests/bench/make_arctic.py --n 20000 --out tests/work/bench/cases/ARCTIC_20000
-python tests/run_bench.py --particles 20000 --threads 1,2,4,8
+cd build
+ctest -C bench -R arctic_case    # build the case only, e.g. on a login node
+ctest -C bench -R arctic -V      # build the case if needed, then the benchmark
 ```
+
+The number of floes is set when configuring: `-DGODAR_BENCH_PARTICLES=20000` (the default). Compute nodes may not reach the internet: on a cluster, build the case once on a login node.
 
 Strong scaling is the same number of floes on more and more cores. Weak scaling is the number of floes growing with the cores (the `part/core` column of the summary stays the same): the time should then stay the same.
 
@@ -204,15 +207,7 @@ Strong scaling is the same number of floes on more and more cores. Weak scaling 
 
 Inside a Slurm allocation (`salloc` for an interactive session, or a job), each configuration nodes x processes per node x threads per process is launched with `srun`, one process per `--cpus-per-task` cores, and the threads are pinned to the cores (`OMP_PLACES=cores`, `OMP_PROC_BIND=close`; `--bind` changes it). The nodes, cores and memory available are read from Slurm, and the configurations that do not fit are skipped, in particular those that need more memory than a node has: each process holds about 100 n² bytes (160 GB for 40 000 floes), so with many floes only one process per node fits.
 
-```bash
-salloc --nodes=8 --exclusive --mem=0 --time=2:00:00 --account=...
-python tests/run_bench.py --particles 20000 --nodes 1,2,4,8 \
-    --ranks-per-node 1,2 --threads 32,64,128 --dry-run
-python tests/run_bench.py --particles 20000 --nodes 1,2,4,8 \
-    --ranks-per-node 1,2 --threads 32,64,128
-```
-
-`--dry-run` prints the commands and the memory of each configuration without running them.
+The test `arctic` asks for 1, 2, 4 nodes x 1, 2, 4 processes per node x 16, 32, 64, 128 threads (`tests/CMakeLists.txt`): run in any allocation, it skips what does not fit. Under `srun`, the peak memory of each process is measured with GNU time (`/usr/bin/time`). For other configurations, run `tests/run_bench.py` directly (see `--help`).
 
 ### How to improve GODAR
 
