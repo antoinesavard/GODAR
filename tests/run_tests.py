@@ -15,11 +15,12 @@ executable, then checks the outputs:
 Each check compares the files with a named set of tolerances from
 cases.json. The run times are printed and appended to <work>/timings.csv.
 
-Only the Python standard library is needed. From the repository root:
+Run the tests with ctest (cd build && ctest --output-on-failure), which
+calls this script once per case. Only the Python standard library is
+needed. To store new references after an intended change of the physics,
+from the repository root:
 
-    python tests/run_tests.py                      # all cases
-    python tests/run_tests.py --case TEST          # one case
-    python tests/run_tests.py --update-reference   # store new references
+    python tests/run_tests.py --update-reference
 """
 
 import argparse
@@ -37,6 +38,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 TESTS = Path(__file__).resolve().parent
 ROOT = TESTS.parent
@@ -48,6 +50,29 @@ DENSE = ["x", "y", "u", "v", "theta", "omega", "r", "h", "tfx", "tfy",
 # outputs with one line "idx j i [values]" per bond or contact
 SPARSE = ["bond", "damage", "beam", "angle"]
 
+# what each output holds, printed with the comparisons
+QUANTITIES = {
+    "x": "position x [m]",
+    "y": "position y [m]",
+    "u": "velocity x [m/s]",
+    "v": "velocity y [m/s]",
+    "theta": "angle [rad]",
+    "omega": "angular velocity [rad/s]",
+    "r": "radius [m]",
+    "h": "thickness [m]",
+    "tfx": "total force x [N]",
+    "tfy": "total force y [N]",
+    "mom": "total moment [N m]",
+    "tsigxx": "stress xx",
+    "tsigyy": "stress yy",
+    "tsigxy": "stress xy",
+    "tsigyx": "stress yx",
+    "tp": "pressure",
+    "bond": "list of the bonds",
+    "damage": "damage of the bonds [-]",
+    "beam": "geometry of the bonds",
+    "angle": "contact direction [deg]",
+}
 
 # ----------------------------------------------------------------------
 #   reading the outputs
@@ -100,24 +125,106 @@ def max_diff(pairs):
 
 
 def compare(new, ref, name, tol):
-    """compare two outputs of the same file. tol = [atol, rtol]: the
-    largest difference must stay below atol + rtol * max|ref|"""
+    """compare two outputs of the same file, new against ref. tol =
+    [atol, rtol]: the largest difference over all the values must stay
+    below atol + rtol * max|ref|. Returns a namespace: ok, diff (largest
+    |new - ref|), scale (max|ref|), limit, count (number of values), and
+    problem: why the values cannot be compared one by one, else None"""
     atol, rtol = tol
+    result = SimpleNamespace(ok=False, diff=None, scale=None, limit=None,
+                             count=0, problem=None)
     if name in DENSE:
         if len(new) != len(ref) or \
                 any(len(a) != len(b) for a, b in zip(new, ref)):
-            return False, "different number of outputs or particles"
+            result.problem = (
+                f"{len(new)} output steps of {len(new[0]) if new else 0} "
+                f"floes, against {len(ref)} of {len(ref[0]) if ref else 0}")
+            return result
         ref_values = [v for line in ref for v in line]
         pairs = zip((v for line in new for v in line), ref_values)
     else:
         missing, extra = ref.keys() - new.keys(), new.keys() - ref.keys()
         if missing or extra:
-            return False, f"{len(missing)} entries missing, {len(extra)} extra"
+            result.problem = (f"{len(missing)} entries missing, "
+                              f"{len(extra)} new entries")
+            return result
         ref_values = [v for k in ref for v in ref[k]]
         pairs = ((a, b) for k in ref for a, b in zip(new[k], ref[k]))
-    limit = atol + rtol * max((abs(v) for v in ref_values), default=0.0)
-    diff = max_diff(pairs)
-    return diff <= limit, f"max diff {diff:.2e}, limit {limit:.2e}"
+    result.count = len(ref_values)
+    result.scale = max((abs(v) for v in ref_values), default=0.0)
+    result.limit = atol + rtol * result.scale
+    result.diff = max_diff(pairs)
+    result.ok = result.diff <= result.limit
+    return result
+
+
+def relative(value, scale):
+    """value divided by the largest |value| of a file (unchanged when the
+    file only holds zeros)"""
+    return value / scale if scale else value
+
+
+def times(ratio):
+    """a ratio written short: 23x, 5360x, 3e6x"""
+    if ratio < 1e5:
+        return f"{ratio:.0f}x"
+    return f"{ratio:.0e}x".replace("e+0", "e").replace("e+", "e")
+
+
+def limit_text(c):
+    """limit of a comparison, relative to the largest |value| of the file"""
+    lim = relative(c.limit, c.scale)
+    return "exact" if lim == 0 else f"{lim:.0e}"
+
+
+def summarize(comparisons):
+    """columns rel. diff, file, limit and margin of a check, for the file
+    that came the closest to its limit"""
+    problems = [f for f, c in comparisons if c.problem]
+    if problems:
+        return "-", " ".join(problems), "", "not comparable"
+
+    def closeness(c):
+        if c.limit:
+            return c.diff / c.limit
+        return 0.0 if c.diff == 0 else math.inf
+
+    fname, c = max(comparisons, key=lambda fc: closeness(fc[1]))
+    if c.diff == 0:
+        exact = all(x.limit == 0 for _, x in comparisons)
+        return ("identical", f"{len(comparisons)} files",
+                "exact" if exact else "", "")
+    rel = f"{relative(c.diff, c.scale):.1e}"
+    if c.limit == 0:
+        differ = [f for f, x in comparisons if x.diff > 0]
+        more = f" +{len(differ) - 1}" if len(differ) > 1 else ""
+        return rel, differ[0] + more, "exact", "not identical"
+    if c.ok:
+        return rel, fname, limit_text(c), times(1 / closeness(c))
+    return rel, fname, limit_text(c), times(closeness(c)) + " over"
+
+
+# one line per run, one line per check, one line per file in the details
+RUN_ROW = "  {:9}{:58}{:>9}"
+CHECK_ROW = "  {:8}{:25}{:10}{:>9}  {:8}{:>6}  {:>8}"
+DETAIL_ROW = "    {:8}{:25}{:>10}{:>10}{:>10}{:>7}  {}"
+
+
+def detail_line(fname, c):
+    """line of a file in the details of a check: largest |value| of the
+    file compared against, largest difference, that difference relative
+    to the largest |value|, and the limit"""
+    quantity = QUANTITIES.get(fname, "")
+    if c.problem:
+        return f"    {fname:8}{quantity:25}FAIL: {c.problem}"
+    verdict = "ok" if c.ok else "FAIL"
+    if c.count == 0:
+        return (f"    {fname:8}{quantity:25}{'same entries':>30}"
+                f"{'':7}  {verdict}")
+    return DETAIL_ROW.format(fname, quantity, f"{c.scale:.2e}",
+                             f"{c.diff:.2e}",
+                             f"{relative(c.diff, c.scale):.1e}",
+                             limit_text(c), verdict)
 
 
 def select(data, name, line):
@@ -217,9 +324,69 @@ def git_version():
 #   one test case
 # ----------------------------------------------------------------------
 
+def plural(count, word):
+    """count and word, e.g. "2 MPI processes", "1 OpenMP thread\""""
+    if count == 1:
+        return f"{count} {word}"
+    return f"{count} {word}{'es' if word.endswith('s') else 's'}"
+
+
+def run_text(run):
+    """MPI processes, OpenMP threads and namelist changes of a run"""
+    parts = [plural(run.get("ranks", 1), "MPI process"),
+             plural(run.get("threads", 1), "OpenMP thread")]
+    parts += [f"{k} = {v}" for k, v in run.get("set", {}).items()]
+    return ", ".join(parts)
+
+
+def differences(a, b):
+    """what run b changes with respect to run a"""
+    out = []
+    for key, word in (("ranks", "MPI process"), ("threads", "OpenMP thread")):
+        if a.get(key, 1) != b.get(key, 1):
+            out.append(f"{plural(b.get(key, 1), word)} instead of "
+                       f"{a.get(key, 1)}")
+    sa, sb = a.get("set", {}), b.get("set", {})
+    for k in sorted(sa.keys() | sb.keys()):
+        if sa.get(k) != sb.get(k):
+            out.append(f"{k} = {sb.get(k, 'value of the namelist')}")
+    return ", ".join(out)
+
+
+def run_change(first, run):
+    """what a run changes with respect to the first run of its case"""
+    if run is first:
+        return run_text(run)
+    parts = []
+    if "restart_from" in run:
+        parts.append(f"restarted from output line {run['restart_line']} "
+                     f"of {run['restart_from']}")
+    if differences(first, run):
+        parts.append(differences(first, run))
+    return ", ".join(parts) or "nothing"
+
+
+def comparison(case, check):
+    """short name of what a check compares"""
+    kind = check["type"]
+    if kind == "reference":
+        return f"{check['run']} vs stored reference"
+    if kind == "same":
+        a, b = check["runs"]
+        return f"{b} vs {a}"
+    if kind == "restart":
+        run = case["runs"][check["run"]]
+        return (f"{check['run']} vs {run['restart_from']} "
+                f"line {run['restart_line']}")
+    if kind == "mass":
+        return f"mass of {check['run']}"
+    raise ValueError(f"unknown check type {kind}")
+
+
 def run_case(args, name, case, tolsets):
-    """run all the runs of a case, then all its checks. Returns a list of
-    (check, ok, messages) and a list of timing rows"""
+    """run all the runs of a case, printing one line per run, then all
+    its checks. Returns the check results (see check_case) and a list of
+    timing rows"""
     work = args.work / name
     if work.exists():
         shutil.rmtree(work)
@@ -227,11 +394,16 @@ def run_case(args, name, case, tolsets):
     (work / "namelist").mkdir()
     (work / "output").mkdir()
 
-    base = (TESTS / "namelist" / case["namelist"]).read_text()
+    base =(TESTS / "namelist" / case["namelist"]).read_text()
     expno = {r: f"{k + 1:02d}" for k, r in enumerate(case["runs"])}
     results, timings, failed_runs = [], [], set()
+    # srun starts the processes on the compute nodes: their memory is not
+    # seen from here, only the memory of srun itself
+    srun = bool(args.mpiexec) and Path(args.mpiexec).name == "srun"
 
-    # runs
+    print(RUN_ROW.format("run", "what changes", "time")
+          + ("" if srun else "    memory"))
+    first = next(iter(case["runs"].values()))
     for rname, run in case["runs"].items():
         nml = f"{rname}.nml"
         text = set_namelist(base, run.get("set", {}))
@@ -244,50 +416,71 @@ def run_case(args, name, case, tolsets):
         else:
             stdin = f"1\n{nml}\n0\n{expno[rname]}\n{case['n']}\n{threads}\n"
 
-        print(f"  run {rname:8s} ({ranks} rank(s), {threads} thread(s))",
-              end="", flush=True)
+        print(f"  {rname:9}{run_change(first, run):58}", end="", flush=True)
         ok, msg, loop, wall, memory = run_godar(args, work, nml, stdin,
                                                 ranks)
-        print(f": {loop:.2f} s, {memory:.2f} GB" if ok
-              else f": FAILED, {msg}")
         if not ok:
+            print(f"   FAILED, {msg}")
             failed_runs.add(rname)
-            results.append((f"run {rname}", False, [msg]))
+            results.append(dict(name=f"run {rname}", tolerance=None,
+                                ok=False, details=[], note=msg,
+                                row=("FAIL", f"run {rname}", "", "", "",
+                                     "", "failed")))
             continue
+        print(f"{loop:7.2f} s" + ("" if srun else f"   {memory:.2f} GB"))
         steps = re.search(r"^\s*nt\s*=\s*([^!\s]+)", text, re.M | re.I)
         timings.append([name, rname, ranks, threads, case["n"],
                         int(float(steps.group(1).lower().replace("d", "e"))),
-                        f"{loop:.3f}", f"{wall:.3f}", f"{memory:.3f}"])
+                        f"{loop:.3f}", f"{wall:.3f}",
+                        "" if srun else f"{memory:.3f}"])
 
+    results += check_case(args, name, case, tolsets, work, expno,
+                          failed_runs)
+    return results, timings
+
+
+def check_case(args, name, case, tolsets, work, expno, failed_runs):
+    """all the checks of a case, on the outputs of its runs in work.
+    Returns one dict per check: name (what is compared), tolerance, ok,
+    row (columns of the table of the checks), details (the comparison of
+    each file) and note (why the check could not be made)"""
     def out(rname, fname):
         return work / "output" / f"{fname}.{expno[rname]}"
 
-    # checks
+    results = []
     for check in case["checks"]:
         kind = check["type"]
         runs = check.get("runs", [check.get("run")])
-        label = f"{kind} {'/'.join(runs)}"
-        if kind == "mass":
-            label += f" (max relative change {check['max_rel_change']:g})"
-        else:
-            label += f" ({check['tolerance']})"
+        what = comparison(case, check)
+        tname = check.get("tolerance")
+        result = dict(name=what, tolerance=tname, ok=False, details=[],
+                      note=None, row=None)
+        results.append(result)
+
         if failed_runs & set(runs):
-            results.append((label, False, ["a run of this check failed"]))
+            result["note"] = "not checked: a run of this check failed"
+            result["row"] = ("FAIL", what, tname or "-", "", "", "",
+                             "not run")
             continue
 
-        msgs, ok_all = [], True
         if kind == "mass":
             r = read_output(out(runs[0], "r"), "r")
             h = read_output(out(runs[0], "h"), "h")
             mass = [sum(a * a * b for a, b in zip(rr, hh))
                     for rr, hh in zip(r, h)]
             change = max(abs(m - mass[0]) for m in mass) / mass[0]
-            ok_all = change <= check["max_rel_change"]
-            msgs.append(f"relative change {change:.2e}")
-            results.append((label, ok_all, msgs))
+            limit = check["max_rel_change"]
+            result["ok"] = change <= limit
+            margin = "" if change == 0 else (
+                times(limit / change) if result["ok"]
+                else times(change / limit) + " over")
+            result["row"] = ("PASS" if result["ok"] else "FAIL", what, "-",
+                             f"{change:.1e}", "r**2 h", f"{limit:.0e}",
+                             margin)
             continue
 
-        tolset = tolsets[check["tolerance"]]["files"]
+        tolset = tolsets[tname]["files"]
+        comparisons = []
         for fname in check.get("files", DENSE + SPARSE):
             tol = tolset.get(fname, tolset.get("*"))
             if tol is None:
@@ -297,29 +490,52 @@ def run_case(args, name, case, tolsets):
                 if args.update_reference:
                     store_reference(out(runs[0], fname), ref)
                 if not ref.exists():
-                    ok, msg = False, "no reference, run --update-reference"
+                    c = SimpleNamespace(
+                        ok=False, problem="no reference, run "
+                        "--update-reference")
                 else:
-                    ok, msg = compare(read_output(out(runs[0], fname), fname),
-                                      read_output(ref, fname), fname, tol)
+                    c = compare(read_output(out(runs[0], fname), fname),
+                                read_output(ref, fname), fname, tol)
             elif kind == "same":
-                ok, msg = compare(read_output(out(runs[1], fname), fname),
-                                  read_output(out(runs[0], fname), fname),
-                                  fname, tol)
+                c = compare(read_output(out(runs[1], fname), fname),
+                            read_output(out(runs[0], fname), fname),
+                            fname, tol)
             elif kind == "restart":
                 line = case["runs"][runs[0]]["restart_line"]
                 src = case["runs"][runs[0]]["restart_from"]
-                ok, msg = compare(
+                c = compare(
                     select(read_output(out(runs[0], fname), fname), fname, 1),
                     select(read_output(out(src, fname), fname), fname, line),
                     fname, tol)
             else:
                 raise ValueError(f"unknown check type {kind}")
-            ok_all &= ok
-            if args.verbose or not ok:
-                msgs.append(f"{fname:7s} {'ok  ' if ok else 'FAIL'} {msg}")
-        results.append((label, ok_all, msgs))
+            comparisons.append((fname, c))
 
-    return results, timings
+        result["ok"] = all(c.ok for _, c in comparisons)
+        result["details"] = comparisons
+        result["row"] = ("PASS" if result["ok"] else "FAIL", what, tname,
+                         *summarize(comparisons))
+    return results
+
+
+def print_checks(results, verbose):
+    """table of the checks of a case, then the details of the failed
+    checks (of all of them when verbose)"""
+    print(CHECK_ROW.format("result", "comparison", "tolerance", "rel. diff",
+                           "file", "limit", "margin"))
+    for result in results:
+        print(CHECK_ROW.format(*result["row"]).rstrip())
+    for result in results:
+        if result["note"]:
+            print(f"\n  {result['name']}: {result['note']}")
+        if result["details"] and (verbose or not result["ok"]):
+            print(f"\n  details of {result['name']} "
+                  f"(tolerance {result['tolerance']}):")
+            print(DETAIL_ROW.format("file", "quantity", "max|value|",
+                                    "max diff", "rel. diff", "limit",
+                                    "").rstrip())
+            for fname, c in result["details"]:
+                print(detail_line(fname, c))
 
 
 # ----------------------------------------------------------------------
@@ -342,8 +558,9 @@ def main():
                         help="store the outputs as the new references")
     parser.add_argument("--timeout", type=float, default=3600,
                         help="maximum time of one run [s]")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="show the comparison of every file")
+    parser.add_argument("-v", "-V", "--verbose", action="store_true",
+                        help="list every file in the details of every "
+                        "check, not only of the failed ones")
     args = parser.parse_args()
     args.godar = args.godar.resolve()
     args.work = args.work.resolve()
@@ -353,18 +570,18 @@ def main():
     version = git_version()
     print(f"godar {args.godar}, version {version}")
 
-    n_failed, n_checks, all_timings = 0, 0, []
+    failed, n_checks, all_timings = [], 0, []
     for name in names:
-        print(f"\ncase {name}: {config['cases'][name]['description']}")
-        results, timings = run_case(args, name, config["cases"][name],
-                                    config["tolerances"])
+        case = config["cases"][name]
+        print(f"\ncase {name}: {case['description']}\n")
+        results, timings = run_case(args, name, case, config["tolerances"])
         all_timings += timings
-        for label, ok, msgs in results:
+        print()
+        print_checks(results, args.verbose)
+        for result in results:
             n_checks += 1
-            n_failed += not ok
-            print(f"  {'PASS' if ok else 'FAIL'}  {label}")
-            for msg in msgs:
-                print(f"          {msg}")
+            if not result["ok"]:
+                failed.append(f"{name} {result['name']}")
 
     # run times, kept from one test session to the next
     log = args.work / "timings.csv"
@@ -378,9 +595,11 @@ def main():
     if args.update_reference:
         print("\nreferences updated in tests/reference: commit them with "
               "the reason of the change")
-    print(f"\n{n_checks - n_failed}/{n_checks} checks passed, "
+    print(f"\n{n_checks - len(failed)}/{n_checks} checks passed, "
           f"run times appended to {log}")
-    return 1 if n_failed else 0
+    if failed:
+        print("failed: " + ", ".join(failed))
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

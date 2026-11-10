@@ -232,10 +232,11 @@ subroutine sea_ice_post (tstep, expno_str)
     if (tstep .eq. 0) then
         num_bonds_nm1 = num_bonds
     end if
-    write(*, '(A,ES3.5E3,A,F4.3,A)') " Mean velocity: ",        &
+
+    write(*, '(A,ES12.5E3,A,F8.3,A)') " Mean velocity: ",       &
         sqrt((sum(u) / n) ** 2 + (sum(v) / n)** 2), " m/s at ", &
         atan2(sum(v) / n, sum(u) / n) * 180d0 / pi, " deg"
-    write(*, '(A,ES3.5E3,A)') " RMS speed: ", &
+    write(*, '(A,ES12.5E3,A)') " RMS speed: ", &
         sqrt(sum(u**2 + v**2) / n), " m/s"
     write(*, '(A,I0)') " Number of bonds: ", num_bonds
     write(*, '(A,I0)') " Number of bonds broken: ", num_bonds - num_bonds_nm1

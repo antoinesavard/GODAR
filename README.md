@@ -134,13 +134,16 @@ Finally, when your jobs have finished running, you can run `./run_video.sh video
 
 ### How to test GODAR
 
-The `tests/` folder contains regression tests, to check that a change to the code does not change the results. After compiling, run them with
+The `tests/` folder contains regression tests, to check that a change to the code does not change the results. After compiling, run them with ctest:
 
 ```bash
-cd build && ctest --output-on-failure
+cd build
+ctest --output-on-failure            # all the cases; shows the report of a case that fails
+ctest --output-on-failure -R '^TEST$'  # one case
+ctest -V                             # also shows the reports of the cases that pass
 ```
 
-or directly with `python tests/run_tests.py` (add `--case TEST` for one case, `-v` to see every comparison). They only need Python 3 (no extra package) and `mpirun`, take about a minute, and need about 2 GB of memory per MPI process.
+They only need Python 3 (no extra package) and the MPI launcher found by CMake, take about a minute, and need about 2 GB of memory per MPI process. On LUMI, `sbatch src/lumi/ctest_debug.sh` (from the folder above `src/`) runs them on the debug partition.
 
 There are two cases, both with the 6261 floes of the CHANNEL experiment: `TEST` starts from its initial conditions (bonds, winds, sheltering, diagnostics, mask), and `TESTSNAP` from its state at output line 33, when the ice is jammed in the channel (contacts, ridging, walls). Each case runs godar a few times (1 and 2 MPI processes, 1 and 4 OpenMP threads, diagnostics on and off, a restart) and checks that:
 
@@ -149,9 +152,24 @@ There are two cases, both with the 6261 floes of the CHANNEL experiment: `TEST` 
 - turning the diagnostics off, or restarting, does not change the results at all (bit for bit);
 - the ice mass is conserved.
 
-Runs on several processes or threads add up the forces in a different order, which changes the last digits of the results. These comparisons use a relative tolerance of 1e-9 (the differences are about 1e-15 after the 200 steps of a test), small enough to catch any real change of the physics. The references were made on macOS (Apple M3, GNU Fortran 16.2, Open MPI 5.0); other machines and compilers also only change the last digits. The runs and tolerances are set in `tests/cases.json`.
+Each check compares two sets of outputs file by file. For a file (one value per floe, or per bond, at each output step), it takes the largest difference between the two sets over all the values, and divides it by the largest |value| of the file it compares against. This relative difference must stay below the limit of the tolerance of the check. There are three tolerances, set with the runs in `tests/cases.json`:
 
-If you change the physics on purpose, the reference check fails: once you are sure the new results are right, store them with `python tests/run_tests.py --update-reference` and commit them with the reason of the change. The run times and peak memory of each test session are appended to `tests/work/timings.csv`.
+- `exact` (turning off the diagnostics, restarting): the outputs must be bit for bit identical.
+- `parallel` (other numbers of MPI processes or OpenMP threads), limit 1e-9: the forces are added up in a different order, which only changes the last digits. The positions stay bit for bit identical, and the other outputs differ by about 1e-15 to 1e-12 after the 200 steps of a test.
+- `machine` (the stored references), limit 1e-12 for the positions and 1e-4 for the other outputs. The references were made on macOS (Apple M3, GNU Fortran 16.2, Open MPI 5.0). Another compiler or machine rounds the position update `x + u dt` differently, so the positions differ by one unit in the last digit. That is small for the positions, but not for the forces.
+
+The report of a case first lists its runs and what each one changes compared with the first run. It then gives one line per check:
+
+```
+  result  comparison               tolerance rel. diff  file     limit    margin
+  PASS    ref vs stored reference  machine     4.4e-06  tp       1e-04       23x
+  PASS    mpi2 vs ref              parallel    1.9e-13  mom      1e-09     5360x
+  PASS    nodiag vs ref            exact     identical  15 files exact
+```
+
+`rel. diff` and `file` are the file that came the closest to its limit, `limit` is that limit relative to the largest value of the file, and `margin` is how many times below the limit the file stayed. Under the table, each failed check lists every file with its largest value, largest difference, relative difference and limit. The relative differences above are about the 200 steps of a test: they grow with the number of steps, so do not compare runs of different lengths with these limits.
+
+If you change the physics on purpose, the reference check fails: once you are sure the new results are right, store them with `python tests/run_tests.py --update-reference` (on LUMI, inside a Slurm allocation, add `--mpiexec srun`) and commit them with the reason of the change. The run times and peak memory of each test session are appended to `tests/work/timings.csv`.
 
 ### How to benchmark GODAR
 

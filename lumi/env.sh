@@ -12,13 +12,13 @@ if [ -z "${TOPDIR:-}" ]; then
     TOPDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 fi
 
+source "${TOPDIR}/venv/bin/activate"
+
 module use /appl/local/containers/test-modules
 ml rocm-afar-cray-mpich/24.3.0
 ml netcdf_fortran
 ml netcdf_c
 ml cray-python
-
-source "${TOPDIR}/venv/bin/activate"
 
 # Increase OpenMP thread stack size for recursive KD-tree searches
 export OMP_STACKSIZE=64M
