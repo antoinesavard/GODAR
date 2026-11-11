@@ -138,14 +138,10 @@ The `tests/` folder contains regression tests, to check that a change to the cod
 
 ```bash
 cd build
-ctest --output-on-failure            # all the cases; shows the report of a case that fails
-ctest --output-on-failure -R '^TEST$'  # one case
-ctest -V                             # also shows the reports of the cases that pass
+ctest --output-on-failure -V
 ```
 
-They only need Python 3 (no extra package) and the MPI launcher found by CMake, take about a minute, and need about 2 GB of memory per MPI process. On LUMI, `sbatch src/lumi/ctest_tests.sh` (from the folder above `src/`) runs them on the debug partition.
-
-There are two cases, both with the 6261 floes of the CHANNEL experiment: `TEST` starts from its initial conditions (bonds, winds, sheltering, diagnostics, mask), and `TESTSNAP` from its state at output line 33, when the ice is jammed in the channel (contacts, ridging, walls). Each case runs godar a few times (1 and 2 MPI processes, 1 and 4 OpenMP threads, diagnostics on and off, a restart) and checks that:
+There are two cases, both with the 6261 floes of the CHANNEL experiment: `TEST` starts from its initial conditions (bonds, winds, sheltering, diagnostics, mask), and `TESTSNAP` from a snapshot. Each case runs godar a few times and checks that:
 
 - the outputs match the stored references in `tests/reference/`;
 - runs that only differ by the number of MPI processes or OpenMP threads give the same results;
@@ -156,7 +152,7 @@ Each check compares two sets of outputs file by file. For a file (one value per 
 
 - `exact` (turning off the diagnostics, restarting): the outputs must be bit for bit identical.
 - `parallel` (other numbers of MPI processes or OpenMP threads), limit 1e-9: the forces are added up in a different order, which only changes the last digits. The positions stay bit for bit identical, and the other outputs differ by about 1e-15 to 1e-12 after the 200 steps of a test.
-- `machine` (the stored references), limit 1e-12 for the positions and 1e-4 for the other outputs. The references were made on macOS (Apple M3, GNU Fortran 16.2, Open MPI 5.0). Another compiler or machine rounds the position update `x + u dt` differently, so the positions differ by one unit in the last digit. That is small for the positions, but not for the forces.
+- `machine` (the stored references), limit 1e-12 for the positions and 1e-4 for the other outputs. Another compiler or machine rounds the position update `x + u dt` differently, so the positions differ by one unit in the last digit. That is small for the positions, but not for the forces.
 
 The report of a case first lists its runs and what each one changes compared with the first run. It then gives one line per check:
 
@@ -189,9 +185,7 @@ The last line compares two executables, e.g. before and after a change: their ru
 
 #### Larger problems: the ARCTIC case
 
-The test cases are too small for a cluster. `--particles` runs the ARCTIC case instead: floes filling the NSIDC sea ice extent of March 2015 on the polar stereographic grid (PS-N, 3.125 km). Their sizes fill the gaps between them, from r_min to 20 r_min as in the CHANNEL experiment (random between 10 and 20 r_min in the open areas, so that the largest floes do not form a lattice), with r_min set by the number of floes so that they always fill the extent (91 to 94 % of its area is covered, more with more floes: disks always leave gaps, here smaller than r_min, mostly along the coast and the edge of the extent). `python tools/plotter/fsd.py <r files>` plots the floe size distributions. The search radius, the bond limit and the time step scale with r_min (`tests/namelist/ARCTIC.nml`). Each floe then has the same neighbours whatever their number, so the work of a time step grows like the number of floes.
-
-The masks and the floes are not in the repository. The ctest test `arctic_case` builds them with `tests/bench/make_arctic.py` and the scripts of `tools/`: `masks/ps.dat` and `masks/ps.sdf` from the NSIDC-0780 sea ice regions (needs `ncdump`, numpy and scipy), the sea ice extent downloaded from NSIDC (needs Pillow), then the packing of the floes (`tools/init/initial_packing_position.py --method fill`, needs numba, about 30 seconds for 5000 floes). They are kept (in `masks/` and `tests/work/bench/cases/`), and only built when missing. The test `arctic` runs `arctic_case` first, then times godar:
+The test cases are too small for a cluster. To benchmark GODAR, use:
 
 ```bash
 cd build
@@ -200,14 +194,6 @@ ctest -C bench -R arctic -V      # build the case if needed, then the benchmark
 ```
 
 The number of floes is set when configuring: `-DGODAR_BENCH_PARTICLES=20000` (the default). Compute nodes may not reach the internet: on a cluster, build the case once on a login node.
-
-Strong scaling is the same number of floes on more and more cores. Weak scaling is the number of floes growing with the cores (the `part/core` column of the summary stays the same): the time should then stay the same.
-
-#### On a cluster (Slurm)
-
-Inside a Slurm allocation (`salloc` for an interactive session, or a job), each configuration nodes x processes per node x threads per process is launched with `srun`, one process per `--cpus-per-task` cores, and the threads are pinned to the cores (`OMP_PLACES=cores`, `OMP_PROC_BIND=close`; `--bind` changes it). The nodes, cores and memory available are read from Slurm, and the configurations that do not fit are skipped, in particular those that need more memory than a node has: each process holds about 100 n² bytes (160 GB for 40 000 floes), so with many floes only one process per node fits.
-
-The test `arctic` asks for 1, 2, 4 nodes x 1, 2, 4 processes per node x 16, 32, 64, 128 threads (`tests/CMakeLists.txt`): run in any allocation, it skips what does not fit. Under `srun`, the peak memory of each process is measured with GNU time (`/usr/bin/time`). For other configurations, run `tests/run_bench.py` directly (see `--help`).
 
 ### How to improve GODAR
 

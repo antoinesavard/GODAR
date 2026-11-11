@@ -13,8 +13,8 @@ printed by godar, pkg/timers).
 
 Larger problems: --particles N1,N2,... runs the ARCTIC case, N floes
 filling the NSIDC sea ice extent of the Arctic, touching each other. The
-case of each N is built once by tests/bench/make_arctic.py and kept in
-<work>/cases. The sizes of the floes, the
+case of each N is built once by tests/bench/make_arctic.py in
+<work>/ARCTIC_N. The sizes of the floes, the
 search radius and the time step scale with N, so that each floe has the
 same neighbours whatever N: the work of a step grows like N (weak
 scaling: N times the floes on N times the cores should take the same
@@ -179,7 +179,7 @@ def thread_env(args, threads):
 
 
 def arctic_dir(args, requested):
-    return args.work / "cases" / f"ARCTIC_{requested}"
+    return args.work / f"ARCTIC_{requested}"
 
 
 def arctic_case(args, requested, build=True):
@@ -641,7 +641,9 @@ def main():
     rows, warnings = [], []
     now = datetime.datetime.now().isoformat(timespec="seconds")
     for name, size, files, namelist, n, built in jobs_of(args, config):
-        work = args.work / (name if size == "default" else f"{name}_{size}")
+        # an ARCTIC case is run in its own folder, the other cases in a
+        # copy of tests/files
+        work = files.parent if name == "ARCTIC" else args.work / name
         print(
             f"\ncase {name}: {n} particles"
             f"{'' if built else ' (the case is not built yet)'}, "
@@ -668,10 +670,17 @@ def main():
         if not todo:
             continue
 
-        if work.exists():
-            shutil.rmtree(work)
-        shutil.copytree(files, work / "files", symlinks=True)
-        (work / "namelist").mkdir()
+        if name == "ARCTIC":
+            # keep the case (files, namelist/ARCTIC.nml, case.json), only
+            # remove the outputs and the logs of the previous runs
+            shutil.rmtree(work / "output", ignore_errors=True)
+            for old in work.glob("log.*"):
+                old.unlink()
+        else:
+            if work.exists():
+                shutil.rmtree(work)
+            shutil.copytree(files, work / "files", symlinks=True)
+        (work / "namelist").mkdir(exist_ok=True)
         (work / "output").mkdir()
         text = rt.set_namelist(
             namelist.read_text(),
