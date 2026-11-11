@@ -42,7 +42,7 @@ set_tests_properties(bench PROPERTIES RESOURCE_LOCK godar TIMEOUT 7200)
 # Arctic benchmark, run after the build with
 #     cd build && ctest -C bench -R arctic -V
 # ====================================================
-set(GODAR_BENCH_PARTICLES 5000 CACHE STRING
+set(GODAR_BENCH_PARTICLES 20000 CACHE STRING
     "number of floes of the ARCTIC benchmark")
 set(GODAR_ARCTIC_CASE
     ${CMAKE_CURRENT_SOURCE_DIR}/work/bench/ARCTIC_${GODAR_BENCH_PARTICLES})
@@ -54,7 +54,7 @@ add_test(NAME arctic CONFIGURATIONS bench
             --godar $<TARGET_FILE:${PROJECT_NAME}>
             ${GODAR_MPIEXEC_ARG}
             --particles ${GODAR_BENCH_PARTICLES}
-            --nodes 1 --ranks-per-node 1,2 --threads 1,2,4,8,16,32,64,128)
+            --nodes 1,2,4 --ranks-per-node 1,2 --threads 1,2,4,8,16,32,64,128)
 set_tests_properties(arctic_case PROPERTIES FIXTURES_SETUP arctic TIMEOUT 3600)
 set_tests_properties(arctic PROPERTIES FIXTURES_REQUIRED arctic
                      RESOURCE_LOCK godar TIMEOUT 14400)
