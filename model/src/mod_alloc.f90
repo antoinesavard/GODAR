@@ -20,12 +20,14 @@ module alloc
 
 contains
 
-    subroutine allocate_all(num_part)
+    subroutine allocate_all(num_part, first_col, last_col)
 
-        integer, intent(in) :: num_part
+        ! first_col, last_col: particles of this rank
 
-        call alloc_variables  (num_part)
-        call alloc_bonds      (num_part)
+        integer, intent(in) :: num_part, first_col, last_col
+
+        call alloc_variables  (num_part, first_col, last_col)
+        call alloc_bonds      (num_part, first_col, last_col)
         call alloc_diagnostics(num_part)
         call alloc_forcings   (num_part)
         call alloc_mpi        (num_part)

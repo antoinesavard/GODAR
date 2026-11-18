@@ -165,6 +165,7 @@ subroutine remove_exited
     use parameters
     use variables
     use bonds
+    use mpi_var, only: first_iter, last_iter
 
     implicit none
 
@@ -174,8 +175,12 @@ subroutine remove_exited
     do i = 1, n
         if (exited(i)) then
             active(i) = .false.
-            bond(:, i) = 0
-            bond(i, :) = 0
+            ! bonds of i in the columns of this rank: its column if i is
+            ! a particle of this rank, its row (rows start at first_iter)
+            if (i .ge. first_iter .and. i .le. last_iter) bond(:, i) = 0
+            if (i .ge. first_iter) bond(i, first_iter:last_iter) = 0
+            ! bond(:, i) = 0
+            ! bond(i, :) = 0
             exited(i) = .false.
         end if
     end do

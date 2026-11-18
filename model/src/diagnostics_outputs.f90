@@ -9,7 +9,7 @@ subroutine sea_ice_post (tstep, expno_str)
     implicit none
 
 
-    integer :: i, j
+    integer :: i, j, k
     integer, intent(in) :: tstep
     character(len=4), intent(in) :: expno_str
     character(len=20) :: filex, filey, fileu, filev, filer, fileh, &
@@ -180,19 +180,39 @@ subroutine sea_ice_post (tstep, expno_str)
     write(17, fmt_row) ( omega(i), i=1, n )
 
     idx = int(tstep / comp)
+
+    ! bonds, from the list gathered on master (gather_bonds_to_master),
+    ! ordered by i then j; state: damageb, lb, rb, hb, alpha_total,
+    ! theta_offset(j,i), theta_offset_ij(j,i)
+    do k = 1, size(out_bond_i)
+        i = out_bond_i(k)
+        j = out_bond_j(k)
+
+        ! bending angles, as in bond_forces_timoshenko
+        thetarelb_ji = -(theta(i) - out_bond_state(5, k) - out_bond_state(6, k))
+        thetarelb_ij = -(theta(j) - out_bond_state(5, k) - out_bond_state(7, k))
+
+        write(18, fmt_bond) idx, j, i
+        write(34, fmt_dmg)  idx, j, i, out_bond_state(1, k)
+        write(35, fmt_beam) idx, j, i, out_bond_state(2, k),       &
+                            out_bond_state(3, k), out_bond_state(4, k), &
+                            thetarelb_ji, thetarelb_ij
+        num_bonds = num_bonds + 1
+    end do
+
     do i = 1, n
         do j = 1, n
-            if (bond(j, i) == 1) then
-                ! bending angles, as in bond_forces_timoshenko
-                thetarelb_ji = -(theta(i) - alpha_total(j,i) - theta_offset(j,i))
-                thetarelb_ij = -(theta(j) - alpha_total(j,i) - theta_offset(i,j))
+            ! if (bond(j, i) == 1) then
+            !     ! bending angles, as in bond_forces_timoshenko
+            !     thetarelb_ji = -(theta(i) - alpha_total(j,i) - theta_offset(j,i))
+            !     thetarelb_ij = -(theta(j) - alpha_total(j,i) - theta_offset(i,j))
 
-                write(18, fmt_bond) idx, j, i
-                write(34, fmt_dmg)  idx, j, i, damageb(j,i)
-                write(35, fmt_beam) idx, j, i, lb(j,i), rb(j,i), &
-                                    hb(j,i), thetarelb_ji, thetarelb_ij
-                num_bonds = num_bonds + 1
-            end if
+            !     write(18, fmt_bond) idx, j, i
+            !     write(34, fmt_dmg)  idx, j, i, damageb(j,i)
+            !     write(35, fmt_beam) idx, j, i, lb(j,i), rb(j,i), &
+            !                         hb(j,i), thetarelb_ji, thetarelb_ij
+            !     num_bonds = num_bonds + 1
+            ! end if
 
             ! contacts between active particles (lower triangle),
             ! overlap recomputed from the positions

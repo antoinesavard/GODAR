@@ -129,18 +129,18 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         end do
         close(110)
 
-        ! read sparse bond data at the same output as the positions:
-        ! line k of the files above is output index k - 1
-        call read_sparse_restart(Bfile, k - 1, 3)
-        call read_sparse_restart(Damfile, k - 1, 4)
+        ! the sparse bond data are read by every rank, for its columns of
+        ! the pair arrays, after the broadcast (bonds_restart)
+        ! call read_sparse_restart(Bfile, k - 1, 3)
+        ! call read_sparse_restart(Damfile, k - 1, 4)
 
-        ! bond geometry and bending angles (not in older outputs)
-        inquire(file = Beamfile, exist = beam_exists)
-        if (beam_exists) then
-            call read_sparse_restart(Beamfile, k - 1, 8)
-        else
-            write(*,*) 'No beam file found: bonds restart stress-free'
-        end if
+        ! ! bond geometry and bending angles (not in older outputs)
+        ! inquire(file = Beamfile, exist = beam_exists)
+        ! if (beam_exists) then
+        !     call read_sparse_restart(Beamfile, k - 1, 8)
+        ! else
+        !     write(*,*) 'No beam file found: bonds restart stress-free'
+        ! end if
 
         ! open(111, file = Bfile, status='old')
         ! do j = 1, (n + 1) * (k - 1)
@@ -220,13 +220,14 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         pc(i)  = 0d0
         pb(i)  = 0d0
 
-        ! initial contact history
-        do j = 1, n
-            ! relative angular position is 0 at first
-            thetarelc(j,i) = 0d0
-            ! tangential compression at contact
-            deltat(j,i) = 0d0
-        end do
+        ! initial contact history: 0 from the allocation, on the columns
+        ! of every rank (alloc_variables)
+        ! do j = 1, n
+        !     ! relative angular position is 0 at first
+        !     thetarelc(j,i) = 0d0
+        !     ! tangential compression at contact
+        !     deltat(j,i) = 0d0
+        ! end do
 
         ! boundary
         theta_bc1(i)  = 0d0
@@ -251,6 +252,47 @@ subroutine ini_get (restart, expno_str_r, nt_r)
 end subroutine ini_get
 
 
+subroutine bonds_restart (expno_str_r, nt_r)
+
+    ! Reads the bonds of a restart from the sparse output files, on every
+    ! rank: read_sparse_restart keeps the columns of this rank only
+
+    use parameters
+    use mpi_var, only: rank
+
+    implicit none
+
+
+    character(len=*), intent(in) :: expno_str_r
+    integer, intent(in) :: nt_r
+
+    integer :: k
+    logical :: beam_exists
+    character(len=32) :: Bondfile, Damagefile, Beamfile
+
+    Bondfile   = 'output/bond.' // trim(adjustl(expno_str_r))
+    Damagefile = 'output/damage.' // trim(adjustl(expno_str_r))
+    Beamfile   = 'output/beam.' // trim(adjustl(expno_str_r))
+
+    ! last timestep data index
+    k = int(nt_r)
+
+    ! read sparse bond data at the same output as the positions:
+    ! line k of the files above is output index k - 1
+    call read_sparse_restart(Bondfile, k - 1, 3)
+    call read_sparse_restart(Damagefile, k - 1, 4)
+
+    ! bond geometry and bending angles (not in older outputs)
+    inquire(file = Beamfile, exist = beam_exists)
+    if (beam_exists) then
+        call read_sparse_restart(Beamfile, k - 1, 8)
+    else if (rank .eq. master) then
+        write(*,*) 'No beam file found: bonds restart stress-free'
+    end if
+
+end subroutine bonds_restart
+
+
 subroutine read_sparse_restart(filename, out_idx, var_type)
 
     ! Reads the bonds saved at output index out_idx from a sparse file.
@@ -261,6 +303,7 @@ subroutine read_sparse_restart(filename, out_idx, var_type)
     
     use parameters
     use bonds
+    use mpi_var, only: first_iter, last_iter
 
     implicit none
 
@@ -292,6 +335,9 @@ subroutine read_sparse_restart(filename, out_idx, var_type)
         if (idx > out_idx) exit
         if (idx < out_idx) cycle
 
+        ! pair (j, i) kept by the rank of particle i
+        if (i < first_iter .or. i > last_iter) cycle
+
         select case (var_type)
         case (3)
             bond(j, i) = 1
@@ -303,7 +349,7 @@ subroutine read_sparse_restart(filename, out_idx, var_type)
             hb(j, i)        = vals(3)
             ! bending angles, turned into offsets by bond_restore
             theta_offset(j, i) = vals(4)
-            theta_offset(i, j) = vals(5)
+            theta_offset_ij(j, i) = vals(5)
         end select
 
     end do

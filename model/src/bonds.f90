@@ -218,7 +218,7 @@ subroutine bond_forces_timoshenko (j, i, p)
     ! thetarelb(j,i) = -omega(i) * dt + thetarelb(j,i)
     ! thetarelb(i,j) = -omega(j) * dt + thetarelb(i,j)
     p%thetarelb_ji = -(theta(i) - alpha_total(j,i) - theta_offset(j,i))
-    p%thetarelb_ij = -(theta(j) - alpha_total(j,i) - theta_offset(i,j))
+    p%thetarelb_ij = -(theta(j) - alpha_total(j,i) - theta_offset_ij(j,i))
 
     ! reduced variables for the viscosity
     m_redu =  mass(i) * mass(j) / ( mass(i) + mass(j) )
@@ -392,7 +392,7 @@ subroutine bond_creation (j, i, p)
         sina_old(j,i) = p%sina
         alpha_total(j,i) = alpha_ji
         theta_offset(j,i) = theta(i) - alpha_ji
-        theta_offset(i,j) = theta(j) - alpha_ji
+        theta_offset_ij(j,i) = theta(j) - alpha_ji
 
 	end if   
 
@@ -420,7 +420,7 @@ subroutine bond_restore (j, i, p)
     if ( lb(j, i) .le. 0d0 ) then
         call bond_properties (j, i, p)
         theta_offset(j, i) = 0d0
-        theta_offset(i, j) = 0d0
+        theta_offset_ij(j, i) = 0d0
     else
         call bond_section (j, i)
     end if
@@ -433,7 +433,7 @@ subroutine bond_restore (j, i, p)
     sina_old(j,i) = p%sina
     alpha_total(j,i) = alpha_ji
     theta_offset(j,i) = theta(i) - alpha_ji + theta_offset(j,i)
-    theta_offset(i,j) = theta(j) - alpha_ji + theta_offset(i,j)
+    theta_offset_ij(j,i) = theta(j) - alpha_ji + theta_offset_ij(j,i)
 
 end subroutine bond_restore
 
@@ -480,7 +480,8 @@ subroutine bond_section (j, i)
 
     ! sb is the cross section area
     ! ib is the inertia
-    sb  (j, i) = 2d0 * rb (j, i) * hb (j, i)
-    ib  (j, i) = 2d0 / 3d0 * hb (j, i) * rb (j, i) ** 3d0
+    ! both are now functions of rb and hb in module bonds (mod_bond.f90)
+    ! sb  (j, i) = 2d0 * rb (j, i) * hb (j, i)
+    ! ib  (j, i) = 2d0 / 3d0 * hb (j, i) * rb (j, i) ** 3d0
 
 end subroutine bond_section

@@ -45,8 +45,9 @@ subroutine broadcasting_ini (thread_requested, restart)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(omega, n, mpi_double_precision,      &
                     master, mpi_comm_world, ierr)
-    call mpi_bcast(bond, n * n, mpi_integer,            &
-                    master, mpi_comm_world, ierr)
+    ! pair arrays are not broadcast, every rank keeps its columns
+    ! call mpi_bcast(bond, n * n, mpi_integer,            &
+    !                 master, mpi_comm_world, ierr)
     call mpi_bcast(active, n, mpi_logical,              &
                     master, mpi_comm_world, ierr)
 
@@ -57,21 +58,23 @@ subroutine broadcasting_ini (thread_requested, restart)
                     master, mpi_comm_world, ierr)
     call mpi_bcast(v, n, mpi_double_precision,          &
                     master, mpi_comm_world, ierr)
-    call mpi_bcast(damageb, n * n, mpi_double_precision,&
-                    master, mpi_comm_world, ierr)
+    ! call mpi_bcast(damageb, n * n, mpi_double_precision,&
+    !                 master, mpi_comm_world, ierr)
 
-    ! bond geometry and saved bending angles (in theta_offset until
-    ! bond_restore), only read from the output files on restart
-    if (restart .eq. 1) then
-        call mpi_bcast(lb, n * n, mpi_double_precision,     &
-                        master, mpi_comm_world, ierr)
-        call mpi_bcast(rb, n * n, mpi_double_precision,     &
-                        master, mpi_comm_world, ierr)
-        call mpi_bcast(hb, n * n, mpi_double_precision,     &
-                        master, mpi_comm_world, ierr)
-        call mpi_bcast(theta_offset, n * n, mpi_double_precision,   &
-                        master, mpi_comm_world, ierr)
-    end if
+    if (restart .ne. 1) damageb = 1d0
+
+    ! ! bond geometry and saved bending angles (in theta_offset until
+    ! ! bond_restore), only read from the output files on restart
+    ! if (restart .eq. 1) then
+    !     call mpi_bcast(lb, n * n, mpi_double_precision,     &
+    !                     master, mpi_comm_world, ierr)
+    !     call mpi_bcast(rb, n * n, mpi_double_precision,     &
+    !                     master, mpi_comm_world, ierr)
+    !     call mpi_bcast(hb, n * n, mpi_double_precision,     &
+    !                     master, mpi_comm_world, ierr)
+    !     call mpi_bcast(theta_offset, n * n, mpi_double_precision,   &
+    !                     master, mpi_comm_world, ierr)
+    ! end if
 
     !-------------------------------------------------------------------
     ! constants broadcast
@@ -88,10 +91,11 @@ subroutine broadcasting_ini (thread_requested, restart)
     !-------------------------------------------------------------------
     ! 2D variables broadcast
     !-------------------------------------------------------------------
-    call mpi_bcast(thetarelc, n * n, mpi_double_precision,        &
-                    master, mpi_comm_world, ierr)
-    call mpi_bcast(deltat, n * n, mpi_double_precision,           &
-                    master, mpi_comm_world, ierr)
+    ! 0 from the allocation on every rank (alloc_variables)
+    ! call mpi_bcast(thetarelc, n * n, mpi_double_precision,        &
+    !                 master, mpi_comm_world, ierr)
+    ! call mpi_bcast(deltat, n * n, mpi_double_precision,           &
+    !                 master, mpi_comm_world, ierr)
 
     !-------------------------------------------------------------------
     ! boundary variables broadcast
@@ -768,7 +772,7 @@ subroutine gather_bonds_to_master()
     !------------------------------------------------------------
     num_local_bonds = 0
     do i = first_iter, last_iter
-        do j = 1, n
+        do j = i + 1, n
             if (bond(j, i) == 1) then
                 num_local_bonds = num_local_bonds + 1
             end if
@@ -783,7 +787,7 @@ subroutine gather_bonds_to_master()
 
     idx = 0
     do i = first_iter, last_iter
-        do j = 1, n
+        do j = i + 1, n
             if (bond(j, i) == 1) then
                 idx = idx + 1
                 local_i(idx) = i
@@ -792,7 +796,7 @@ subroutine gather_bonds_to_master()
                                         rb(j, i), hb(j, i),           &
                                         alpha_total(j, i),            &
                                         theta_offset(j, i),           &
-                                        theta_offset(i, j) ]
+                                        theta_offset_ij(j, i) ]
             end if
         end do
     end do
@@ -857,28 +861,32 @@ subroutine gather_bonds_to_master()
                      mpi_double_precision, 0, mpi_comm_world, ierr)
 
     !------------------------------------------------------------
-    ! Master rank now has all_i(k), all_j(k) for k=1..num_total_bonds
-    ! and can reconstruct the full bond and bond state arrays
+    ! Master rank now has all_i(k), all_j(k) for k=1..num_total_bonds,
+    ! ordered by i then j, kept for the outputs (sea_ice_post)
     !------------------------------------------------------------
     if (rank .eq. master) then
-        ! clear the columns owned by the other ranks, so that bonds
-        ! broken there are removed before rebuilding from the list
-        bond(:, 1:first_iter-1) = 0
-        bond(:, last_iter+1:n)  = 0
+        call move_alloc(all_i, out_bond_i)
+        call move_alloc(all_j, out_bond_j)
+        call move_alloc(all_state, out_bond_state)
 
-        do k = 1, num_total_bonds
-            i = all_i(k)
-            j = all_j(k)
+        ! ! clear the columns owned by the other ranks, so that bonds
+        ! ! broken there are removed before rebuilding from the list
+        ! bond(:, 1:first_iter-1) = 0
+        ! bond(:, last_iter+1:n)  = 0
 
-            bond(j, i)         = 1
-            damageb(j, i)      = all_state(1, k)
-            lb(j, i)           = all_state(2, k)
-            rb(j, i)           = all_state(3, k)
-            hb(j, i)           = all_state(4, k)
-            alpha_total(j, i)  = all_state(5, k)
-            theta_offset(j, i) = all_state(6, k)
-            theta_offset(i, j) = all_state(7, k)
-        end do
+        ! do k = 1, num_total_bonds
+        !     i = all_i(k)
+        !     j = all_j(k)
+
+        !     bond(j, i)         = 1
+        !     damageb(j, i)      = all_state(1, k)
+        !     lb(j, i)           = all_state(2, k)
+        !     rb(j, i)           = all_state(3, k)
+        !     hb(j, i)           = all_state(4, k)
+        !     alpha_total(j, i)  = all_state(5, k)
+        !     theta_offset(j, i) = all_state(6, k)
+        !     theta_offset(i, j) = all_state(7, k)
+        ! end do
     end if
 
     ! deallocate
@@ -887,8 +895,9 @@ subroutine gather_bonds_to_master()
     if (rank .eq. master) then
         deallocate(bond_recvcounts, bond_displs)
         deallocate(state_recvcounts, state_displs)
-        deallocate(all_i, all_j)
-        deallocate(all_state)
+        ! moved to out_bond_i, out_bond_j, out_bond_state
+        ! deallocate(all_i, all_j)
+        ! deallocate(all_state)
     end if
 
 end subroutine gather_bonds_to_master
