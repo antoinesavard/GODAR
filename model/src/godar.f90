@@ -94,8 +94,7 @@ program godar
     ! broadcast n to all ranks so they can allocate their module arrays
     call mpi_bcast(n, 1, mpi_integer, master, mpi_comm_world, ierr)
 
-    ! allocate all per-particle module arrays on every rank (the pair
-    ! arrays once the particles are shared between the ranks, below)
+    ! allocate all per-particle module arrays on every rank
     call allocate_all(n)
 
     call get_default
