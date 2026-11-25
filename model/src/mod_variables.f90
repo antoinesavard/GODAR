@@ -78,9 +78,9 @@ module variables
 
 contains
 
-    subroutine alloc_variables(num_part, first_col, last_col)
+    subroutine alloc_variables(num_part)
 
-        integer, intent(in) :: num_part, first_col, last_col
+        integer, intent(in) :: num_part
 
         ! particle state
         allocate(x      (num_part), source=0.0_dp)
@@ -106,9 +106,7 @@ contains
         allocate(fcorx(num_part), source=0.0_dp)
         allocate(fcory(num_part), source=0.0_dp)
 
-        ! contact history per pair
-        allocate(deltat   (first_col:num_part, first_col:last_col), source=0.0_dp)
-        allocate(thetarelc(first_col:num_part, first_col:last_col), source=0.0_dp)
+        ! contact history per pair (alloc_variables_pairs)
 
         ! boundary-condition forces and BC history
         allocate(fn_bc        (num_part), source=0.0_dp)
@@ -139,6 +137,19 @@ contains
         allocate(dvol(num_part), source=0.0_dp)
 
     end subroutine alloc_variables
+
+
+    subroutine alloc_variables_pairs(num_part, first_col, last_col)
+
+        ! first_col, last_col: particles of this rank
+
+        integer, intent(in) :: num_part, first_col, last_col
+
+        ! contact history per pair
+        allocate(deltat   (first_col:num_part, first_col:last_col), source=0.0_dp)
+        allocate(thetarelc(first_col:num_part, first_col:last_col), source=0.0_dp)
+
+    end subroutine alloc_variables_pairs
 
 
     subroutine dealloc_variables

@@ -11,7 +11,7 @@ program godar
     use parameters
     use const
     use mpi_var
-    use alloc, only: allocate_all, deallocate_all
+    use alloc, only: allocate_all, allocate_pairs, deallocate_all
     use timers, only: timer_on, timer_off, timer_report, t_output
 
     implicit none
@@ -21,6 +21,7 @@ program godar
     integer :: expno, readnamelist, restart, expno_r, nt_r
     integer :: proc_num, thread_num, thread_requested
     double precision :: tic, tac, toc, loop_time
+    double precision, allocatable :: work(:)
     character(len=4) :: expno_str, expno_str_r
     character(len=16), save :: namelist_name
     character(10) :: n_str
@@ -93,21 +94,9 @@ program godar
     ! broadcast n to all ranks so they can allocate their module arrays
     call mpi_bcast(n, 1, mpi_integer, master, mpi_comm_world, ierr)
 
-    ! set mpi variables
-    call init_mpi_counts_weighted(n, n_ranks, rank, local_n, local_disp)
-
-    first_iter = local_disp + 1
-    last_iter  = local_disp + local_n
-
-    ! safety
-    if (last_iter > n) last_iter = n
-    if (first_iter < 1) first_iter = 1
-
-    print*, "rank: ", rank, "particle id (start-stop): ", first_iter, last_iter
-
-    ! allocate all per-particle module arrays on every rank, and the
-    ! columns first_iter:last_iter of the pair arrays
-    call allocate_all(n, first_iter, last_iter)
+    ! allocate all per-particle module arrays on every rank (the pair
+    ! arrays once the particles are shared between the ranks, below)
+    call allocate_all(n)
 
     call get_default
     
@@ -186,23 +175,44 @@ program godar
     ! broadcast the data to all the other ranks
     call broadcasting_ini (thread_requested, restart)
 
-    ! bonds of the restart files, read by every rank for its columns
+    ! restart files, read by every rank (particle_work, bonds_restart)
     if (restart .eq. 1) then
         call mpi_bcast(expno_str_r, len(expno_str_r), mpi_character, &
                         master, mpi_comm_world, ierr)
         call mpi_bcast(nt_r, 1, mpi_integer, master, mpi_comm_world, ierr)
-        call bonds_restart (expno_str_r, nt_r)
     end if
 
     ! set openmp in all ranks
     call mpi_barrier (mpi_comm_world, ierr)
     call omp_set_num_threads (thread_requested)
-    
+
+    ! set mpi variables: contiguous blocks of particles with the same
+    ! estimated work in the force loop
+    allocate(work(n))
+    call particle_work (restart, expno_str_r, nt_r, work)
+    call init_mpi_counts_weighted(n, n_ranks, rank, local_n, local_disp, work)
+    deallocate(work)
+
+    first_iter = local_disp + 1
+    last_iter  = local_disp + local_n
+
+    ! safety
+    if (last_iter > n) last_iter = n
+    if (first_iter < 1) first_iter = 1
+
+    print*, "rank: ", rank, "particle id (start-stop): ", first_iter, last_iter
+
+    ! columns first_iter:last_iter of the pair arrays
+    call allocate_pairs(n, first_iter, last_iter)
+
+    ! bonds of the restart files, read by every rank for its columns
+    if (restart .eq. 1) call bonds_restart (expno_str_r, nt_r)
+
     !-------------------------------------------------------------------
     ! Main (time) loop of the program
     !-------------------------------------------------------------------
 
-    ! (mpi variables set before allocate_all)
+    ! (mpi variables set after the initial broadcast)
 
     call mpi_barrier(mpi_comm_world, ierr)
     

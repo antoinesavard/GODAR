@@ -61,7 +61,9 @@ subroutine broadcasting_ini (thread_requested, restart)
     ! call mpi_bcast(damageb, n * n, mpi_double_precision,&
     !                 master, mpi_comm_world, ierr)
 
-    if (restart .ne. 1) damageb = 1d0
+    ! pair arrays allocated after this broadcast, damageb = 1 at
+    ! allocation (alloc_bonds_pairs)
+    ! if (restart .ne. 1) damageb = 1d0
 
     ! ! bond geometry and saved bending angles (in theta_offset until
     ! ! bond_restore), only read from the output files on restart

@@ -1,5 +1,5 @@
 !=======================================================================
-!   Module: orchestrate allocation / deallocation of all per-particle
+!   Module: orchestrate allocation/deallocation of all per-particle
 !           module arrays
 !
 ! Each data module exposes its own alloc_<module>(num_part) and
@@ -11,7 +11,9 @@ module alloc
 
     use parameters,  only: n
     use variables,   only: alloc_variables,   dealloc_variables
+    use variables,   only: alloc_variables_pairs
     use bonds,       only: alloc_bonds,       dealloc_bonds
+    use bonds,       only: alloc_bonds_pairs
     use diagnostics, only: alloc_diagnostics, dealloc_diagnostics
     use forcings,    only: alloc_forcings,    dealloc_forcings
     use mpi_var,     only: alloc_mpi,         dealloc_mpi
@@ -20,19 +22,31 @@ module alloc
 
 contains
 
-    subroutine allocate_all(num_part, first_col, last_col)
+    subroutine allocate_all(num_part)
 
-        ! first_col, last_col: particles of this rank
+        integer, intent(in) :: num_part
 
-        integer, intent(in) :: num_part, first_col, last_col
-
-        call alloc_variables  (num_part, first_col, last_col)
-        call alloc_bonds      (num_part, first_col, last_col)
+        call alloc_variables  (num_part)
+        call alloc_bonds      (num_part)
         call alloc_diagnostics(num_part)
         call alloc_forcings   (num_part)
         call alloc_mpi        (num_part)
 
     end subroutine allocate_all
+
+
+    subroutine allocate_pairs(num_part, first_col, last_col)
+
+        ! pair arrays: columns first_col:last_col (particles of this
+        ! rank), rows first_col:num_part. Allocated once the particles
+        ! are shared between the ranks (godar.f90)
+
+        integer, intent(in) :: num_part, first_col, last_col
+
+        call alloc_variables_pairs(num_part, first_col, last_col)
+        call alloc_bonds_pairs    (num_part, first_col, last_col)
+
+    end subroutine allocate_pairs
 
 
     subroutine deallocate_all

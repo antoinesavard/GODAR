@@ -187,7 +187,8 @@ subroutine ini_get (restart, expno_str_r, nt_r)
         end do
 
         ! no bonds yet: bond_creation sets the damage of new bonds to 0
-        damageb = 1d0
+        ! (damageb = 1 at allocation, after the partition: alloc_bonds_pairs)
+        ! damageb = 1d0
 
     end if
 
@@ -355,5 +356,97 @@ subroutine read_sparse_restart(filename, out_idx, var_type)
     end do
 
     close(111)
-    
+
 end subroutine read_sparse_restart
+
+
+subroutine particle_work (restart, expno_str_r, nt_r, work)
+
+    ! Estimated time of each particle i in the force loop (stepper), from
+    ! its pairs j > i at the start of the run:
+    !
+    !   work(i) = c_floe + c_nb * nb(i) + c_contact * nc(i) + c_bond * nbond(i)
+    !
+    ! nb: neighbours (lists of the stepper), nc: contacts, nbond: bonds
+    ! (created at the first step, or read from the restart files). The
+    ! constants are fitted on the time of each particle of ARCTIC_8000
+    ! (1 rank, 1 thread, 300 steps). Only their ratios matter for the
+    ! partition (init_mpi_counts_weighted)
+
+    use parameters
+    use variables
+    use const
+    use bonds
+    use options
+    use kdtree_utils, only: build_neighbours, neighbours
+
+    implicit none
+
+
+    integer, intent(in) :: restart, nt_r
+    character(len=*), intent(in) :: expno_str_r
+    double precision, intent(out) :: work(n)
+
+    ! time per step [us] of a particle, neighbour, contact and bond
+    double precision, parameter :: c_floe    = 0.221d0
+    double precision, parameter :: c_nb      = 0.056d0
+    double precision, parameter :: c_contact = 0.058d0
+    double precision, parameter :: c_bond    = 0.183d0
+
+    integer :: i, j, k, idx
+    integer :: iostat
+    double precision :: deltan
+    character(len=32) :: Bondfile
+    integer, allocatable :: nb(:), nc(:), nbond(:)
+
+    allocate(nb   (n), source=0)
+    allocate(nc   (n), source=0)
+    allocate(nbond(n), source=0)
+
+    ! neighbour lists of all the particles, as in the stepper
+    call build_neighbours(x, y, r + rtree, 1, n)
+
+    do i = 1, n
+        if (.not. active(i)) cycle
+        do k = 1, size(neighbours(i)%j)
+            j = neighbours(i)%j(k)
+            if (.not. active(j)) cycle
+
+            nb(i) = nb(i) + 1
+
+            ! normal overlap, as in rel_pos_vel
+            deltan = r(i) + r(j) - sqrt( ( x(i) - x(j) ) ** 2 + &
+                                         ( y(i) - y(j) ) ** 2 )
+            if ( deltan .gt. 0d0 ) nc(i) = nc(i) + 1
+
+            ! bonds created at the first step (bond_creation)
+            if ( restart .ne. 1 .and. (cohesion .eqv. .true.) .and. &
+                 deltan .ge. -bond_lim ) nbond(i) = nbond(i) + 1
+        end do
+    end do
+
+    ! bonds of the restart: pairs (j, i) saved at output nt_r - 1, as
+    ! in bonds_restart
+    if ( restart .eq. 1 ) then
+        Bondfile = 'output/bond.' // trim(adjustl(expno_str_r))
+        open(unit=111, file=Bondfile, status='old', action='read')
+        do
+            read(111, *, iostat=iostat) idx, j, i
+            if (iostat /= 0) exit
+            if (idx > nt_r - 1) exit
+            if (idx == nt_r - 1) nbond(i) = nbond(i) + 1
+        end do
+        close(111)
+    end if
+
+    work = c_floe + c_nb * nb + c_contact * nc + c_bond * nbond
+    where (.not. active) work = 0d0
+
+    ! the stepper builds the lists of the particles of its rank
+    deallocate(neighbours)
+
+    deallocate(nb   )
+    deallocate(nc   )
+    deallocate(nbond)
+
+end subroutine particle_work

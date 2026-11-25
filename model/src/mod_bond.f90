@@ -63,7 +63,21 @@ module bonds
 
 contains
 
-    subroutine alloc_bonds(num_part, first_col, last_col)
+    subroutine alloc_bonds(num_part)
+
+        integer, intent(in) :: num_part
+
+        ! summed forces in bonds
+        allocate(mb (num_part), source=0.0_dp)
+        allocate(fbx(num_part), source=0.0_dp)
+        allocate(fby(num_part), source=0.0_dp)
+
+    end subroutine alloc_bonds
+
+
+    subroutine alloc_bonds_pairs(num_part, first_col, last_col)
+
+        ! first_col, last_col: particles of this rank
 
         integer, intent(in) :: num_part, first_col, last_col
 
@@ -73,7 +87,8 @@ contains
         allocate(lb       (first_col:num_part, first_col:last_col), source=0.0_dp)
         ! allocate(sb       (num_part, num_part), source=0.0_dp)
         ! allocate(ib       (num_part, num_part), source=0.0_dp)
-        allocate(damageb  (first_col:num_part, first_col:last_col), source=0.0_dp)
+        ! 1: no bond (bond_creation sets 0, read_sparse_restart reads it)
+        allocate(damageb  (first_col:num_part, first_col:last_col), source=1.0_dp)
 
         ! angle variables for bending
         allocate(theta_offset   (first_col:num_part, first_col:last_col), source=0.0_dp)
@@ -82,15 +97,10 @@ contains
         allocate(sina_old       (first_col:num_part, first_col:last_col), source=0.0_dp)
         allocate(alpha_total    (first_col:num_part, first_col:last_col), source=0.0_dp)
 
-        ! summed forces in bonds
-        allocate(mb (num_part), source=0.0_dp)
-        allocate(fbx(num_part), source=0.0_dp)
-        allocate(fby(num_part), source=0.0_dp)
-
         ! bond presence
         allocate(bond(first_col:num_part, first_col:last_col), source=0)
 
-    end subroutine alloc_bonds
+    end subroutine alloc_bonds_pairs
 
 
     subroutine dealloc_bonds

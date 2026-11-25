@@ -76,11 +76,11 @@ contains
     end subroutine init_mpi_counts
 
     subroutine init_mpi_counts_weighted(n, n_ranks, rank, local_n, local_disp, weights)
-        ! Partition indices 1..n into contiguous blocks that equalize 
+        ! Partition indices 1..n into contiguous blocks that equalize
         ! the sum of a weight per row.
-        ! We estimate per-row work as w(i) = (n - i) * weights(i) + eps
-        ! The (n-i) factor accounts for lower triangular loop cost.
-        ! The weights(i) accounts for particle size.
+        ! weights(i): estimated work of row i. Without weights, the work
+        ! is taken as w(i) = n - i + 1, the length of the lower
+        ! triangular loop.
 
         implicit none
 
@@ -115,7 +115,8 @@ contains
             end if
             do i = 1, n
                 ! estimated work
-                w(i) = (dble(n - i) + 1.0d0) * max(eps, weights(i)) + eps
+                ! w(i) = (dble(n - i) + 1.0d0) * max(eps, weights(i)) + eps
+                w(i) = max(eps, weights(i))
             end do
         else
             ! base work if no weights
